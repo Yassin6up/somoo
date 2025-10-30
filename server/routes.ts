@@ -8,6 +8,8 @@ import multer from "multer";
 import { writeFile, mkdir } from "fs/promises";
 import { join } from "path";
 import { existsSync } from "fs";
+import bcrypt from "bcrypt";
+import { generateToken, authMiddleware, requireRole, type AuthRequest } from "./middleware/auth";
 
 // Initialize OpenAI client using Replit AI Integrations
 // This provides OpenAI-compatible API access without requiring your own OpenAI API key
@@ -43,12 +45,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "اسم المستخدم مستخدم بالفعل" });
       }
 
-      const freelancer = await storage.createFreelancer(validatedData);
+      // Hash password before storing
+      const hashedPassword = await bcrypt.hash(validatedData.password, 10);
+      const freelancerData = { ...validatedData, password: hashedPassword };
+
+      const freelancer = await storage.createFreelancer(freelancerData);
+      
+      // Generate JWT token
+      const token = generateToken({
+        userId: freelancer.id,
+        userType: "freelancer",
+        email: freelancer.email,
+      });
       
       // Don't send password back to client
       const { password, ...freelancerWithoutPassword } = freelancer;
       
-      res.status(201).json(freelancerWithoutPassword);
+      res.status(201).json({ 
+        user: freelancerWithoutPassword,
+        token,
+        message: "تم إنشاء الحساب بنجاح"
+      });
     } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ error: error.errors });
@@ -91,11 +108,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Update freelancer
-  app.patch("/api/freelancers/:id", async (req, res) => {
+  // Update freelancer (protected)
+  app.patch("/api/freelancers/:id", authMiddleware, requireRole(["freelancer"]), async (req: AuthRequest, res) => {
     try {
       const { id } = req.params;
       const updates = req.body;
+
+      // Verify user can only update their own profile
+      if (req.user?.userId !== id) {
+        return res.status(403).json({ error: "ليس لديك صلاحية لتحديث هذا الحساب" });
+      }
 
       // Don't allow password updates through this endpoint
       delete updates.password;
@@ -130,12 +152,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "البريد الإلكتروني مستخدم بالفعل" });
       }
 
-      const productOwner = await storage.createProductOwner(validatedData);
+      // Hash password before storing
+      const hashedPassword = await bcrypt.hash(validatedData.password, 10);
+      const ownerData = { ...validatedData, password: hashedPassword };
+
+      const productOwner = await storage.createProductOwner(ownerData);
+      
+      // Generate JWT token
+      const token = generateToken({
+        userId: productOwner.id,
+        userType: "product_owner",
+        email: productOwner.email,
+      });
       
       // Don't send password back to client
       const { password, ...ownerWithoutPassword } = productOwner;
       
-      res.status(201).json(ownerWithoutPassword);
+      res.status(201).json({ 
+        user: ownerWithoutPassword,
+        token,
+        message: "تم إنشاء الحساب بنجاح"
+      });
     } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ error: error.errors });
@@ -178,11 +215,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Update product owner
-  app.patch("/api/product-owners/:id", async (req, res) => {
+  // Update product owner (protected)
+  app.patch("/api/product-owners/:id", authMiddleware, requireRole(["product_owner"]), async (req: AuthRequest, res) => {
     try {
       const { id } = req.params;
       const updates = req.body;
+
+      // Verify user can only update their own profile
+      if (req.user?.userId !== id) {
+        return res.status(403).json({ error: "ليس لديك صلاحية لتحديث هذا الحساب" });
+      }
 
       // Don't allow password updates through this endpoint
       delete updates.password;
@@ -265,8 +307,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // FILE UPLOAD (Object Storage)
   // ============================================
 
-  // Upload profile image or ID verification
-  app.post("/api/upload", upload.single("file"), async (req, res) => {
+  // Upload profile image or ID verification (protected)
+  app.post("/api/upload", authMiddleware, upload.single("file"), async (req: AuthRequest, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ error: "لم يتم رفع أي ملف" });
@@ -317,12 +359,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Try to find freelancer first
       let user = await storage.getFreelancerByEmail(email);
-      let userType: "freelancer" | "owner" = "freelancer";
+      let userType: "freelancer" | "product_owner" = "freelancer";
 
       // If not found, try product owner
       if (!user) {
         user = await storage.getProductOwnerByEmail(email);
-        userType = "owner";
+        userType = "product_owner";
       }
 
       // User not found
@@ -330,10 +372,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ error: "البريد الإلكتروني أو كلمة المرور غير صحيحة" });
       }
 
-      // Verify password (in production, use bcrypt comparison)
-      if (user.password !== password) {
+      // Verify password using bcrypt
+      const isPasswordValid = await bcrypt.compare(password, user.password);
+      if (!isPasswordValid) {
         return res.status(401).json({ error: "البريد الإلكتروني أو كلمة المرور غير صحيحة" });
       }
+
+      // Generate JWT token
+      const token = generateToken({
+        userId: user.id,
+        userType,
+        email: user.email,
+      });
 
       // Don't send password back
       const { password: _, ...userWithoutPassword } = user;
@@ -341,6 +391,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({
         user: userWithoutPassword,
         userType,
+        token,
         message: "تم تسجيل الدخول بنجاح"
       });
     } catch (error) {
