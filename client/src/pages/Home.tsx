@@ -153,96 +153,81 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Right Side - Review Services Card */}
-            <div className="relative" style={{ perspective: '1000px' }}>
+            {/* Right Side - Review Services Card - Horizontal Layout */}
+            <div className="relative w-full">
               <div className="absolute -top-6 -right-6 w-24 h-24 bg-amber-500/20 rounded-full blur-3xl"></div>
               <div className="absolute -bottom-6 -left-6 w-32 h-32 bg-primary/20 rounded-full blur-3xl"></div>
               
               <motion.div
-                initial={{ opacity: 0, y: 20, rotateX: -15 }}
+                initial={{ opacity: 0, y: 20 }}
                 animate={{ 
                   opacity: 1, 
-                  y: [0, -10, 0],
-                  rotateX: 0
+                  y: 0
                 }}
                 transition={{ 
                   opacity: { duration: 0.5 },
-                  rotateX: { duration: 0.5 },
-                  y: { 
-                    duration: 3,
-                    repeat: Infinity,
-                    repeatType: "reverse",
-                    ease: "easeInOut"
-                  }
+                  y: { duration: 0.5 }
                 }}
                 whileHover={{
-                  rotateY: 5,
-                  rotateX: 5,
-                  scale: 1.02,
+                  scale: 1.01,
                   transition: { duration: 0.3 }
                 }}
-                style={{
-                  transformStyle: 'preserve-3d',
-                }}
               >
-                <Card className="rounded-3xl shadow-2xl border-2 relative overflow-visible hover-elevate backdrop-blur-sm bg-card/95 max-w-md mx-auto" data-testid="card-review-services" style={{ transform: 'translateZ(50px)' }}>
+                <Card className="rounded-3xl shadow-2xl border-2 relative overflow-visible hover-elevate backdrop-blur-sm bg-card/95" data-testid="card-review-services">
                   {/* Decorative gradient overlay */}
                   <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-primary/20 to-transparent rounded-full -translate-y-12 translate-x-12"></div>
                   
-                  <CardContent className="p-8 space-y-6">
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="text-2xl font-bold bg-gradient-to-br from-primary to-primary/70 bg-clip-text text-transparent">خدماتنا المميزة</h3>
+                  <CardContent className="p-6 lg:p-8">
+                    <div className="flex items-center justify-between mb-6">
+                      <h3 className="text-xl lg:text-2xl font-bold bg-gradient-to-br from-primary to-primary/70 bg-clip-text text-transparent">خدماتنا المميزة</h3>
                       <Badge className="bg-primary/10 text-primary hover:bg-primary/20 rounded-xl px-3 shadow-sm">
                         <Sparkles className="h-3 w-3 ml-1" />
                         احترافي
                       </Badge>
                     </div>
 
-                    <div className="space-y-4">
+                    {/* Horizontal Grid Layout */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6">
                       {reviewServices.map((service, index) => (
                         <motion.div
                           key={index}
-                          initial={{ opacity: 0, x: -20 }}
-                          animate={{ opacity: 1, x: 0 }}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
                           transition={{ duration: 0.5, delay: index * 0.1 }}
-                          whileHover={{ scale: 1.02 }}
-                          className="bg-gradient-to-br from-background to-muted/30 rounded-2xl p-5 hover-elevate active-elevate-2 transition-all group border border-border/50 shadow-sm"
+                          whileHover={{ y: -5, scale: 1.02 }}
+                          className="bg-gradient-to-br from-background to-muted/30 rounded-2xl p-4 hover-elevate active-elevate-2 transition-all group border border-border/50 shadow-sm text-center"
                           data-testid={`service-${index}`}
                         >
-                          <div className="flex items-start gap-4">
-                            <motion.div
-                              animate={{ 
-                                rotate: [0, 5, -5, 0],
-                                scale: [1, 1.1, 1]
-                              }}
-                              transition={{ 
-                                duration: 2,
-                                repeat: Infinity,
-                                repeatDelay: 3
-                              }}
-                              className={`p-3 rounded-xl ${service.bgColor} shadow-lg`}
-                            >
-                              <service.icon className={`h-6 w-6 ${service.color}`} />
-                            </motion.div>
-                            
-                            <div className="flex-1 space-y-1">
-                              <h4 className="text-base font-bold text-foreground">{service.title}</h4>
-                              <p className="text-xs text-muted-foreground font-medium">{service.subtitle}</p>
-                              <div className="flex items-center gap-2 mt-2">
-                                <div className={`text-xl font-bold bg-gradient-to-r ${service.gradient} bg-clip-text text-transparent`}>
-                                  {service.value}
-                                </div>
-                                <span className="text-xs text-muted-foreground">{service.label}</span>
-                              </div>
+                          <motion.div
+                            animate={{ 
+                              rotate: [0, 5, -5, 0],
+                              scale: [1, 1.1, 1]
+                            }}
+                            transition={{ 
+                              duration: 2,
+                              repeat: Infinity,
+                              repeatDelay: 3
+                            }}
+                            className={`inline-flex p-4 rounded-xl ${service.bgColor} shadow-lg mb-3`}
+                          >
+                            <service.icon className={`h-8 w-8 ${service.color}`} />
+                          </motion.div>
+                          
+                          <h4 className="text-sm font-bold text-foreground mb-1">{service.title}</h4>
+                          <p className="text-xs text-muted-foreground font-medium mb-3">{service.subtitle}</p>
+                          
+                          <div className="flex items-center justify-center gap-2">
+                            <div className={`text-2xl font-bold bg-gradient-to-r ${service.gradient} bg-clip-text text-transparent`}>
+                              {service.value}
                             </div>
-
                             <motion.div
                               whileHover={{ scale: 1.2, rotate: 15 }}
-                              className={`p-2 rounded-full ${service.bgColor}`}
+                              className={`p-1.5 rounded-full ${service.bgColor}`}
                             >
-                              <Star className={`h-4 w-4 ${service.color} fill-current`} />
+                              <Star className={`h-3 w-3 ${service.color} fill-current`} />
                             </motion.div>
                           </div>
+                          <span className="text-xs text-muted-foreground block mt-1">{service.label}</span>
                         </motion.div>
                       ))}
                     </div>
@@ -250,9 +235,9 @@ export default function Home() {
                     {/* Bottom CTA */}
                     <motion.div
                       whileHover={{ scale: 1.02 }}
-                      className="bg-gradient-to-br from-primary/10 to-primary/5 rounded-2xl p-5 border border-primary/20 shadow-sm"
+                      className="bg-gradient-to-br from-primary/10 to-primary/5 rounded-2xl p-5 border border-primary/20 shadow-sm mt-6"
                     >
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between flex-wrap gap-3">
                         <div>
                           <p className="text-sm font-bold text-foreground mb-1">جاهز للبدء؟</p>
                           <p className="text-xs text-muted-foreground">انضم لأكثر من 500+ عميل راضٍ</p>
