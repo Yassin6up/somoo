@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -100,9 +100,15 @@ export default function ProductOwnerSignup() {
     }
   };
 
+  // Memoize default values to prevent re-initialization
+  const defaultFormValues = useMemo(() => ({
+    ...formData,
+    services: formData.services || [],
+  }), [currentStep]);
+
   const form = useForm<FormData>({
     resolver: zodResolver(getSchemaForStep(currentStep)),
-    defaultValues: formData as any,
+    values: defaultFormValues as any,
     mode: "onChange",
   });
 

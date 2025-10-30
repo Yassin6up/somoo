@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -108,9 +108,17 @@ export default function FreelancerSignup() {
     }
   };
 
+  // Memoize default values to prevent re-initialization
+  const defaultFormValues = useMemo(() => ({
+    ...formData,
+    countryCode: formData.countryCode || "+966",
+    teamSize: formData.teamSize || "1",
+    services: formData.services || [],
+  }), [currentStep]);
+
   const form = useForm<FormData>({
     resolver: zodResolver(getSchemaForStep(currentStep)),
-    defaultValues: formData as any,
+    values: defaultFormValues as any,
     mode: "onChange",
   });
 
