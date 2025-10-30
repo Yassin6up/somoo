@@ -6,6 +6,7 @@ import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { StepIndicator } from "@/components/StepIndicator";
 import { PasswordStrength } from "@/components/PasswordStrength";
+import { FileUpload } from "@/components/FileUpload";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -16,6 +17,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Briefcase, Users as UsersIcon, Puzzle, Edit3, Camera, CreditCard, ArrowRight, ArrowLeft, Upload } from "lucide-react";
 import { serviceOptions, paymentMethods } from "@shared/schema";
 import { useLocation } from "wouter";
+import { useMutation } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 const steps = [
   { id: 1, title: "المعلومات الأساسية" },
@@ -60,10 +64,38 @@ type FormData = z.infer<typeof step1Schema> &
 export default function FreelancerSignup() {
   const [currentStep, setCurrentStep] = useState(1);
   const [, navigate] = useLocation();
+  const { toast } = useToast();
   const [formData, setFormData] = useState<Partial<FormData>>({
     countryCode: "+966",
     teamSize: "1",
     services: [],
+  });
+
+  const createFreelancerMutation = useMutation({
+    mutationFn: async (data: Partial<FormData>) => {
+      return await apiRequest<any>("/api/freelancers", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...data,
+          teamSize: parseInt(data.teamSize || "1", 10),
+        }),
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "تم إنشاء الحساب بنجاح!",
+        description: "مرحبًا بك في منصة سُمُوّ",
+      });
+      navigate("/dashboard?role=freelancer");
+    },
+    onError: (error: any) => {
+      toast({
+        title: "حدث خطأ",
+        description: error.message || "فشل في إنشاء الحساب. حاول مرة أخرى.",
+        variant: "destructive",
+      });
+    },
   });
 
   const getSchemaForStep = (step: number) => {
@@ -86,15 +118,15 @@ export default function FreelancerSignup() {
     const isValid = await form.trigger();
     if (isValid) {
       const currentValues = form.getValues();
-      setFormData({ ...formData, ...currentValues });
+      const updatedFormData = { ...formData, ...currentValues };
+      setFormData(updatedFormData);
       
       if (currentStep < 4) {
         setCurrentStep(currentStep + 1);
         form.clearErrors();
       } else {
-        // Submit form
-        console.log("Final form data:", { ...formData, ...currentValues });
-        navigate("/dashboard?role=freelancer");
+        // Submit form to backend
+        createFreelancerMutation.mutate(updatedFormData);
       }
     }
   };
@@ -368,15 +400,14 @@ export default function FreelancerSignup() {
                                 </FormLabel>
                                 <FormControl>
                                   <div className="flex items-center gap-4">
-                                    <div className="w-24 h-24 rounded-2xl bg-muted border-2 border-dashed flex items-center justify-center">
-                                      <Camera className="h-8 w-8 text-muted-foreground" />
-                                    </div>
+                                    <FileUpload
+                                      type="profile"
+                                      currentFile={field.value}
+                                      onFileUploaded={(url) => field.onChange(url)}
+                                      accept="image/*"
+                                    />
                                     <div className="flex-1">
-                                      <Button type="button" variant="outline" className="rounded-xl" data-testid="button-upload-profile">
-                                        <Upload className="ml-2 h-4 w-4" />
-                                        اختر صورة
-                                      </Button>
-                                      <p className="text-xs text-muted-foreground mt-2">
+                                      <p className="text-xs text-muted-foreground">
                                         اختر صورة واضحة لزيادة الثقة بينك وبين العملاء
                                       </p>
                                     </div>
@@ -395,10 +426,12 @@ export default function FreelancerSignup() {
                                 <FormLabel>إثبات الهوية (اختياري)</FormLabel>
                                 <FormControl>
                                   <div>
-                                    <Button type="button" variant="outline" className="rounded-xl" data-testid="button-upload-id">
-                                      <Upload className="ml-2 h-4 w-4" />
-                                      رفع إثبات الهوية
-                                    </Button>
+                                    <FileUpload
+                                      type="verification"
+                                      currentFile={field.value}
+                                      onFileUploaded={(url) => field.onChange(url)}
+                                      accept="image/*,application/pdf"
+                                    />
                                     <p className="text-xs text-muted-foreground mt-2">
                                       PDF أو صورة - سيتم مراجعتها يدويًا من قبل الإدارة
                                     </p>
@@ -493,9 +526,10 @@ export default function FreelancerSignup() {
                       onClick={handleNext}
                       className="flex-1 rounded-2xl"
                       data-testid="button-next"
+                      disabled={createFreelancerMutation.isPending}
                     >
-                      {currentStep === 4 ? "إنشاء الحساب" : "التالي"}
-                      {currentStep < 4 && <ArrowRight className="mr-2 h-4 w-4" />}
+                      {createFreelancerMutation.isPending ? "جاري الإنشاء..." : currentStep === 4 ? "إنشاء الحساب" : "التالي"}
+                      {currentStep < 4 && !createFreelancerMutation.isPending && <ArrowRight className="mr-2 h-4 w-4" />}
                     </Button>
                   </div>
                 </form>

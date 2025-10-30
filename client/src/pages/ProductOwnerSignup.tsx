@@ -17,6 +17,9 @@ import { ArrowRight, ArrowLeft, Check } from "lucide-react";
 import { serviceOptions, productTypes, packages } from "@shared/schema";
 import { useLocation } from "wouter";
 import { cn } from "@/lib/utils";
+import { useMutation } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 const steps = [
   { id: 1, title: "المعلومات العامة" },
@@ -58,8 +61,33 @@ type FormData = z.infer<typeof step1Schema> &
 export default function ProductOwnerSignup() {
   const [currentStep, setCurrentStep] = useState(1);
   const [, navigate] = useLocation();
+  const { toast } = useToast();
   const [formData, setFormData] = useState<Partial<FormData>>({
     services: [],
+  });
+
+  const createOwnerMutation = useMutation({
+    mutationFn: async (data: Partial<FormData>) => {
+      return await apiRequest<any>("/api/product-owners", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "تم إنشاء الحساب بنجاح!",
+        description: "مرحبًا بك في منصة سُمُوّ",
+      });
+      navigate("/dashboard?role=owner");
+    },
+    onError: (error: any) => {
+      toast({
+        title: "حدث خطأ",
+        description: error.message || "فشل في إنشاء الحساب. حاول مرة أخرى.",
+        variant: "destructive",
+      });
+    },
   });
 
   const getSchemaForStep = (step: number) => {
@@ -82,14 +110,15 @@ export default function ProductOwnerSignup() {
     const isValid = await form.trigger();
     if (isValid) {
       const currentValues = form.getValues();
-      setFormData({ ...formData, ...currentValues });
+      const updatedFormData = { ...formData, ...currentValues };
+      setFormData(updatedFormData);
       
       if (currentStep < 4) {
         setCurrentStep(currentStep + 1);
         form.clearErrors();
       } else {
-        console.log("Final form data:", { ...formData, ...currentValues });
-        navigate("/dashboard?role=owner");
+        // Submit form to backend
+        createOwnerMutation.mutate(updatedFormData);
       }
     }
   };
@@ -456,9 +485,10 @@ export default function ProductOwnerSignup() {
                       onClick={handleNext}
                       className="flex-1 rounded-2xl"
                       data-testid="button-next"
+                      disabled={createOwnerMutation.isPending}
                     >
-                      {currentStep === 4 ? "إنشاء الحساب" : "التالي"}
-                      {currentStep < 4 && <ArrowRight className="mr-2 h-4 w-4" />}
+                      {createOwnerMutation.isPending ? "جاري الإنشاء..." : currentStep === 4 ? "إنشاء الحساب" : "التالي"}
+                      {currentStep < 4 && !createOwnerMutation.isPending && <ArrowRight className="mr-2 h-4 w-4" />}
                     </Button>
                   </div>
                 </form>
