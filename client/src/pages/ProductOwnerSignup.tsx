@@ -341,7 +341,7 @@ export default function ProductOwnerSignup() {
                       <FormField
                         control={form.control}
                         name="services"
-                        render={() => (
+                        render={({ field }) => (
                           <FormItem>
                             <FormLabel>الخدمات المطلوبة *</FormLabel>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
@@ -353,7 +353,7 @@ export default function ProductOwnerSignup() {
                                   data-testid={`checkbox-service-${service}`}
                                 >
                                   <Checkbox
-                                    checked={(form.watch("services") || []).includes(service)}
+                                    checked={(field.value || []).includes(service)}
                                     className="mt-0.5"
                                   />
                                   <span className="text-sm">{service}</span>
@@ -365,22 +365,26 @@ export default function ProductOwnerSignup() {
                         )}
                       />
 
-                      <div>
-                        <FormLabel>اختر الباقة المناسبة</FormLabel>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-3">
-                          {packages.map((pkg) => (
-                            <Card
-                              key={pkg.id}
-                              onClick={() => selectPackage(pkg.id)}
-                              className={cn(
-                                "rounded-2xl cursor-pointer transition-all hover-elevate",
-                                form.watch("package") === pkg.id 
-                                  ? "ring-2 ring-primary shadow-lg" 
-                                  : "shadow-md",
-                                pkg.recommended && "border-primary"
-                              )}
-                              data-testid={`card-package-${pkg.id}`}
-                            >
+                      <FormField
+                        control={form.control}
+                        name="package"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>اختر الباقة المناسبة</FormLabel>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-3">
+                              {packages.map((pkg) => (
+                                <Card
+                                  key={pkg.id}
+                                  onClick={() => selectPackage(pkg.id)}
+                                  className={cn(
+                                    "rounded-2xl cursor-pointer transition-all hover-elevate",
+                                    field.value === pkg.id 
+                                      ? "ring-2 ring-primary shadow-lg" 
+                                      : "shadow-md",
+                                    pkg.recommended && "border-primary"
+                                  )}
+                                  data-testid={`card-package-${pkg.id}`}
+                                >
                               <CardContent className="p-6 space-y-4">
                                 {pkg.recommended && (
                                   <div className="inline-block px-3 py-1 bg-primary text-primary-foreground text-xs font-semibold rounded-full">
@@ -406,7 +410,9 @@ export default function ProductOwnerSignup() {
                             </Card>
                           ))}
                         </div>
-                      </div>
+                          </FormItem>
+                        )}
+                      />
                     </div>
                   )}
 

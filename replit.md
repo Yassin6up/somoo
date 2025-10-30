@@ -19,18 +19,26 @@ The platform is built with a modern web stack, featuring a modular project struc
 
 **Technical Implementations & Feature Specifications:**
 - **Frontend:** React with TypeScript, Wouter for routing, Tailwind CSS, Shadcn UI, React Hook Form with Zod for validation, and TanStack Query for data management.
-- **Backend:** Express.js, with In-Memory Storage for the prototype phase.
-- **Forms:** Multi-step forms for registration (Freelancer and Product Owner) with robust validation.
+- **Backend:** Express.js, with PostgreSQL database (Neon) for production, In-Memory Storage for testing.
+- **Forms:** Multi-step forms for registration (Freelancer and Product Owner) with robust validation. Fixed infinite render loop issue by using `field.value` instead of `form.watch` in checkbox components.
 - **User Authentication:** Login system with JWT-based sessions and role-based authorization.
-- **Dashboards:** Personalized dashboards for freelancers and product owners.
-- **Campaign Management:** CRUD operations for product owners to manage campaigns.
+- **Dashboards:** 
+  - **Freelancer Dashboard:** Real-time statistics (active, submitted, completed tasks, earnings), tabbed task views, search/filter for available tasks, task cards with details, and task management (accept, start, submit with report).
+  - **Product Owner Dashboard:** Real-time statistics (active campaigns, submitted/completed tasks, total spent), three tabs (Submitted for Review, All Campaigns, All Tasks), task review dialog with approve/reject functionality, comprehensive campaign overview cards.
+- **Campaign Management:** Full CRUD operations including delete functionality for product owners to manage campaigns.
+- **Task Management:** Complete workflow from available → assigned → in_progress → submitted → approved/rejected. Product owners can review, approve, or reject submitted tasks with feedback. Approval updates freelancer wallet and creates notifications.
 - **Freelancer Listing:** `/freelancers` page with search, filter, and detailed freelancer cards.
-- **API Endpoints:** Comprehensive CRUD APIs for freelancers, product owners, and campaigns, secured by authentication and authorization middleware.
+- **API Endpoints:** 
+  - Comprehensive CRUD APIs for freelancers, product owners, and campaigns
+  - Task management: GET /api/tasks/available, /api/tasks/my-tasks, /api/tasks/owner
+  - Task actions: POST /api/tasks/:id/accept, PATCH /api/tasks/:id/start, /api/tasks/:id/submit, /api/tasks/:id/approve, /api/tasks/:id/reject
+  - Campaign deletion: DELETE /api/campaigns/:id
+  - All secured by authentication and authorization middleware
 - **File Uploads:** System for profile images and ID verification using `multer`.
 - **Service Offerings:** Defined packages (Basic, Pro, Growth) and services (app testing, Google Maps reviews, UX/UI reviews, social media engagement).
 - **SEO & Social Media Integration:** Comprehensive SEO-optimized content for the homepage and a dedicated social media interaction service to boost engagement across platforms (Facebook, Instagram, Twitter, LinkedIn).
-- **Freelancer Dashboard:** Features real-time statistics (active, submitted, completed tasks, earnings), tabbed task views, search/filter for available tasks, task cards with details, and task management (accept, start, submit with report). Uses TanStack Query for data fetching and mutations with optimistic updates.
-- **Homepage Motion Graphics:** Utilizes Framer Motion for professional animations including 3D fade-ins, animated background particles, floating decorative icons, and interactive hover effects on service cards. Each service card has unique animated icons, background particles, and color gradients.
+- **Homepage Motion Graphics:** Utilizes Framer Motion for professional animations including 3D transforms (rotateX/rotateY), floating animations on horizontal "سُمُوّ" card, perspective effects, animated background particles, floating decorative icons, and interactive hover effects on service cards. Each service card has unique animated icons, background particles, and color gradients.
+- **Testing Infrastructure:** Comprehensive data-testid attributes on all interactive elements for end-to-end testing with Playwright.
 
 **System Design Choices:**
 - **Data Schemas:** Shared TypeScript data models for consistency across the stack.
