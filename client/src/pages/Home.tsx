@@ -214,27 +214,39 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Right Side - Review Services Card - Horizontal Layout */}
-            <div className="relative w-full">
+            {/* Right Side - Review Services Card - Horizontal 3D Layout */}
+            <div className="relative w-full" style={{ perspective: '1200px' }}>
               <div className="absolute -top-6 -right-6 w-24 h-24 bg-amber-500/20 rounded-full blur-3xl"></div>
               <div className="absolute -bottom-6 -left-6 w-32 h-32 bg-primary/20 rounded-full blur-3xl"></div>
               
               <motion.div
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 20, rotateX: -15 }}
                 animate={{ 
                   opacity: 1, 
-                  y: 0
+                  y: [0, -10, 0],
+                  rotateX: 0
                 }}
                 transition={{ 
                   opacity: { duration: 0.5 },
-                  y: { duration: 0.5 }
+                  rotateX: { duration: 0.5 },
+                  y: { 
+                    duration: 3,
+                    repeat: Infinity,
+                    repeatType: "reverse",
+                    ease: "easeInOut"
+                  }
                 }}
                 whileHover={{
-                  scale: 1.01,
+                  rotateY: 5,
+                  rotateX: 5,
+                  scale: 1.02,
                   transition: { duration: 0.3 }
                 }}
+                style={{
+                  transformStyle: 'preserve-3d',
+                }}
               >
-                <Card className="rounded-3xl shadow-2xl border-2 relative overflow-visible hover-elevate backdrop-blur-sm bg-card/95" data-testid="card-review-services">
+                <Card className="rounded-3xl shadow-2xl border-2 relative overflow-visible hover-elevate backdrop-blur-sm bg-card/95 w-full max-w-5xl" data-testid="card-review-services" style={{ transform: 'translateZ(50px)' }}>
                   {/* Decorative gradient overlay */}
                   <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-primary/20 to-transparent rounded-full -translate-y-12 translate-x-12"></div>
                   

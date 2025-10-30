@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertFreelancerSchema, insertProductOwnerSchema } from "@shared/schema";
+import { insertFreelancerSchema, insertProductOwnerSchema, insertCampaignSchema, type Campaign } from "@shared/schema";
 import { z } from "zod";
 import OpenAI from "openai";
 import multer from "multer";
@@ -434,7 +434,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (req.user?.userType === "product_owner") {
         // Product owners see only their campaigns
-        campaigns = await storage.getCampaignsByOwnerId(req.user.userId);
+        campaigns = await storage.getCampaignsByOwner(req.user.userId);
       } else {
         // Freelancers see only active campaigns (not drafts, paused, etc.)
         const allCampaigns = await storage.getAllCampaigns();
@@ -460,7 +460,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/campaigns/:id", authMiddleware, async (req: AuthRequest, res) => {
     try {
       const { id } = req.params;
-      const campaign = await storage.getCampaignById(id);
+      const campaign = await storage.getCampaign(id);
 
       if (!campaign) {
         return res.status(404).json({ error: "الحملة غير موجودة" });
@@ -484,7 +484,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { id } = req.params;
       
       // Get existing campaign to verify ownership
-      const existingCampaign = await storage.getCampaignById(id);
+      const existingCampaign = await storage.getCampaign(id);
       if (!existingCampaign) {
         return res.status(404).json({ error: "الحملة غير موجودة" });
       }
@@ -516,7 +516,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { id } = req.params;
 
       // Get existing campaign to verify ownership
-      const existingCampaign = await storage.getCampaignById(id);
+      const existingCampaign = await storage.getCampaign(id);
       if (!existingCampaign) {
         return res.status(404).json({ error: "الحملة غير موجودة" });
       }
@@ -716,6 +716,157 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error starting task:", error);
       res.status(500).json({ error: "حدث خطأ أثناء بدء المهمة" });
+    }
+  });
+
+  // ============================================
+  // PRODUCT OWNER - TASKS MANAGEMENT
+  // ============================================
+
+  // Get all tasks for product owner's campaigns
+  app.get("/api/tasks/owner", authMiddleware, requireRole(["product_owner"]), async (req: AuthRequest, res) => {
+    try {
+      if (!req.user?.userId) {
+        return res.status(401).json({ error: "غير مصرح" });
+      }
+
+      // Get all campaigns for this product owner
+      const campaigns: Campaign[] = await storage.getCampaignsByOwner(req.user.userId);
+      const campaignIds = campaigns.map((c: Campaign) => c.id);
+
+      // Get all tasks for these campaigns
+      const allTasks: any[] = [];
+      for (const campaignId of campaignIds) {
+        const tasks = await storage.getTasksByCampaign(campaignId);
+        allTasks.push(...tasks);
+      }
+
+      res.json(allTasks);
+    } catch (error) {
+      console.error("Error fetching owner tasks:", error);
+      res.status(500).json({ error: "حدث خطأ أثناء جلب المهام" });
+    }
+  });
+
+  // Approve a task (product owner)
+  app.patch("/api/tasks/:id/approve", authMiddleware, requireRole(["product_owner"]), async (req: AuthRequest, res) => {
+    try {
+      const { id } = req.params;
+      const { feedback } = req.body;
+
+      if (!req.user?.userId) {
+        return res.status(401).json({ error: "غير مصرح" });
+      }
+
+      const task = await storage.getTask(id);
+      if (!task) {
+        return res.status(404).json({ error: "المهمة غير موجودة" });
+      }
+
+      // Verify ownership through campaign
+      const campaign = await storage.getCampaign(task.campaignId);
+      if (!campaign || campaign.productOwnerId !== req.user.userId) {
+        return res.status(403).json({ error: "ليس لديك صلاحية للموافقة على هذه المهمة" });
+      }
+
+      if (task.status !== "submitted") {
+        return res.status(400).json({ error: "لا يمكن الموافقة على هذه المهمة في حالتها الحالية" });
+      }
+
+      // Update task
+      const updatedTask = await storage.updateTask(id, {
+        status: "approved",
+        feedback: feedback || "",
+        completedAt: new Date(),
+      });
+
+      // Update freelancer wallet - add reward to balance
+      if (task.freelancerId) {
+        const wallet = await storage.getWalletByFreelancer(task.freelancerId);
+        if (wallet) {
+          await storage.updateWallet(wallet.id, {
+            balance: (Number(wallet.balance) + Number(task.reward)).toString(),
+            totalEarned: (Number(wallet.totalEarned) + Number(task.reward)).toString(),
+          });
+
+          // Create transaction record
+          await storage.createTransaction({
+            walletId: wallet.id,
+            taskId: task.id,
+            type: "earning",
+            amount: task.reward.toString(),
+            status: "completed",
+            description: `مكافأة المهمة: ${task.title}`,
+          });
+        }
+
+        // Create notification for freelancer
+        await storage.createNotification({
+          userId: task.freelancerId,
+          userType: "freelancer",
+          title: "تمت الموافقة على المهمة",
+          message: `تمت الموافقة على المهمة "${task.title}" وتم إضافة ${task.reward} ر.س لمحفظتك`,
+          type: "task_approved",
+        });
+      }
+
+      res.json(updatedTask);
+    } catch (error) {
+      console.error("Error approving task:", error);
+      res.status(500).json({ error: "حدث خطأ أثناء الموافقة على المهمة" });
+    }
+  });
+
+  // Reject a task (product owner)
+  app.patch("/api/tasks/:id/reject", authMiddleware, requireRole(["product_owner"]), async (req: AuthRequest, res) => {
+    try {
+      const { id } = req.params;
+      const { feedback } = req.body;
+
+      if (!req.user?.userId) {
+        return res.status(401).json({ error: "غير مصرح" });
+      }
+
+      if (!feedback || !feedback.trim()) {
+        return res.status(400).json({ error: "يجب تقديم سبب الرفض" });
+      }
+
+      const task = await storage.getTask(id);
+      if (!task) {
+        return res.status(404).json({ error: "المهمة غير موجودة" });
+      }
+
+      // Verify ownership through campaign
+      const campaign = await storage.getCampaign(task.campaignId);
+      if (!campaign || campaign.productOwnerId !== req.user.userId) {
+        return res.status(403).json({ error: "ليس لديك صلاحية لرفض هذه المهمة" });
+      }
+
+      if (task.status !== "submitted") {
+        return res.status(400).json({ error: "لا يمكن رفض هذه المهمة في حالتها الحالية" });
+      }
+
+      // Update task - return to in_progress for rework
+      const updatedTask = await storage.updateTask(id, {
+        status: "in_progress",
+        feedback,
+      });
+
+      // Create notification for freelancer
+      if (task.freelancerId) {
+        await storage.createNotification({
+          userId: task.freelancerId,
+          userType: "freelancer",
+          title: "تم رفض المهمة",
+          message: `تم رفض المهمة "${task.title}". يرجى مراجعة الملاحظات وإعادة التسليم`,
+          type: "task_rejected",
+        });
+      }
+
+      res.json(updatedTask);
+    } catch (error) {
+      console.error("Error rejecting task:", error);
+      res.status(500).json({ error: "حدث خطأ أثناء رفض المهمة" });
     }
   });
 

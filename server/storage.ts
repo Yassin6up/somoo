@@ -59,6 +59,7 @@ export interface IStorage {
   getActiveCampaigns(): Promise<Campaign[]>;
   createCampaign(campaign: InsertCampaign): Promise<Campaign>;
   updateCampaign(id: string, updates: Partial<Campaign>): Promise<Campaign | undefined>;
+  deleteCampaign(id: string): Promise<void>;
 
   // Task methods
   getTask(id: string): Promise<Task | undefined>;
@@ -220,6 +221,7 @@ export class MemStorage implements IStorage {
   async getActiveCampaigns(): Promise<Campaign[]> { throw new Error("Not implemented in MemStorage"); }
   async createCampaign(): Promise<Campaign> { throw new Error("Not implemented in MemStorage"); }
   async updateCampaign(): Promise<Campaign | undefined> { throw new Error("Not implemented in MemStorage"); }
+  async deleteCampaign(): Promise<void> { throw new Error("Not implemented in MemStorage"); }
   async getTask(): Promise<Task | undefined> { throw new Error("Not implemented in MemStorage"); }
   async getTasksByCampaign(): Promise<Task[]> { throw new Error("Not implemented in MemStorage"); }
   async getTasksByFreelancer(): Promise<Task[]> { throw new Error("Not implemented in MemStorage"); }
@@ -342,6 +344,10 @@ export class DatabaseStorage implements IStorage {
   async updateCampaign(id: string, updates: Partial<Campaign>): Promise<Campaign | undefined> {
     const [updated] = await db.update(campaigns).set({ ...updates, updatedAt: new Date() }).where(eq(campaigns.id, id)).returning();
     return updated || undefined;
+  }
+
+  async deleteCampaign(id: string): Promise<void> {
+    await db.delete(campaigns).where(eq(campaigns.id, id));
   }
 
   // Task methods

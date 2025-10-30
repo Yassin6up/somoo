@@ -10,6 +10,7 @@ import FreelancerSignup from "@/pages/FreelancerSignup";
 import ProductOwnerSignup from "@/pages/ProductOwnerSignup";
 import Dashboard from "@/pages/Dashboard";
 import FreelancerDashboard from "@/pages/FreelancerDashboard";
+import ProductOwnerDashboard from "@/pages/ProductOwnerDashboard";
 import Login from "@/pages/Login";
 import Campaigns from "@/pages/Campaigns";
 import Freelancers from "@/pages/Freelancers";
@@ -24,6 +25,7 @@ function Router() {
       <Route path="/product-owner-signup" component={ProductOwnerSignup} />
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/freelancer-dashboard" component={FreelancerDashboard} />
+      <Route path="/product-owner-dashboard" component={ProductOwnerDashboard} />
       <Route path="/campaigns" component={Campaigns} />
       <Route path="/freelancers" component={Freelancers} />
       <Route component={NotFound} />
