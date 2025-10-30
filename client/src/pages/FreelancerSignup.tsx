@@ -73,7 +73,7 @@ export default function FreelancerSignup() {
 
   const createFreelancerMutation = useMutation({
     mutationFn: async (data: Partial<FormData>) => {
-      return await apiRequest<any>("/api/freelancers", {
+      const response = await fetch("/api/freelancers", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -81,13 +81,25 @@ export default function FreelancerSignup() {
           teamSize: parseInt(data.teamSize || "1", 10),
         }),
       });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "فشل إنشاء الحساب");
+      }
+      
+      return await response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data: any) => {
+      // Store token and user data in localStorage
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("user", JSON.stringify(data.user));
+      localStorage.setItem("userType", "freelancer");
+      
       toast({
         title: "تم إنشاء الحساب بنجاح!",
         description: "مرحبًا بك في منصة سُمُوّ",
       });
-      navigate("/dashboard?role=freelancer");
+      navigate("/dashboard");
     },
     onError: (error: any) => {
       toast({

@@ -401,6 +401,139 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // ============================================
+  // CAMPAIGN ROUTES
+  // ============================================
+
+  // Create campaign (product owners only)
+  app.post("/api/campaigns", authMiddleware, requireRole(["product_owner"]), async (req: AuthRequest, res) => {
+    try {
+      const validatedData = insertCampaignSchema.parse(req.body);
+
+      // Ensure owner_id matches the authenticated user
+      if (validatedData.owner_id !== req.user?.userId) {
+        return res.status(403).json({ error: "يمكنك فقط إنشاء حملات لحسابك الخاص" });
+      }
+
+      const campaign = await storage.createCampaign(validatedData);
+      res.status(201).json(campaign);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors });
+      }
+      console.error("Error creating campaign:", error);
+      res.status(500).json({ error: "حدث خطأ أثناء إنشاء الحملة" });
+    }
+  });
+
+  // Get all campaigns (filtered based on user type)
+  app.get("/api/campaigns", authMiddleware, async (req: AuthRequest, res) => {
+    try {
+      const { status, owner_id } = req.query;
+      
+      let campaigns;
+      
+      if (req.user?.userType === "product_owner") {
+        // Product owners see only their campaigns
+        campaigns = await storage.getCampaignsByOwnerId(req.user.userId);
+      } else {
+        // Freelancers see only active campaigns (not drafts, paused, etc.)
+        const allCampaigns = await storage.getAllCampaigns();
+        campaigns = allCampaigns.filter(c => c.status === "active");
+      }
+
+      // Apply additional filters
+      if (status) {
+        campaigns = campaigns.filter(c => c.status === status);
+      }
+      if (owner_id && req.user?.userType === "product_owner") {
+        campaigns = campaigns.filter(c => c.owner_id === owner_id);
+      }
+
+      res.json(campaigns);
+    } catch (error) {
+      console.error("Error fetching campaigns:", error);
+      res.status(500).json({ error: "حدث خطأ أثناء جلب الحملات" });
+    }
+  });
+
+  // Get campaign by ID
+  app.get("/api/campaigns/:id", authMiddleware, async (req: AuthRequest, res) => {
+    try {
+      const { id } = req.params;
+      const campaign = await storage.getCampaignById(id);
+
+      if (!campaign) {
+        return res.status(404).json({ error: "الحملة غير موجودة" });
+      }
+
+      // Product owners can only see their own campaigns
+      if (req.user?.userType === "product_owner" && campaign.owner_id !== req.user.userId) {
+        return res.status(403).json({ error: "ليس لديك صلاحية لعرض هذه الحملة" });
+      }
+
+      res.json(campaign);
+    } catch (error) {
+      console.error("Error fetching campaign:", error);
+      res.status(500).json({ error: "حدث خطأ أثناء جلب بيانات الحملة" });
+    }
+  });
+
+  // Update campaign (product owners only, own campaigns)
+  app.patch("/api/campaigns/:id", authMiddleware, requireRole(["product_owner"]), async (req: AuthRequest, res) => {
+    try {
+      const { id } = req.params;
+      
+      // Get existing campaign to verify ownership
+      const existingCampaign = await storage.getCampaignById(id);
+      if (!existingCampaign) {
+        return res.status(404).json({ error: "الحملة غير موجودة" });
+      }
+
+      if (existingCampaign.owner_id !== req.user?.userId) {
+        return res.status(403).json({ error: "ليس لديك صلاحية لتحديث هذه الحملة" });
+      }
+
+      // Create update schema (partial of insert schema, excluding owner_id and id)
+      const updateCampaignSchema = insertCampaignSchema.partial().omit({ owner_id: true, id: true });
+      
+      // Validate updates
+      const validatedUpdates = updateCampaignSchema.parse(req.body);
+
+      const updatedCampaign = await storage.updateCampaign(id, validatedUpdates);
+      res.json(updatedCampaign);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors });
+      }
+      console.error("Error updating campaign:", error);
+      res.status(500).json({ error: "حدث خطأ أثناء تحديث الحملة" });
+    }
+  });
+
+  // Delete campaign (product owners only, own campaigns)
+  app.delete("/api/campaigns/:id", authMiddleware, requireRole(["product_owner"]), async (req: AuthRequest, res) => {
+    try {
+      const { id } = req.params;
+
+      // Get existing campaign to verify ownership
+      const existingCampaign = await storage.getCampaignById(id);
+      if (!existingCampaign) {
+        return res.status(404).json({ error: "الحملة غير موجودة" });
+      }
+
+      if (existingCampaign.owner_id !== req.user?.userId) {
+        return res.status(403).json({ error: "ليس لديك صلاحية لحذف هذه الحملة" });
+      }
+
+      await storage.deleteCampaign(id);
+      res.json({ message: "تم حذف الحملة بنجاح" });
+    } catch (error) {
+      console.error("Error deleting campaign:", error);
+      res.status(500).json({ error: "حدث خطأ أثناء حذف الحملة" });
+    }
+  });
+
+  // ============================================
   // HEALTH CHECK
   // ============================================
 

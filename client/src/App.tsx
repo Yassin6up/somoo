@@ -10,6 +10,7 @@ import FreelancerSignup from "@/pages/FreelancerSignup";
 import ProductOwnerSignup from "@/pages/ProductOwnerSignup";
 import Dashboard from "@/pages/Dashboard";
 import Login from "@/pages/Login";
+import Campaigns from "@/pages/Campaigns";
 
 function Router() {
   return (
@@ -20,6 +21,7 @@ function Router() {
       <Route path="/freelancer-signup" component={FreelancerSignup} />
       <Route path="/product-owner-signup" component={ProductOwnerSignup} />
       <Route path="/dashboard" component={Dashboard} />
+      <Route path="/campaigns" component={Campaigns} />
       <Route component={NotFound} />
     </Switch>
   );

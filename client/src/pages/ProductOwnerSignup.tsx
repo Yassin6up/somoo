@@ -68,18 +68,30 @@ export default function ProductOwnerSignup() {
 
   const createOwnerMutation = useMutation({
     mutationFn: async (data: Partial<FormData>) => {
-      return await apiRequest<any>("/api/product-owners", {
+      const response = await fetch("/api/product-owners", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "فشل إنشاء الحساب");
+      }
+      
+      return await response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data: any) => {
+      // Store token and user data in localStorage
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("user", JSON.stringify(data.user));
+      localStorage.setItem("userType", "product_owner");
+      
       toast({
         title: "تم إنشاء الحساب بنجاح!",
         description: "مرحبًا بك في منصة سُمُوّ",
       });
-      navigate("/dashboard?role=owner");
+      navigate("/campaigns");
     },
     onError: (error: any) => {
       toast({

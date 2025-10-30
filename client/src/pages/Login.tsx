@@ -51,12 +51,22 @@ export default function Login() {
       return await response.json();
     },
     onSuccess: (data: any) => {
+      // Store token and user data in localStorage
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("user", JSON.stringify(data.user));
+      localStorage.setItem("userType", data.userType);
+      
       toast({
         title: "تم تسجيل الدخول بنجاح!",
         description: "مرحبًا بعودتك إلى منصة سُمُوّ",
       });
-      // Navigate to dashboard with user type
-      navigate(`/dashboard?role=${data.userType}`);
+      
+      // Navigate based on user type
+      if (data.userType === "product_owner") {
+        navigate("/campaigns");
+      } else {
+        navigate("/dashboard");
+      }
     },
     onError: (error: any) => {
       toast({
