@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { Menu, X } from "lucide-react";
+import { Menu, X, LogIn, UserPlus } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 
@@ -36,8 +36,15 @@ export function Navbar() {
 
           {/* Desktop CTA Buttons */}
           <div className="hidden md:flex items-center gap-3">
+            <Link href="/login">
+              <Button variant="ghost" className="rounded-2xl" data-testid="button-login">
+                <LogIn className="ml-2 h-4 w-4" />
+                تسجيل الدخول
+              </Button>
+            </Link>
             <Link href="/role-selection">
-              <Button variant="outline" className="rounded-2xl" data-testid="button-signup">
+              <Button variant="default" className="rounded-2xl" data-testid="button-signup">
+                <UserPlus className="ml-2 h-4 w-4" />
                 إنشاء حساب
               </Button>
             </Link>
@@ -68,8 +75,15 @@ export function Navbar() {
               كيف تعمل
             </a>
             <div className="pt-2 flex flex-col gap-2">
+              <Link href="/login">
+                <Button variant="outline" className="w-full rounded-2xl" data-testid="button-login-mobile">
+                  <LogIn className="ml-2 h-4 w-4" />
+                  تسجيل الدخول
+                </Button>
+              </Link>
               <Link href="/role-selection">
                 <Button variant="default" className="w-full rounded-2xl" data-testid="button-signup-mobile">
+                  <UserPlus className="ml-2 h-4 w-4" />
                   إنشاء حساب
                 </Button>
               </Link>

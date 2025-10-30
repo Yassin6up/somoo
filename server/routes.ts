@@ -303,6 +303,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // ============================================
+  // AUTHENTICATION ROUTES
+  // ============================================
+
+  // Login endpoint
+  app.post("/api/login", async (req, res) => {
+    try {
+      const { email, password } = req.body;
+
+      if (!email || !password) {
+        return res.status(400).json({ error: "البريد الإلكتروني وكلمة المرور مطلوبان" });
+      }
+
+      // Try to find freelancer first
+      let user = await storage.getFreelancerByEmail(email);
+      let userType: "freelancer" | "owner" = "freelancer";
+
+      // If not found, try product owner
+      if (!user) {
+        user = await storage.getProductOwnerByEmail(email);
+        userType = "owner";
+      }
+
+      // User not found
+      if (!user) {
+        return res.status(401).json({ error: "البريد الإلكتروني أو كلمة المرور غير صحيحة" });
+      }
+
+      // Verify password (in production, use bcrypt comparison)
+      if (user.password !== password) {
+        return res.status(401).json({ error: "البريد الإلكتروني أو كلمة المرور غير صحيحة" });
+      }
+
+      // Don't send password back
+      const { password: _, ...userWithoutPassword } = user;
+
+      res.json({
+        user: userWithoutPassword,
+        userType,
+        message: "تم تسجيل الدخول بنجاح"
+      });
+    } catch (error) {
+      console.error("Error during login:", error);
+      res.status(500).json({ error: "حدث خطأ أثناء تسجيل الدخول" });
+    }
+  });
+
+  // ============================================
   // HEALTH CHECK
   // ============================================
 

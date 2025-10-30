@@ -9,11 +9,13 @@ import RoleSelection from "@/pages/RoleSelection";
 import FreelancerSignup from "@/pages/FreelancerSignup";
 import ProductOwnerSignup from "@/pages/ProductOwnerSignup";
 import Dashboard from "@/pages/Dashboard";
+import Login from "@/pages/Login";
 
 function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
+      <Route path="/login" component={Login} />
       <Route path="/role-selection" component={RoleSelection} />
       <Route path="/freelancer-signup" component={FreelancerSignup} />
       <Route path="/product-owner-signup" component={ProductOwnerSignup} />
