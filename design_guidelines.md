@@ -1,187 +1,156 @@
-# Design Guidelines for Sumou Platform (سُمُوّ)
+# Sumou Platform Design Guidelines (سُمُوّ)
 
-## Design Approach
-**Reference-Based Approach**: Modern SaaS aesthetic inspired by Figma and Notion, with emphasis on clean interfaces, clear information hierarchy, and professional presentation suitable for a B2B/B2C marketplace platform.
+## Design Philosophy
 
-## Core Visual Language
+**Reference-Based Approach**: Modern SaaS aesthetic inspired by Figma/Notion—clean interfaces, clear hierarchy, professional presentation, RTL-first with seamless LTR adaptation.
 
-### Color Palette
-- **Primary Green**: #4CAF50 (medium green for positive actions, CTAs, and highlights)
-- **Secondary Light Green**: #E8F5E9 (soft green tint for accents and backgrounds)
-- **Background**: #FAFAFA (soft white, easy on eyes)
-- **Text Primary**: #222222
-- **Neutral Grays**: Use for borders, secondary text, and subtle UI elements
+**Core Principles**: Spacious layouts, professional yet approachable, clear visual hierarchy, breathing room between elements.
 
-### Typography
-- **Primary Font**: Cairo (Arabic) or Inter (fallback for Latin)
-- **Hierarchy**:
-  - Hero Headlines: Very large, bold weights
-  - Section Headers: Large, semibold
-  - Body Text: Regular weight, comfortable reading size
-  - Metadata/Captions: Smaller, lighter weight
-- **Direction**: Full RTL support for Arabic, switchable to LTR for English
+## Typography
 
-### Spacing System
-Use Tailwind units of 2, 4, 6, 8, 12, 16, 20, and 32 for consistent rhythm throughout the application.
+**Fonts**: Cairo (Arabic primary, RTL-optimized) + Inter (Latin fallback) via Google Fonts CDN
 
-### Border Radius & Shadows
-- **All Buttons**: rounded-2xl (very rounded corners)
-- **Cards & Sections**: rounded-2xl with soft shadow (shadow-md)
-- **Input Fields**: rounded-xl
-- **Interactive Elements**: Subtle hover scale (scale-105) with smooth transitions
+**Scale**:
+- Hero: 3.5-4.5rem, weight 700-800
+- Page Titles: 2.5-3rem, weight 700
+- Section Headers: 1.875-2.25rem, weight 600
+- Card Titles: 1.25-1.5rem, weight 600
+- Body: 1rem, weight 400
+- Small/Captions: 0.875rem, weight 400-500
 
-## Page-Specific Layouts
+**RTL/LTR**: Use `dir="rtl"` for Arabic, mirror spacing/padding/margins, flip directional icons, right-align RTL text.
 
-### Landing Page
-**Hero Section**: Full-width with centered content
-- Large, impactful headline centered
-- Descriptive subheadline
-- Two prominent CTA buttons side-by-side (for freelancers and product owners)
-- Illustrative imagery showing platform users and digital products
+## Layout & Spacing
 
-**How It Works Section**: Three-column grid on desktop, single column on mobile
-- Icon-driven cards with numbered steps
-- Clear, concise descriptions
-- Visual flow indicators between steps
+**Spacing Units**: 2, 4, 6, 8, 12, 16, 20, 24, 32 (Tailwind)
 
-**Footer**: Comprehensive with links organized in columns
-- Platform policies and legal links
-- Support contact information
-- Copyright notice
+**Common Patterns**:
+- Component padding: p-6/p-8
+- Section spacing: py-16 to py-24 (desktop), py-12 (mobile)
+- Card gaps: gap-6/gap-8
+- Form fields: space-y-6
+- Buttons: px-8 py-3 (large), px-6 py-2.5 (medium)
 
-### Account Type Selection
-**Layout**: Centered, minimal page with two large cards
-- Cards positioned side-by-side on desktop, stacked on mobile
-- Equal visual weight for both options
-- Hover state: Enhanced shadow and subtle lift effect
+**Grids**:
+- Features: grid-cols-1 md:grid-cols-2 lg:grid-cols-3
+- Dashboard: grid-cols-1 md:grid-cols-2 xl:grid-cols-3
+- Pricing: grid-cols-1 lg:grid-cols-3
 
-**Card Content**:
-- Large, clear icon at top
-- Bold role title
-- Three bullet points explaining benefits
-- Primary CTA button at bottom
+**Containers**: Full-width with max-w-7xl mx-auto px-6 | Forms: max-w-2xl mx-auto | Modals: max-w-lg to max-w-3xl
 
-### Freelancer Multi-Step Signup
+**Breakpoints**: Mobile <768px | Tablet 768-1024px | Desktop >1024px | Wide >1440px
 
-**Step 1 - Basic Information**:
-- Clean form layout with proper spacing
-- Password strength indicator (visual bar)
-- Country code selector for phone input
-- Form validation feedback
+## Components
 
-**Step 2 - Professional Profile**:
-- **Bio Section**: Large textarea with example placeholder
-- **Job Title Field**: Icon-enhanced input
-- **Team Size**: Numeric input with helper text
-- **Services Multi-Select**: Dropdown with checkbox options for:
-  - App testing
-  - Google Maps reviews
-  - Android/iOS app reviews
-  - Website reviews
-  - Software testing
-  - UX/UI reviews
-  - Social media engagement
+### Navigation
 
-**Step 3 - Verification**:
-- **Profile Picture Upload**: Circular preview with camera icon
-- **ID Verification**: Optional file upload with pending/verified badge display
+**Landing Header**: Fixed/sticky, backdrop-blur, logo right (RTL)/left (LTR), nav links gap-8 weight-500, CTA rounded-2xl shadow-sm
 
-**Step 4 - Payment Settings**:
-- Light background card (#F5F9FC)
-- Payment method dropdown (Sumou Wallet, PayPal, STC Pay, Bank Transfer)
-- Account number input field
-- Save button with icon
+**Dashboard Sidebar**: 280px fixed, icons from Heroicons, active state with green accent strip, collapsible mobile overlay
 
-### Product Owner Signup
+### Forms & Inputs
 
-**Multi-Step Form**:
-- Company/product information inputs
-- Product type selector (app, website, system, store)
-- URL validation for live products
-- APK/TestFlight upload option for unreleased products
+**Text Inputs**: 1px border, rounded-xl, px-4 py-3, green ring on focus, red border for errors, icons right (RTL) with mr-3
 
-**Service Selection**:
-- Checkbox grid for multiple service types
-- Pre-configured package cards (Basic, Pro, Growth)
-- Each package shows: user count, features list, and pricing indication
+**Multi-Step Forms**: Progress indicator with step numbers/connecting lines, current step green, completed with checkmarks, max-w-2xl centered, prev/next buttons at bottom
 
-**Budget Section**:
-- Amount input or package selection
-- Timeline estimate field
-- Terms acceptance checkbox with clear text
+**File Upload**: Dashed border rounded-xl, drag-drop zone, uploaded files list with remove button, circular preview (profile), rectangular (docs)
 
-### Post-Registration Dashboard
+**Select/Multi-Select**: Custom styled matching inputs, multi-select with checkboxes, selected tags as rounded-full chips with close icon, gap-2 wrapping
 
-**Sidebar Navigation**:
-- Fixed left sidebar (RTL: right sidebar)
-- Menu items: Profile, Campaigns/Tasks, Notifications, Wallet, Support
-- Active state highlighting with green accent
+**Password**: Toggle icon right (RTL), strength bar below (weak/medium/strong), requirements checklist on focus
 
-**Main Content Area**:
-- Welcome message personalized by user type
-- Quick action cards for common tasks
-- Empty state illustrations for new users
-
-## Component Patterns
-
-### Buttons
-- **Primary Actions**: Green background (#4CAF50), white text, rounded-2xl, shadow-md
-- **Hover State**: Slight scale (1.05) with smooth transition
-- **Secondary Actions**: White background, green border and text
-- **Disabled State**: Reduced opacity, no hover effects
-
-### Form Inputs
-- Border: gray-300 color
-- Rounded: rounded-xl
-- Focus State: Green ring (ring-green-300)
-- Icons: Positioned inside inputs on the right (RTL) for context
-- Error State: Red border with error message below
+**OTP**: 6 squared boxes rounded corners, auto-focus next, centered modal with backdrop-blur, resend timer
 
 ### Cards
-- White background
-- Soft shadow (shadow-md)
-- Rounded corners (rounded-2xl)
-- Padding: p-6 or p-8
-- Hover state where interactive: Enhanced shadow
 
-### Multi-Select Tags
-- Chip-style selected items
-- Remove option on each tag
-- Dropdown with checkboxes for selection
+**Primary Card**: White bg, rounded-2xl, shadow-md, p-6/p-8, hover: shadow-lg + scale-105
 
-### File Upload Components
-- Drag-and-drop area with dashed border
-- Instant preview for images
-- File name display for documents
-- Upload progress indicator
+**Feature Cards**: Large circular icon (light green bg), title weight-600 text-lg, 2-3 line description, optional "Learn more" link
 
-### AI Suggestion Features
-- Subtle suggestion cards appearing contextually
-- Question format with action buttons
-- Light background to distinguish from main content
-- Quick dismiss option
+**Pricing Cards**: Vertical layout, badge for "Popular", bold package name, large price, checkmark feature list, full-width CTA at bottom
 
-## Responsive Behavior
-- **Desktop (lg+)**: Multi-column layouts, side-by-side forms
-- **Tablet (md)**: Two-column grids, adjusted spacing
-- **Mobile (base)**: Single column, stacked elements, full-width buttons
+**Dashboard Stats**: Large number (2.5rem, weight 700), label below, circular icon corner, trend arrow with %
+
+### Buttons
+
+**Primary**: Green (#4CAF50) bg, white text weight-600, rounded-2xl, px-8 py-3/px-6 py-2.5, shadow-md, hover: scale-105 transition-all 200ms
+
+**On Hero Images**: backdrop-blur-md, semi-transparent bg, rounded-2xl, shadow
+
+**Secondary**: 2px green border, transparent/white bg, green text, same sizing
+
+**Icon**: p-2/p-3, rounded-xl, hover bg treatment
+
+### Dashboard Elements
+
+**Sidebar Items**: Icon + label gap-3, px-4 py-3, rounded-xl, active: green tint bg + green text, hover: light bg
+
+**Data Tables**: Header row bg tint weight-600, subtle row dividers, row hover light bg, icon buttons for actions, centered pagination
+
+**Empty States**: Centered icon/illustration, "No [items] yet" headline, descriptive text, primary CTA
+
+### AI Suggestions
+
+**Card Style**: Light tint bg, lightbulb/sparkle icon, medium weight text, "Apply"/"Dismiss" buttons, close icon, positioned contextually
+
+### Modals
+
+**Structure**: Semi-transparent dark backdrop, centered rounded-2xl container, close button top-right (RTL: top-left), bold title, comfortable padding, action buttons aligned right (RTL: left)
+
+**Confirmations**: Circular green checkmark icon, centered message, single primary button
+
+## Landing Page Sections
+
+**Hero**: Full-width min-h-85vh, large bg image (diverse users/digital marketplace), centered content with z-index, extra-large 2-line headline, max-w-2xl subheadline, dual CTAs (side-by-side desktop/stacked mobile) with backdrop-blur-md semi-transparent bg
+
+**How It Works**: Centered title/subtitle, 3-col grid (desktop)/single (mobile), numbered icons with titles/descriptions, connecting lines optional
+
+**Features**: 6 cards in 2x3 grid (desktop), equal height flex layout
+
+**Freelancer/Product Owner**: Alternating left-right image-text, headline + bullets + CTA, background alternates white/subtle tint
+
+**Pricing**: Centered header, 3 cards side-by-side (desktop), center card elevated as "Popular"
+
+**Social Proof**: Testimonial cards with photo/quote/name/role, 2-col grid or carousel, star ratings
+
+**Footer**: 4-col (desktop)/stacked (mobile): About, Services, Support, Legal + logo/tagline right (RTL), social icons, language switcher, copyright
+
+## Registration Flows
+
+**Account Selection**: Minimal centered layout, 2 large cards side-by-side (desktop), icon + role + 3-4 bullets + button, equal weight
+
+**Freelancer Steps**:
+1. Name, email, password (strength indicator), phone (country code), terms checkbox
+2. Job title (icon), bio textarea (4-5 rows), team size, services multi-select
+3. Profile pic (circular preview), ID upload (rectangular), verification badges
+4. Payment method dropdown, account details, info card
+
+**Product Owner Steps**:
+1. Company name, website, product type, category
+2. Product URL (live) or file upload (unreleased APK/TestFlight), target audience
+3. Service checkbox grid, package cards (Basic/Pro/Growth) with comparison
+4. Budget input/package selection, timeline, campaign objectives textarea
+
+## Dashboard Layouts
+
+**Freelancer**: 280px sidebar, full-width main content, top bar (welcome + notifications + profile), 4 metric cards, filterable tasks list/grid, activity feed
+
+**Product Owner**: Similar sidebar, campaign overview cards, active campaigns table, analytics charts, prominent wallet balance
 
 ## Images
-**Hero Section**: Include illustrative imagery showing diverse freelancers and digital product interfaces. Style should be modern, friendly, and professional—consider illustration style or high-quality photography with soft treatment.
 
-**Throughout Platform**: Use icons from Heroicons or Lucide React for consistent iconography.
+- **Hero**: High-quality photo/illustration of diverse people collaborating in digital workspace, bright/optimistic/professional
+- **Features**: Platform screenshots/illustrations showing functionality
+- **Account Cards**: Icon illustrations (freelancer: person+tools, owner: person+product/chart)
+- **Empty States**: Friendly, simple, guiding custom illustrations
 
-## Accessibility & Interactions
-- Clear focus states on all interactive elements
-- Sufficient color contrast for text
-- Keyboard navigation support
-- Screen reader friendly labels (especially for RTL)
-- OTP verification modal: Centered overlay with 6-digit input boxes
+## Accessibility
 
-## Animation Philosophy
-Use sparingly and purposefully:
-- Smooth page transitions between signup steps
-- Gentle hover effects on cards and buttons
-- Progress indicators for multi-step forms
-- Success animations for completed actions
-- Avoid distracting or excessive motion
+- Clear focus indicators, sufficient contrast ratios
+- Full keyboard navigation, ARIA labels for RTL screen readers
+- Clear form validation errors, loading states for async actions
+
+---
+
+**Quick Reference**: Green primary (#4CAF50), rounded-2xl standard radius, Cairo/Inter fonts, RTL-first mirroring, shadow-md standard elevation, transition-all duration-200ms standard animation

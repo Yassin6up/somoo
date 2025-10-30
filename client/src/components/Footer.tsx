@@ -21,24 +21,20 @@ export function Footer() {
             <ul className="space-y-2 text-sm">
               <li>
                 <Link href="/">
-                  <a className="text-muted-foreground hover:text-foreground transition-colors" data-testid="link-footer-home">
+                  <span className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer" data-testid="link-footer-home">
                     الرئيسية
-                  </a>
+                  </span>
                 </Link>
               </li>
               <li>
-                <Link href="#services">
-                  <a className="text-muted-foreground hover:text-foreground transition-colors" data-testid="link-footer-services">
-                    الخدمات
-                  </a>
-                </Link>
+                <a href="#services" className="text-muted-foreground hover:text-foreground transition-colors" data-testid="link-footer-services">
+                  الخدمات
+                </a>
               </li>
               <li>
-                <Link href="#how-it-works">
-                  <a className="text-muted-foreground hover:text-foreground transition-colors" data-testid="link-footer-how-it-works">
-                    كيف تعمل
-                  </a>
-                </Link>
+                <a href="#how-it-works" className="text-muted-foreground hover:text-foreground transition-colors" data-testid="link-footer-how-it-works">
+                  كيف تعمل
+                </a>
               </li>
             </ul>
           </div>

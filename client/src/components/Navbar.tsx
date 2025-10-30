@@ -12,30 +12,26 @@ export function Navbar() {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link href="/">
-            <a className="flex items-center gap-2 hover-elevate active-elevate-2 px-3 py-2 rounded-xl transition-all" data-testid="link-home">
+            <div className="flex items-center gap-2 hover-elevate active-elevate-2 px-3 py-2 rounded-xl transition-all cursor-pointer" data-testid="link-home">
               <div className="text-2xl font-bold bg-gradient-to-br from-primary to-primary/70 bg-clip-text text-transparent">
                 سُمُوّ
               </div>
-            </a>
+            </div>
           </Link>
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-2">
             <Link href="/">
-              <a className="px-4 py-2 hover-elevate active-elevate-2 rounded-xl transition-all text-sm font-medium" data-testid="link-home-nav">
+              <div className="px-4 py-2 hover-elevate active-elevate-2 rounded-xl transition-all text-sm font-medium cursor-pointer" data-testid="link-home-nav">
                 الرئيسية
-              </a>
+              </div>
             </Link>
-            <Link href="#services">
-              <a className="px-4 py-2 hover-elevate active-elevate-2 rounded-xl transition-all text-sm font-medium" data-testid="link-services">
-                الخدمات
-              </a>
-            </Link>
-            <Link href="#how-it-works">
-              <a className="px-4 py-2 hover-elevate active-elevate-2 rounded-xl transition-all text-sm font-medium" data-testid="link-how-it-works">
-                كيف تعمل
-              </a>
-            </Link>
+            <a href="#services" className="px-4 py-2 hover-elevate active-elevate-2 rounded-xl transition-all text-sm font-medium" data-testid="link-services">
+              الخدمات
+            </a>
+            <a href="#how-it-works" className="px-4 py-2 hover-elevate active-elevate-2 rounded-xl transition-all text-sm font-medium" data-testid="link-how-it-works">
+              كيف تعمل
+            </a>
           </div>
 
           {/* Desktop CTA Buttons */}
@@ -61,20 +57,16 @@ export function Navbar() {
         {mobileMenuOpen && (
           <div className="md:hidden py-4 space-y-2 border-t">
             <Link href="/">
-              <a className="block px-4 py-2 hover-elevate active-elevate-2 rounded-xl text-sm font-medium" data-testid="link-home-mobile">
+              <div className="block px-4 py-2 hover-elevate active-elevate-2 rounded-xl text-sm font-medium cursor-pointer" data-testid="link-home-mobile">
                 الرئيسية
-              </a>
+              </div>
             </Link>
-            <Link href="#services">
-              <a className="block px-4 py-2 hover-elevate active-elevate-2 rounded-xl text-sm font-medium" data-testid="link-services-mobile">
-                الخدمات
-              </a>
-            </Link>
-            <Link href="#how-it-works">
-              <a className="block px-4 py-2 hover-elevate active-elevate-2 rounded-xl text-sm font-medium" data-testid="link-how-it-works-mobile">
-                كيف تعمل
-              </a>
-            </Link>
+            <a href="#services" className="block px-4 py-2 hover-elevate active-elevate-2 rounded-xl text-sm font-medium" data-testid="link-services-mobile">
+              الخدمات
+            </a>
+            <a href="#how-it-works" className="block px-4 py-2 hover-elevate active-elevate-2 rounded-xl text-sm font-medium" data-testid="link-how-it-works-mobile">
+              كيف تعمل
+            </a>
             <div className="pt-2 flex flex-col gap-2">
               <Link href="/role-selection">
                 <Button variant="default" className="w-full rounded-2xl" data-testid="button-signup-mobile">
