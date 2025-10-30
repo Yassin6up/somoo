@@ -1,5 +1,5 @@
-import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, integer } from "drizzle-orm/pg-core";
+import { sql, relations } from "drizzle-orm";
+import { pgTable, text, varchar, integer, timestamp, decimal, boolean } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -21,6 +21,8 @@ export const freelancers = pgTable("freelancers", {
   idVerification: text("id_verification"),
   paymentMethod: text("payment_method"),
   accountNumber: text("account_number"),
+  isVerified: boolean("is_verified").default(false),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 // Product Owner schema
@@ -39,15 +41,176 @@ export const productOwners = pgTable("product_owners", {
   package: text("package"),
   budget: text("budget"),
   duration: text("duration"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
+
+// Campaigns schema
+export const campaigns = pgTable("campaigns", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  productOwnerId: varchar("product_owner_id").notNull().references(() => productOwners.id),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  productType: text("product_type").notNull(),
+  productUrl: text("product_url"),
+  services: text("services").array().notNull(),
+  package: text("package").notNull(),
+  budget: decimal("budget", { precision: 10, scale: 2 }).notNull(),
+  testersNeeded: integer("testers_needed").notNull(),
+  testersAssigned: integer("testers_assigned").default(0).notNull(),
+  status: text("status").notNull().default("draft"), // draft, active, in_progress, completed, cancelled
+  startDate: timestamp("start_date"),
+  endDate: timestamp("end_date"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Tasks schema (individual testing tasks assigned to freelancers)
+export const tasks = pgTable("tasks", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  campaignId: varchar("campaign_id").notNull().references(() => campaigns.id),
+  freelancerId: varchar("freelancer_id").references(() => freelancers.id),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  serviceType: text("service_type").notNull(),
+  reward: decimal("reward", { precision: 10, scale: 2 }).notNull(),
+  status: text("status").notNull().default("available"), // available, assigned, in_progress, submitted, approved, rejected
+  assignedAt: timestamp("assigned_at"),
+  submittedAt: timestamp("submitted_at"),
+  completedAt: timestamp("completed_at"),
+  submission: text("submission"), // Freelancer's submission/report
+  feedback: text("feedback"), // Product owner's feedback
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Wallets schema (freelancer wallets)
+export const wallets = pgTable("wallets", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  freelancerId: varchar("freelancer_id").notNull().unique().references(() => freelancers.id),
+  balance: decimal("balance", { precision: 10, scale: 2 }).default("0").notNull(),
+  pendingBalance: decimal("pending_balance", { precision: 10, scale: 2 }).default("0").notNull(),
+  totalEarned: decimal("total_earned", { precision: 10, scale: 2 }).default("0").notNull(),
+  totalWithdrawn: decimal("total_withdrawn", { precision: 10, scale: 2 }).default("0").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Transactions schema (wallet transactions)
+export const transactions = pgTable("transactions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  walletId: varchar("wallet_id").notNull().references(() => wallets.id),
+  taskId: varchar("task_id").references(() => tasks.id),
+  type: text("type").notNull(), // earning, withdrawal, refund
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  status: text("status").notNull().default("pending"), // pending, completed, failed
+  description: text("description"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Payments schema (product owner payments)
+export const payments = pgTable("payments", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  campaignId: varchar("campaign_id").notNull().references(() => campaigns.id),
+  productOwnerId: varchar("product_owner_id").notNull().references(() => productOwners.id),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  paymentMethod: text("payment_method").notNull(), // stripe, paypal, stc_pay
+  paymentIntentId: text("payment_intent_id"),
+  status: text("status").notNull().default("pending"), // pending, processing, completed, failed, refunded
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Notifications schema
+export const notifications = pgTable("notifications", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(), // can be freelancer or product owner
+  userType: text("user_type").notNull(), // freelancer or product_owner
+  title: text("title").notNull(),
+  message: text("message").notNull(),
+  type: text("type").notNull(), // task_assigned, payment_received, campaign_update, etc.
+  isRead: boolean("is_read").default(false).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Relations
+export const freelancersRelations = relations(freelancers, ({ one, many }) => ({
+  wallet: one(wallets, { fields: [freelancers.id], references: [wallets.freelancerId] }),
+  tasks: many(tasks),
+}));
+
+export const productOwnersRelations = relations(productOwners, ({ many }) => ({
+  campaigns: many(campaigns),
+  payments: many(payments),
+}));
+
+export const campaignsRelations = relations(campaigns, ({ one, many }) => ({
+  productOwner: one(productOwners, { fields: [campaigns.productOwnerId], references: [productOwners.id] }),
+  tasks: many(tasks),
+  payments: many(payments),
+}));
+
+export const tasksRelations = relations(tasks, ({ one, many }) => ({
+  campaign: one(campaigns, { fields: [tasks.campaignId], references: [campaigns.id] }),
+  freelancer: one(freelancers, { fields: [tasks.freelancerId], references: [freelancers.id] }),
+  transactions: many(transactions),
+}));
+
+export const walletsRelations = relations(wallets, ({ one, many }) => ({
+  freelancer: one(freelancers, { fields: [wallets.freelancerId], references: [freelancers.id] }),
+  transactions: many(transactions),
+}));
+
+export const transactionsRelations = relations(transactions, ({ one }) => ({
+  wallet: one(wallets, { fields: [transactions.walletId], references: [wallets.id] }),
+  task: one(tasks, { fields: [transactions.taskId], references: [tasks.id] }),
+}));
+
+export const paymentsRelations = relations(payments, ({ one }) => ({
+  campaign: one(campaigns, { fields: [payments.campaignId], references: [campaigns.id] }),
+  productOwner: one(productOwners, { fields: [payments.productOwnerId], references: [productOwners.id] }),
+}));
 
 // Insert schemas for validation
 export const insertFreelancerSchema = createInsertSchema(freelancers).omit({
   id: true,
+  isVerified: true,
+  createdAt: true,
 });
 
 export const insertProductOwnerSchema = createInsertSchema(productOwners).omit({
   id: true,
+  createdAt: true,
+});
+
+export const insertCampaignSchema = createInsertSchema(campaigns).omit({
+  id: true,
+  testersAssigned: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertTaskSchema = createInsertSchema(tasks).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertWalletSchema = createInsertSchema(wallets).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertTransactionSchema = createInsertSchema(transactions).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertPaymentSchema = createInsertSchema(payments).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertNotificationSchema = createInsertSchema(notifications).omit({
+  id: true,
+  createdAt: true,
 });
 
 // TypeScript types
@@ -55,6 +218,18 @@ export type Freelancer = typeof freelancers.$inferSelect;
 export type InsertFreelancer = z.infer<typeof insertFreelancerSchema>;
 export type ProductOwner = typeof productOwners.$inferSelect;
 export type InsertProductOwner = z.infer<typeof insertProductOwnerSchema>;
+export type Campaign = typeof campaigns.$inferSelect;
+export type InsertCampaign = z.infer<typeof insertCampaignSchema>;
+export type Task = typeof tasks.$inferSelect;
+export type InsertTask = z.infer<typeof insertTaskSchema>;
+export type Wallet = typeof wallets.$inferSelect;
+export type InsertWallet = z.infer<typeof insertWalletSchema>;
+export type Transaction = typeof transactions.$inferSelect;
+export type InsertTransaction = z.infer<typeof insertTransactionSchema>;
+export type Payment = typeof payments.$inferSelect;
+export type InsertPayment = z.infer<typeof insertPaymentSchema>;
+export type Notification = typeof notifications.$inferSelect;
+export type InsertNotification = z.infer<typeof insertNotificationSchema>;
 
 // Service options
 export const serviceOptions = [
