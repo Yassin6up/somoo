@@ -11,7 +11,6 @@ import {
   FileCheck, 
   BarChart3, 
   Users, 
-  Smartphone, 
   TrendingUp,
   Star,
   CheckCircle2,
@@ -24,8 +23,15 @@ import {
   Globe,
   MessageSquare,
   MapPin,
-  Apple
+  Apple,
+  Smartphone
 } from "lucide-react";
+
+// Import service images
+import googleReviewsImg from "@assets/1664194331913_1761831994718.png";
+import androidImg from "@assets/صورة واتساب بتاريخ 1447-05-08 في 16.44.35_1edbe9d3_1761831899109.jpg";
+import appStoreImg from "@assets/455ccc1099702144b7da4269541ae1b4_1761831607863.png";
+import starsImg from "@assets/صورة واتساب بتاريخ 1447-05-08 في 16.44.34_9d1270d9_1761831906751.jpg";
 
 // Component for advanced fade-in animations on scroll with 3D effects
 function FadeInSection({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) {
@@ -108,7 +114,7 @@ function FloatingIcon({ icon: Icon, color, delay = 0 }: { icon: any; color: stri
 export default function Home() {
   const reviewServices = [
     { 
-      icon: MapPin, 
+      image: googleReviewsImg, 
       title: "تقييمات خرائط جوجل",
       subtitle: "Google Maps Reviews", 
       value: "1,200+", 
@@ -118,7 +124,7 @@ export default function Home() {
       gradient: "from-red-500 to-red-600"
     },
     { 
-      icon: Smartphone, 
+      image: androidImg, 
       title: "تقييمات تطبيقات Android",
       subtitle: "Android App Reviews", 
       value: "850+", 
@@ -128,7 +134,7 @@ export default function Home() {
       gradient: "from-green-500 to-green-600"
     },
     { 
-      icon: Apple, 
+      image: appStoreImg, 
       title: "تقييمات تطبيقات iOS",
       subtitle: "iOS App Reviews", 
       value: "620+", 
@@ -283,7 +289,7 @@ export default function Home() {
                             }}
                             className={`inline-flex p-4 rounded-xl ${service.bgColor} shadow-lg mb-3`}
                           >
-                            <service.icon className={`h-8 w-8 ${service.color}`} />
+                            <img src={service.image} alt={service.title} className="h-8 w-8 object-contain" />
                           </motion.div>
                           
                           <h4 className="text-sm font-bold text-foreground mb-1">{service.title}</h4>
