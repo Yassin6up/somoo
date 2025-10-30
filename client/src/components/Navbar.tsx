@@ -26,6 +26,11 @@ export function Navbar() {
                 الرئيسية
               </div>
             </Link>
+            <Link href="/freelancers">
+              <div className="px-4 py-2 hover-elevate active-elevate-2 rounded-xl transition-all text-sm font-medium cursor-pointer" data-testid="link-freelancers-nav">
+                المستقلين
+              </div>
+            </Link>
             <a href="#services" className="px-4 py-2 hover-elevate active-elevate-2 rounded-xl transition-all text-sm font-medium" data-testid="link-services">
               الخدمات
             </a>
@@ -66,6 +71,11 @@ export function Navbar() {
             <Link href="/">
               <div className="block px-4 py-2 hover-elevate active-elevate-2 rounded-xl text-sm font-medium cursor-pointer" data-testid="link-home-mobile">
                 الرئيسية
+              </div>
+            </Link>
+            <Link href="/freelancers">
+              <div className="block px-4 py-2 hover-elevate active-elevate-2 rounded-xl text-sm font-medium cursor-pointer" data-testid="link-freelancers-mobile">
+                المستقلين
               </div>
             </Link>
             <a href="#services" className="block px-4 py-2 hover-elevate active-elevate-2 rounded-xl text-sm font-medium" data-testid="link-services-mobile">

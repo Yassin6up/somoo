@@ -141,7 +141,18 @@ export class MemStorage implements IStorage {
     const freelancer: Freelancer = { 
       ...insertFreelancer, 
       id,
-      services: insertFreelancer.services || [],
+      countryCode: insertFreelancer.countryCode || "+966",
+      jobTitle: insertFreelancer.jobTitle || null,
+      teamSize: insertFreelancer.teamSize || null,
+      services: insertFreelancer.services || null,
+      bio: insertFreelancer.bio || null,
+      aboutMe: insertFreelancer.aboutMe || null,
+      profileImage: insertFreelancer.profileImage || null,
+      idVerification: insertFreelancer.idVerification || null,
+      paymentMethod: insertFreelancer.paymentMethod || null,
+      accountNumber: insertFreelancer.accountNumber || null,
+      isVerified: false,
+      createdAt: new Date(),
     };
     this.freelancers.set(id, freelancer);
     return freelancer;
@@ -176,7 +187,14 @@ export class MemStorage implements IStorage {
     const owner: ProductOwner = { 
       ...insertOwner, 
       id,
-      services: insertOwner.services || [],
+      companyName: insertOwner.companyName || null,
+      productDescription: insertOwner.productDescription || null,
+      productUrl: insertOwner.productUrl || null,
+      services: insertOwner.services || null,
+      package: insertOwner.package || null,
+      budget: insertOwner.budget || null,
+      duration: insertOwner.duration || null,
+      createdAt: new Date(),
     };
     this.productOwners.set(id, owner);
     return owner;

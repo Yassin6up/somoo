@@ -9,8 +9,10 @@ import RoleSelection from "@/pages/RoleSelection";
 import FreelancerSignup from "@/pages/FreelancerSignup";
 import ProductOwnerSignup from "@/pages/ProductOwnerSignup";
 import Dashboard from "@/pages/Dashboard";
+import FreelancerDashboard from "@/pages/FreelancerDashboard";
 import Login from "@/pages/Login";
 import Campaigns from "@/pages/Campaigns";
+import Freelancers from "@/pages/Freelancers";
 
 function Router() {
   return (
@@ -21,7 +23,9 @@ function Router() {
       <Route path="/freelancer-signup" component={FreelancerSignup} />
       <Route path="/product-owner-signup" component={ProductOwnerSignup} />
       <Route path="/dashboard" component={Dashboard} />
+      <Route path="/freelancer-dashboard" component={FreelancerDashboard} />
       <Route path="/campaigns" component={Campaigns} />
+      <Route path="/freelancers" component={Freelancers} />
       <Route component={NotFound} />
     </Switch>
   );

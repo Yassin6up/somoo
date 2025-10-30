@@ -1,338 +1,75 @@
 # منصة سُمُوّ - Sumou Platform
 
-## نظرة عامة
-منصة رقمية عربية تربط المستقلين المحترفين بأصحاب المنتجات الرقمية لاختبار التطبيقات، المواقع، والأنظمة - مع تقييمات حقيقية وتفاعل على السوشيال ميديا.
+## Overview
+Sumou Platform is an Arabic digital platform designed to connect professional freelancers with digital product owners. Its primary purpose is to facilitate the testing of applications, websites, and systems, offering authentic reviews and social media engagement. The platform aims to provide a robust marketplace for digital product quality assurance and enhancement.
 
-## التقنيات المستخدمة
+## User Preferences
+I prefer the AI to maintain a professional yet approachable tone. When suggesting code changes, provide clear, concise explanations for the rationale behind the changes. Prioritize iterative development, presenting changes in manageable chunks. For significant architectural decisions or major code overhauls, please ask for confirmation before proceeding. Ensure all communication is clear and directly addresses the task at hand. I prefer to maintain the existing file structure and naming conventions unless a strong, justified reason for alteration is presented.
 
-### Frontend
-- **React** مع **TypeScript** للواجهة الأمامية
-- **Wouter** للتوجيه (Routing)
-- **Tailwind CSS** للتصميم
-- **Shadcn UI** للمكونات الجاهزة
-- **React Hook Form** + **Zod** لإدارة النماذج والتحقق
-- **TanStack Query** لإدارة البيانات والـ API calls
+## System Architecture
+The platform is built with a modern web stack. The frontend utilizes **React** with **TypeScript**, **Wouter** for routing, **Tailwind CSS** for styling, **Shadcn UI** for components, **React Hook Form** with **Zod** for form management and validation, and **TanStack Query** for data management. The backend is powered by **Express.js** and, for the prototype phase, uses **In-Memory Storage**.
 
-### Backend
-- **Express.js** للخادم
-- **In-Memory Storage** لتخزين البيانات (للنموذج الأولي)
-- **OpenAI** (via Replit AI Integrations) للاقتراحات الذكية
-- **Object Storage** لرفع الصور والملفات
+**UI/UX Decisions:**
+- **Design Language:** Modern SaaS aesthetic inspired by platforms like Figma and Notion, featuring soft shadows, rounded edges (rounded-2xl, rounded-3xl), and a clean layout.
+- **Color Scheme:** Primary green (#4CAF50), with a white background (#FAFAFA).
+- **Typography:** **Tajawal Bold/Thick** for Arabic text and **Inter** for English text.
+- **Responsiveness:** Fully responsive design across all devices.
+- **RTL Support:** Comprehensive Right-to-Left (RTL) support for the Arabic interface.
+- **Interactive Elements:** Features hover effects, 3D elevations, and Framer Motion animations for icons (rotate, scale on hover) and card elements (floating, tilt/rotate on hover).
+- **Component Library:** Heavy use of Shadcn UI components for consistency and rapid development.
 
-### التصميم
-- خطوط: **Cairo** للعربية، **Inter** للإنجليزية
-- دعم RTL كامل
-- ألوان: أخضر #4CAF50 كلون أساسي، خلفية بيضاء #FAFAFA
-- تصميم Responsive على جميع الأجهزة
+**Technical Implementations & Feature Specifications:**
+- **Multi-step Forms:** Implemented for both Freelancer and Product Owner registration, utilizing React Hook Form and Zod for robust validation.
+- **User Authentication:** Includes a login system with JWT-based session management and bcrypt for password hashing in production. Role-based authorization controls access to specific features and APIs.
+- **Dashboard:** Personalized dashboards for both freelancers and product owners, displaying relevant statistics and navigation.
+- **Campaign Management:** Product owners can create, view, update, and delete campaigns through dedicated API endpoints and a frontend interface.
+- **Freelancer Listing:** A dedicated `/freelancers` page showcasing registered freelancers with search and filter capabilities, including detailed cards for each freelancer.
+- **API Endpoints:** Comprehensive CRUD operations for freelancers, product owners, and campaigns, protected by authentication and authorization middleware.
+- **File Uploads:** System for uploading profile images and ID verification documents using `multer`.
 
-## بنية المشروع
+**System Design Choices:**
+- **Modular Project Structure:** Organized into `client/`, `server/`, and `shared/` directories for clear separation of concerns.
+- **Data Schemas:** Defined shared TypeScript data models for Freelancers and Product Owners, ensuring consistency across frontend and backend.
+- **Service Offerings:** Defined packages (Basic, Pro, Growth) and available services (app testing, Google Maps reviews, UX/UI reviews, social media engagement).
 
-```
-├── client/
-│   ├── src/
-│   │   ├── components/         # المكونات المشتركة
-│   │   │   ├── Navbar.tsx
-│   │   │   ├── Footer.tsx
-│   │   │   ├── StepIndicator.tsx
-│   │   │   └── PasswordStrength.tsx
-│   │   ├── pages/              # الصفحات الرئيسية
-│   │   │   ├── Home.tsx        # الصفحة الرئيسية
-│   │   │   ├── RoleSelection.tsx
-│   │   │   ├── FreelancerSignup.tsx
-│   │   │   ├── ProductOwnerSignup.tsx
-│   │   │   └── Dashboard.tsx
-│   │   └── App.tsx             # نقطة الدخول الرئيسية
-├── server/
-│   ├── routes.ts               # API endpoints
-│   ├── storage.ts              # In-memory storage
-│   └── index.ts                # نقطة الدخول للسيرفر
-├── shared/
-│   └── schema.ts               # نماذج البيانات المشتركة
-└── design_guidelines.md        # إرشادات التصميم
-```
+## External Dependencies
+- **OpenAI (via Replit AI Integrations):** Used for AI-powered suggestions, such as generating bio and product descriptions.
+- **Object Storage:** Planned for storing uploaded images and files (e.g., profile pictures, ID verifications).
+- **PostgreSQL:** Planned for persistent data storage in production, replacing in-memory storage.
 
-## الصفحات والميزات
+## Latest Updates (SEO Content + Social Media Service)
 
-### 1. الصفحة الرئيسية (/)
-- Hero Section جذاب مع عنوان ووصف
-- قسم "كيف تعمل المنصة" بثلاث خطوات
-- قسم الخدمات المتاحة
-- تصميم responsive كامل
+**محتوى SEO شامل للصفحة الرئيسية** ✅:
+- ✅ إزالة كروت features الصغيرة واستبدالها بمحتوى نصي مباشر
+- ✅ إضافة قسم "عن المنصة" (id="about") بمحتوى شامل SEO-optimized
+- ✅ شرح تفصيلي للمنصة (1000+ كلمة) يشمل:
+  - ما هي منصة سُمُوّ وما تقدمه
+  - وصف كامل لجميع الخدمات الـ 6 بطريقة محسنة لمحركات البحث
+  - قسم "لماذا تختار منصة سُمُوّ؟" مع 6 مميزات
+  - قسم "كيف تعمل المنصة؟" بـ 4 خطوات واضحة
+- ✅ استخدام HTML semantics صحيحة (h2, h3, h4, strong, ul, ol)
+- ✅ كلمات مفتاحية للSEO:
+  - "اختبار التطبيقات", "تقييمات حقيقية", "Google Maps"
+  - "السوشيال ميديا", "تفاعل", "انتشار المحتوى"
+  - "UX/UI", "مستقلين محترفين", "منتجات رقمية"
 
-### 2. صفحة اختيار نوع الحساب (/role-selection)
-- بطاقتان تفاعليتان: مستقل أو صاحب منتج
-- عرض مميزات كل نوع حساب
+**خدمة التفاعل مع السوشيال ميديا** ✅ (Featured Service):
+- ✅ إضافة خدمة جديدة للتفاعل مع منشورات السوشيال ميديا
+- ✅ تمييزها كخدمة مميزة (featured: true)
+- ✅ badge "خدمة مميزة" مع أيقونة Sparkles
+- ✅ border خاص (border-2 border-primary ring-2)
+- ✅ positioning صحيح للbadge (relative + absolute)
+- ✅ شرح تفصيلي في المحتوى يشمل:
+  - زيادة التفاعل والانتشار على السوشيال ميديا
+  - إعجابات وتعليقات ومشاركات حقيقية
+  - تحسين ظهور المحتوى في خوارزميات المنصات
+  - الفئات المستهدفة: أصحاب الأعمال، المؤثرين، الشركات الناشئة، الحملات التسويقية
+  - المنصات المدعومة: Facebook, Instagram, Twitter, LinkedIn
 
-### 3. تسجيل المستقل (/freelancer-signup)
-نظام متعدد الخطوات:
-- **الخطوة 1**: المعلومات الأساسية (الاسم، البريد، الهاتف، كلمة المرور)
-- **الخطوة 2**: المهارات والخدمات (المسمى المهني، حجم الفريق، الخدمات، الوصف)
-- **الخطوة 3**: التوثيق (صورة شخصية، إثبات الهوية)
-- **الخطوة 4**: إعدادات الدفع (وسيلة الدفع، رقم الحساب)
-
-### 4. تسجيل صاحب المنتج (/product-owner-signup)
-نظام متعدد الخطوات:
-- **الخطوة 1**: المعلومات العامة
-- **الخطوة 2**: معلومات المنتج (الاسم، النوع، الوصف، الرابط)
-- **الخطوة 3**: الخدمات والباقات (اختيار الخدمات والباقة المناسبة)
-- **الخطوة 4**: الميزانية والتأكيد
-
-### 5. لوحة التحكم (/dashboard)
-- عرض مخصص للمستقلين وأصحاب المنتجات
-- إحصائيات سريعة
-- قائمة جانبية للتنقل
-- حالة فارغة جميلة
-
-## نماذج البيانات
-
-### المستقلون (Freelancers)
-```typescript
-{
-  id: string
-  email: string
-  password: string
-  fullName: string
-  username: string
-  phone: string
-  countryCode: string
-  jobTitle?: string
-  teamSize?: number
-  services: string[]
-  bio?: string
-  aboutMe?: string
-  profileImage?: string
-  idVerification?: string
-  paymentMethod?: string
-  accountNumber?: string
-}
-```
-
-### أصحاب المنتجات (Product Owners)
-```typescript
-{
-  id: string
-  email: string
-  password: string
-  fullName: string
-  companyName?: string
-  phone: string
-  productName: string
-  productType: string
-  productDescription?: string
-  productUrl?: string
-  services: string[]
-  package?: string
-  budget?: string
-  duration?: string
-}
-```
-
-## الباقات المتاحة
-
-### Basic (أساسي)
-- 10 مختبرين
-- تقرير أساسي
-- 499 ر.س
-
-### Pro (احترافي) ⭐ الأكثر طلبًا
-- 30 مختبر
-- تحليل UX/UI مفصل
-- 1299 ر.س
-
-### Growth (نمو)
-- 50+ مختبر
-- اختبار + تقييم + تفاعل
-- تحليل ذكي بالـ AI
-- 2999 ر.س
-
-## الخدمات المتاحة
-1. اختبار تطبيقات
-2. تقييم خرائط Google Maps
-3. تقييم تطبيقات Android
-4. تقييم تطبيقات iOS
-5. تقييم مواقع إلكترونية
-6. اختبار أنظمة Software
-7. مراجعات تجربة المستخدم UX/UI
-8. التفاعل مع منشورات السوشيال ميديا
-
-## التشغيل
-
-المشروع يعمل بالأمر:
-```bash
-npm run dev
-```
-
-يتم تشغيل السيرفر على المنفذ الافتراضي مع Vite للواجهة الأمامية.
-
-## الميزات القادمة (Next Phase)
-
-1. **Backend Integration**
-   - تنفيذ API endpoints الكاملة
-   - دمج OpenAI للاقتراحات الذكية
-   - نظام رفع الملفات (Object Storage)
-
-2. **Database**
-   - PostgreSQL لتخزين البيانات بشكل دائم
-   - Migration scripts
-
-3. **Authentication**
-   - نظام تسجيل الدخول
-   - JWT tokens
-   - حماية الـ routes
-
-4. **Advanced Features**
-   - نظام الإشعارات
-   - المحفظة الإلكترونية
-   - التقارير الذكية
-   - لوحة إدارة
-
-## ملاحظات التطوير
-
-- التصميم يتبع نمط SaaS حديث مشابه لـ Figma و Notion
-- جميع النماذج تستخدم React Hook Form + Zod للتحقق
-- التصميم responsive بالكامل
-- دعم RTL كامل للغة العربية
-- استخدام Shadcn UI components بشكل مكثف
-- ظلال ناعمة وحواف دائرية (rounded-2xl) في كل مكان
-- نظام ألوان متسق مع اللون الأخضر #4CAF50 كأساسي
-
-## آخر التحديثات
-
-**Task 1 Completed ✅**: تم بناء جميع صفحات ومكونات الواجهة الأمامية بتصميم احترافي استثنائي
-- ✅ Schema definitions
-- ✅ Design system setup (Cairo font, RTL, colors)
-- ✅ All page components (Home, Role Selection, Freelancer/Owner Signup, Dashboard)
-- ✅ Shared components (Navbar, Footer, StepIndicator, PasswordStrength)
-- ✅ Responsive design
-- ✅ RTL support
-
-**Task 2 Completed ✅**: Backend implementation with full functionality
-- ✅ In-memory storage system for freelancers and product owners
-- ✅ Complete API endpoints (POST/GET/PATCH for freelancers and product owners)
-- ✅ OpenAI integration using Replit AI Integrations (gpt-5 model)
-- ✅ AI-powered suggestions for bio and product descriptions
-- ✅ File upload system with multer for profile images and ID verification
-- ✅ Error handling and validation with Zod
-- ✅ Fixed nested <a> tags in Navbar and Footer components
-
-**Task 3 Completed ✅**: Integration & Testing
-- ✅ Connected frontend forms to backend APIs (FreelancerSignup & ProductOwnerSignup)
-- ✅ Added loading states and error handling with toast notifications
-- ✅ useMutation from TanStack Query for form submissions
-- ✅ Implemented FileUpload component with multipart/form-data support
-- ✅ Fixed file upload flow (architect review addressed)
-- ✅ Image preview and upload progress indicators
-- ✅ Error handling and retry logic for file uploads
-- ✅ Fully integrated end-to-end registration flows for both user types
-
-**Task 4 Completed ✅**: Homepage Redesign & Login System
-- ✅ Professional homepage with stats dashboard (4 metrics with icons)
-- ✅ Interactive icons for all sections using Lucide React
-- ✅ 6 feature tiles with color-coded icons and descriptions
-- ✅ 6 service cards with top-colored bars and hover effects
-- ✅ All elements use hover-elevate for smooth interactions
-- ✅ Complete data-testid attributes for all interactive elements
-- ✅ Login page with professional Arabic design
-- ✅ Backend /api/login endpoint that searches both user stores
-- ✅ Password verification (now with bcrypt)
-- ✅ Login returns user data (without password) + userType + JWT token
-- ✅ Navbar updated with Login button (LogIn icon) and Signup button (UserPlus icon)
-- ✅ Both buttons available on desktop and mobile menus
-- ✅ Proper error handling with Arabic toast notifications
-- ✅ Navigation to dashboard with correct role parameter
-- ✅ All LSP errors resolved
-- ✅ Token storage in localStorage on successful login
-
-
-## Latest Updates (UI Redesign + 3D Effects)
-
-**تحديث واجهة المنصة** ✅:
-- ✅ تغيير الخط الكامل للموقع إلى **Tajawal Bold/Thick** من Google Fonts
-- ✅ تعديل كارت الصفحة الرئيسية (يسار الشاشة) بالعناوين الجديدة:
-  - تقييمات خرائط جوجل (Google Maps Reviews)
-  - تقييمات تطبيقات Android (Android App Reviews) 
-  - تقييمات تطبيقات iOS (iOS App Reviews)
-- ✅ إضافة أيقونات متحركة باستخدام Framer Motion:
-  - حركة دوران بسيطة للأيقونات (rotate animation)
-  - تأثير تكبير عند المرور بالماوس (scale on hover)
-  - انتقالات سلسة مع تأخير متدرج (staggered animations)
-- ✅ تصميم مستطيل مع زوايا ناعمة (rounded-3xl)
-- ✅ ظلال احترافية وتدرجات خفيفة
-- ✅ تناسق مع ألوان المنصة الأساسية (Primary Green)
-- ✅ خلفية بيضاء ناعمة مع تأثيرات blur
-- ✅ أيقونات ملونة مع gradients:
-  - Google Maps: أحمر (Red)
-  - Android: أخضر (Green)
-  - iOS: أزرق (Blue)
-
-**تحديثات تصميمية إضافية** ✅:
-- ✅ تصغير العنوان الرئيسي (من text-6xl إلى text-5xl)
-- ✅ تحويل الكارت إلى شكل مستطيل أكثر (max-w-md)
-- ✅ إضافة تأثيرات 3D احترافية للكارت:
-  - Perspective 3D (1000px) على الحاوية الرئيسية
-  - حركة Floating عمودية (y: [0, -10, 0]) متكررة كل 3 ثواني
-  - تأثير Tilt/Rotate عند hover (rotateY: 5deg, rotateX: 5deg)
-  - Transform preserve-3d لعمق ثلاثي الأبعاد
-  - translateZ(50px) للكارت نفسه
-  - انتقالات سلسة ومهنية بين الحركات
-
-## Latest Updates (Task 3)
-
-**Backend Implementation**:
-- ✅ Complete Campaign CRUD API endpoints
-- ✅ POST /api/campaigns - Create campaign (product owners only)
-- ✅ GET /api/campaigns - List campaigns (filtered by user type)
-- ✅ GET /api/campaigns/:id - Get campaign details
-- ✅ PATCH /api/campaigns/:id - Update campaign (ownership verified)
-- ✅ DELETE /api/campaigns/:id - Delete campaign (ownership verified)
-- ✅ All routes protected with authMiddleware
-- ✅ Role-based authorization (requireRole middleware)
-- ✅ Ownership verification on all mutations
-
-**Frontend Implementation**:
-- ✅ Campaigns page (/campaigns) for product owners
-- ✅ Campaign creation dialog with full form validation
-- ✅ Campaign listing with cards showing all details
-- ✅ Status badges with Arabic labels (draft, active, paused, completed, cancelled)
-- ✅ Filter by status functionality
-- ✅ Delete campaign with confirmation
-- ✅ Integration with backend API using JWT tokens
-- ✅ Comprehensive data-testid coverage
-- ✅ Responsive design with proper RTL support
-- ✅ Empty state when no campaigns exist
-- ✅ Loading skeleton states
-
-**Security**:
-- ✅ JWT token storage in localStorage
-- ✅ Authorization header sent with all protected requests
-- ✅ Login redirects product owners to /campaigns
-- ✅ Login redirects freelancers to /dashboard
-
-## MVP Status: Production-Ready 🚀
-
-All core features implemented and tested:
-- ✅ Arabic RTL landing page with professional stats and interactive design
-- ✅ Login system with backend integration
-- ✅ Role selection (Freelancer vs Product Owner)
-- ✅ Multi-step registration forms with validation
-- ✅ Backend API with CRUD operations
-- ✅ AI-powered suggestions (OpenAI gpt-5 integration)
-- ✅ File upload system for profile pictures and ID verification
-- ✅ Dashboard for both user types
-- ✅ Toast notifications for user feedback
-- ✅ Loading states and error handling
-- ✅ Responsive design with Cairo/Inter fonts
-- ✅ Comprehensive data-testid coverage for e2e testing
-
-## Security Notes
-
-**For Production Deployment**:
-- ⚠️ Replace plaintext passwords with bcrypt hashing in `/api/login` and signup endpoints
-- ⚠️ Implement JWT-based session management
-- ⚠️ Add HTTPS/TLS for secure communication
-- ⚠️ Set up CORS policies
-- ⚠️ Add rate limiting for API endpoints
-
-**Current State**: All core functionality is complete and working. The platform is ready for user acceptance testing and can be deployed with the noted security enhancements for production use.
-
-**Next**: Deploy to production with security enhancements, add analytics tracking, and begin user onboarding.
+**تحسينات إضافية** ✅:
+- ✅ تحديث جميع أوصاف الخدمات لتكون أكثر تفصيلاً
+- ✅ إضافة featured property للخدمات
+- ✅ تحديث زر "تعرف على المزيد" للتوجيه إلى #about
+- ✅ محتوى متوافق بالكامل مع محركات البحث Google
+- ✅ تصميم responsive كامل
+- ✅ دعم RTL كامل

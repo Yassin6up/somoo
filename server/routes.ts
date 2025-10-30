@@ -534,6 +534,192 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // ============================================
+  // TASK ROUTES
+  // ============================================
+
+  // Get available tasks (freelancers can browse)
+  app.get("/api/tasks/available", authMiddleware, requireRole(["freelancer"]), async (req: AuthRequest, res) => {
+    try {
+      const tasks = await storage.getAvailableTasks();
+      res.json(tasks);
+    } catch (error) {
+      console.error("Error fetching available tasks:", error);
+      res.status(500).json({ error: "حدث خطأ أثناء جلب المهام المتاحة" });
+    }
+  });
+
+  // Get freelancer's tasks (assigned, in_progress, submitted, approved)
+  app.get("/api/tasks/my-tasks", authMiddleware, requireRole(["freelancer"]), async (req: AuthRequest, res) => {
+    try {
+      if (!req.user?.userId) {
+        return res.status(401).json({ error: "غير مصرح" });
+      }
+      
+      const tasks = await storage.getTasksByFreelancer(req.user.userId);
+      res.json(tasks);
+    } catch (error) {
+      console.error("Error fetching freelancer tasks:", error);
+      res.status(500).json({ error: "حدث خطأ أثناء جلب مهامك" });
+    }
+  });
+
+  // Get single task details
+  app.get("/api/tasks/:id", authMiddleware, async (req: AuthRequest, res) => {
+    try {
+      const { id } = req.params;
+      const task = await storage.getTask(id);
+      
+      if (!task) {
+        return res.status(404).json({ error: "المهمة غير موجودة" });
+      }
+
+      // Check authorization: freelancer can only view their own tasks or available tasks
+      if (req.user?.userType === "freelancer") {
+        if (task.status !== "available" && task.freelancerId !== req.user.userId) {
+          return res.status(403).json({ error: "ليس لديك صلاحية لعرض هذه المهمة" });
+        }
+      }
+
+      res.json(task);
+    } catch (error) {
+      console.error("Error fetching task:", error);
+      res.status(500).json({ error: "حدث خطأ أثناء جلب المهمة" });
+    }
+  });
+
+  // Accept a task (freelancer assigns themselves)
+  app.post("/api/tasks/:id/accept", authMiddleware, requireRole(["freelancer"]), async (req: AuthRequest, res) => {
+    try {
+      const { id } = req.params;
+      
+      if (!req.user?.userId) {
+        return res.status(401).json({ error: "غير مصرح" });
+      }
+
+      // Check if task exists and is available
+      const task = await storage.getTask(id);
+      if (!task) {
+        return res.status(404).json({ error: "المهمة غير موجودة" });
+      }
+
+      if (task.status !== "available") {
+        return res.status(400).json({ error: "هذه المهمة غير متاحة حالياً" });
+      }
+
+      // Assign task to freelancer
+      const updatedTask = await storage.assignTask(id, req.user.userId);
+      
+      if (!updatedTask) {
+        return res.status(400).json({ error: "فشل قبول المهمة" });
+      }
+
+      // Create notification for product owner
+      const campaign = await storage.getCampaign(task.campaignId);
+      if (campaign) {
+        await storage.createNotification({
+          userId: campaign.productOwnerId,
+          userType: "product_owner",
+          title: "تم قبول مهمة",
+          message: `تم قبول المهمة "${task.title}" من قبل مستقل`,
+          type: "task_assigned",
+        });
+      }
+
+      res.json(updatedTask);
+    } catch (error) {
+      console.error("Error accepting task:", error);
+      res.status(500).json({ error: "حدث خطأ أثناء قبول المهمة" });
+    }
+  });
+
+  // Submit task with report
+  app.patch("/api/tasks/:id/submit", authMiddleware, requireRole(["freelancer"]), async (req: AuthRequest, res) => {
+    try {
+      const { id } = req.params;
+      const { submission } = req.body;
+
+      if (!req.user?.userId) {
+        return res.status(401).json({ error: "غير مصرح" });
+      }
+
+      if (!submission || !submission.trim()) {
+        return res.status(400).json({ error: "التقرير مطلوب" });
+      }
+
+      // Check if task exists and belongs to this freelancer
+      const task = await storage.getTask(id);
+      if (!task) {
+        return res.status(404).json({ error: "المهمة غير موجودة" });
+      }
+
+      if (task.freelancerId !== req.user.userId) {
+        return res.status(403).json({ error: "ليس لديك صلاحية لتسليم هذه المهمة" });
+      }
+
+      if (task.status !== "assigned" && task.status !== "in_progress") {
+        return res.status(400).json({ error: "لا يمكن تسليم هذه المهمة في حالتها الحالية" });
+      }
+
+      // Update task with submission
+      const updatedTask = await storage.updateTask(id, {
+        submission,
+        status: "submitted",
+        submittedAt: new Date(),
+      });
+
+      // Create notification for product owner
+      const campaign = await storage.getCampaign(task.campaignId);
+      if (campaign) {
+        await storage.createNotification({
+          userId: campaign.productOwnerId,
+          userType: "product_owner",
+          title: "تم تسليم مهمة",
+          message: `تم تسليم المهمة "${task.title}" من قبل المستقل`,
+          type: "task_submitted",
+        });
+      }
+
+      res.json(updatedTask);
+    } catch (error) {
+      console.error("Error submitting task:", error);
+      res.status(500).json({ error: "حدث خطأ أثناء تسليم المهمة" });
+    }
+  });
+
+  // Update task status to in_progress (freelancer starts working)
+  app.patch("/api/tasks/:id/start", authMiddleware, requireRole(["freelancer"]), async (req: AuthRequest, res) => {
+    try {
+      const { id } = req.params;
+
+      if (!req.user?.userId) {
+        return res.status(401).json({ error: "غير مصرح" });
+      }
+
+      const task = await storage.getTask(id);
+      if (!task) {
+        return res.status(404).json({ error: "المهمة غير موجودة" });
+      }
+
+      if (task.freelancerId !== req.user.userId) {
+        return res.status(403).json({ error: "ليس لديك صلاحية لبدء هذه المهمة" });
+      }
+
+      if (task.status !== "assigned") {
+        return res.status(400).json({ error: "لا يمكن بدء هذه المهمة في حالتها الحالية" });
+      }
+
+      const updatedTask = await storage.updateTask(id, {
+        status: "in_progress",
+      });
+
+      res.json(updatedTask);
+    } catch (error) {
+      console.error("Error starting task:", error);
+      res.status(500).json({ error: "حدث خطأ أثناء بدء المهمة" });
+    }
+  });
+
+  // ============================================
   // HEALTH CHECK
   // ============================================
 

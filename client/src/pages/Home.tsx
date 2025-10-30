@@ -60,81 +60,49 @@ export default function Home() {
     },
   ];
 
-  const features = [
-    {
-      icon: Shield,
-      title: "أمان وموثوقية",
-      description: "نظام حماية متقدم لبياناتك ومعاملاتك المالية",
-      color: "bg-blue-500/10 text-blue-500"
-    },
-    {
-      icon: Zap,
-      title: "سرعة في الإنجاز",
-      description: "احصل على النتائج في وقت قياسي",
-      color: "bg-amber-500/10 text-amber-500"
-    },
-    {
-      icon: Target,
-      title: "دقة عالية في التقييم",
-      description: "تقييمات دقيقة من مختصين محترفين",
-      color: "bg-green-500/10 text-green-500"
-    },
-    {
-      icon: Award,
-      title: "جودة مضمونة",
-      description: "ضمان الجودة مع إمكانية إعادة الاختبار",
-      color: "bg-purple-500/10 text-purple-500"
-    },
-    {
-      icon: Clock,
-      title: "دعم على مدار الساعة",
-      description: "فريق دعم متواجد 24/7 لمساعدتك",
-      color: "bg-rose-500/10 text-rose-500"
-    },
-    {
-      icon: Globe,
-      title: "تغطية واسعة",
-      description: "مختبرون من مختلف الدول والمناطق",
-      color: "bg-cyan-500/10 text-cyan-500"
-    }
-  ];
 
   const services = [
     {
       icon: Smartphone,
       title: "اختبار التطبيقات",
-      description: "اختبار شامل للتطبيقات على iOS وAndroid مع تقارير مفصلة",
-      color: "bg-blue-500"
+      description: "اختبار شامل للتطبيقات على iOS وAndroid مع تقارير مفصلة عن الأخطاء والأداء",
+      color: "bg-blue-500",
+      featured: false
     },
     {
       icon: FileCheck,
       title: "تقييمات Google Maps",
-      description: "تقييمات حقيقية على خرائط Google بعد تجربة فعلية",
-      color: "bg-red-500"
+      description: "تقييمات حقيقية على خرائط Google بعد تجربة فعلية لتحسين ترتيبك المحلي",
+      color: "bg-red-500",
+      featured: false
     },
     {
       icon: TrendingUp,
-      title: "تفاعل السوشيال ميديا",
-      description: "زيادة التفاعل على منشوراتك لتعزيز الانتشار",
-      color: "bg-pink-500"
+      title: "التفاعل مع السوشيال ميديا",
+      description: "زيادة التفاعل والانتشار على منشوراتك من خلال إعجابات وتعليقات ومشاركات حقيقية",
+      color: "bg-pink-500",
+      featured: true
     },
     {
       icon: BarChart3,
       title: "تحليل UX/UI",
-      description: "تحليل تجربة المستخدم مع توصيات للتحسين",
-      color: "bg-purple-500"
+      description: "تحليل احترافي لتجربة المستخدم مع توصيات عملية لتحسين التصميم والتحويل",
+      color: "bg-purple-500",
+      featured: false
     },
     {
       icon: Globe,
       title: "اختبار المواقع",
-      description: "فحص شامل للمواقع الإلكترونية والتأكد من جودتها",
-      color: "bg-green-500"
+      description: "فحص شامل للمواقع الإلكترونية يشمل الأداء، الأمان، والتوافق",
+      color: "bg-green-500",
+      featured: false
     },
     {
       icon: MessageSquare,
       title: "تقييمات المستخدمين",
-      description: "آراء وتقييمات حقيقية من مستخدمين فعليين",
-      color: "bg-orange-500"
+      description: "آراء وتقييمات صادقة من مستخدمين فعليين على متاجر التطبيقات",
+      color: "bg-orange-500",
+      featured: false
     }
   ];
 
@@ -189,7 +157,7 @@ export default function Home() {
                   variant="outline" 
                   className="w-full sm:w-auto rounded-2xl shadow-md text-base px-8 hover-elevate" 
                   data-testid="button-learn-more"
-                  onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}
+                  onClick={() => document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' })}
                 >
                   <BarChart3 className="ml-2 h-5 w-5" />
                   تعرف على المزيد
@@ -333,38 +301,134 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Features Section */}
-      <section id="features" className="py-20 bg-muted/20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
+      {/* About Platform - SEO Content */}
+      <section id="about" className="py-20 bg-background">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
             <Badge className="mb-4 bg-primary/10 text-primary hover:bg-primary/20 rounded-xl px-4 py-1">
               <Sparkles className="h-3 w-3 ml-1" />
-              لماذا سُمُوّ
+              عن المنصة
             </Badge>
-            <h2 className="text-3xl sm:text-4xl font-bold mb-4" data-testid="text-features-title">
-              مميزات تجعلنا الخيار الأمثل
+            <h2 className="text-3xl sm:text-4xl font-bold mb-6" data-testid="text-about-title">
+              منصة سُمُوّ - الحل الأمثل لاختبار وتطوير المنتجات الرقمية
             </h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              نقدم لك تجربة متكاملة لاختبار وتحسين منتجك الرقمي
-            </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {features.map((feature, index) => (
-              <Card 
-                key={index} 
-                className="rounded-2xl shadow-md hover-elevate active-elevate-2 transition-all group border-2 hover:border-primary/20" 
-                data-testid={`card-feature-${index}`}
-              >
-                <CardContent className="p-6 space-y-4">
-                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${feature.color} transition-transform group-hover:scale-110`}>
-                    <feature.icon className="h-7 w-7" />
-                  </div>
-                  <h3 className="font-bold text-lg">{feature.title}</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">{feature.description}</p>
-                </CardContent>
-              </Card>
-            ))}
+          <div className="prose prose-lg max-w-none text-right space-y-6">
+            <p className="text-lg text-foreground leading-relaxed">
+              <strong>منصة سُمُوّ</strong> هي المنصة الرائدة في المنطقة العربية التي تربط بين أصحاب المنتجات الرقمية والمستقلين المحترفين المتخصصين في اختبار التطبيقات، المواقع الإلكترونية، وتحسين تجربة المستخدم. نوفر لك حلولاً متكاملة لضمان جودة منتجك الرقمي وزيادة انتشاره على جميع المنصات.
+            </p>
+
+            <h3 className="text-2xl font-bold text-foreground mt-8 mb-4">ما الذي تقدمه منصة سُمُوّ؟</h3>
+            <p className="text-foreground leading-relaxed">
+              نحن نقدم <strong>خدمات شاملة ومتنوعة</strong> تساعدك على تحسين منتجك الرقمي وزيادة انتشاره. من خلال شبكة واسعة من المستقلين المحترفين في جميع أنحاء الوطن العربي، نضمن لك الحصول على <strong>تقييمات حقيقية</strong> و<strong>اختبارات دقيقة</strong> و<strong>تفاعل فعّال</strong> على منصات التواصل الاجتماعي.
+            </p>
+
+            <h3 className="text-2xl font-bold text-foreground mt-8 mb-4">خدماتنا المتخصصة</h3>
+            
+            <div className="space-y-4 text-foreground">
+              <div>
+                <h4 className="text-xl font-semibold text-primary mb-2">1. اختبار التطبيقات (iOS & Android)</h4>
+                <p className="leading-relaxed">
+                  نوفر <strong>اختبارات شاملة للتطبيقات</strong> على نظامي iOS وAndroid من قبل مختبرين محترفين. نقدم تقارير مفصلة تشمل اكتشاف الأخطاء، تحسين الأداء، وتجربة المستخدم، مما يساعدك على إطلاق تطبيق خالٍ من المشاكل وجاهز للمنافسة في متاجر التطبيقات.
+                </p>
+              </div>
+
+              <div>
+                <h4 className="text-xl font-semibold text-primary mb-2">2. تقييمات خرائط جوجل (Google Maps Reviews)</h4>
+                <p className="leading-relaxed">
+                  احصل على <strong>تقييمات حقيقية وموثوقة</strong> على Google Maps من مستخدمين فعليين قاموا بتجربة خدماتك. نساعدك على <strong>تحسين ترتيبك</strong> في نتائج البحث المحلية وزيادة ثقة العملاء الجدد، مما يؤدي إلى زيادة المبيعات والانتشار.
+                </p>
+              </div>
+
+              <div>
+                <h4 className="text-xl font-semibold text-primary mb-2">3. التفاعل مع منشورات السوشيال ميديا</h4>
+                <p className="leading-relaxed">
+                  <strong>خدمة حصرية</strong> تساعدك على <strong>زيادة التفاعل والانتشار</strong> لمحتواك على منصات التواصل الاجتماعي مثل Facebook، Instagram، Twitter، وLinkedIn. يقوم مستقلون حقيقيون بالتفاعل مع منشوراتك من خلال الإعجابات، التعليقات الحقيقية، والمشاركات، مما يعزز من <strong>ظهور المحتوى</strong> في خوارزميات السوشيال ميديا ويزيد من الوصول إلى جمهور أوسع. هذه الخدمة مثالية لـ:
+                </p>
+                <ul className="list-disc list-inside mr-6 space-y-2 mt-3">
+                  <li>أصحاب الأعمال الذين يرغبون في زيادة الوعي بعلامتهم التجارية</li>
+                  <li>المؤثرين والمبدعين الذين يسعون لزيادة التفاعل مع محتواهم</li>
+                  <li>الشركات الناشئة التي تحتاج إلى بناء حضور قوي على السوشيال ميديا</li>
+                  <li>الحملات التسويقية التي تستهدف الوصول لجمهور أكبر</li>
+                </ul>
+              </div>
+
+              <div>
+                <h4 className="text-xl font-semibold text-primary mb-2">4. تحليل تجربة المستخدم (UX/UI)</h4>
+                <p className="leading-relaxed">
+                  احصل على <strong>تحليل احترافي</strong> لتجربة المستخدم وواجهة التطبيق أو الموقع الخاص بك. نقدم توصيات عملية لتحسين التصميم، سهولة الاستخدام، وزيادة معدلات التحويل، مما يساعدك على <strong>تقليل معدل الارتداد</strong> وزيادة رضا المستخدمين.
+                </p>
+              </div>
+
+              <div>
+                <h4 className="text-xl font-semibold text-primary mb-2">5. اختبار المواقع الإلكترونية</h4>
+                <p className="leading-relaxed">
+                  فحص شامل لموقعك الإلكتروني يشمل اختبار الأداء، التوافق مع المتصفحات، الاستجابة على الأجهزة المختلفة، وأمان الموقع. نضمن لك موقع <strong>سريع، آمن، ومتوافق</strong> مع جميع الأجهزة.
+                </p>
+              </div>
+
+              <div>
+                <h4 className="text-xl font-semibold text-primary mb-2">6. تقييمات المستخدمين الحقيقية</h4>
+                <p className="leading-relaxed">
+                  احصل على <strong>آراء وتقييمات صادقة</strong> من مستخدمين فعليين على متاجر التطبيقات (App Store & Google Play). نساعدك على بناء <strong>سمعة قوية</strong> وزيادة التحميلات من خلال تقييمات إيجابية موثوقة.
+                </p>
+              </div>
+            </div>
+
+            <h3 className="text-2xl font-bold text-foreground mt-8 mb-4">لماذا تختار منصة سُمُوّ؟</h3>
+            <div className="grid md:grid-cols-2 gap-4 text-foreground">
+              <div className="flex items-start gap-3">
+                <CheckCircle2 className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
+                <div>
+                  <strong className="text-foreground">شبكة واسعة من المستقلين المحترفين</strong> في جميع أنحاء الوطن العربي
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <CheckCircle2 className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
+                <div>
+                  <strong className="text-foreground">نظام أمان متقدم</strong> لحماية بياناتك ومعاملاتك المالية
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <CheckCircle2 className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
+                <div>
+                  <strong className="text-foreground">سرعة في الإنجاز</strong> واحصل على النتائج في وقت قياسي
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <CheckCircle2 className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
+                <div>
+                  <strong className="text-foreground">دقة عالية</strong> في التقييمات والاختبارات من مختصين محترفين
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <CheckCircle2 className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
+                <div>
+                  <strong className="text-foreground">ضمان الجودة</strong> مع إمكانية إعادة الاختبار
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <CheckCircle2 className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
+                <div>
+                  <strong className="text-foreground">دعم فني على مدار الساعة</strong> لمساعدتك في أي وقت
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-primary/10 rounded-2xl p-6 mt-8 border border-primary/20">
+              <h3 className="text-2xl font-bold text-foreground mb-4">كيف تعمل المنصة؟</h3>
+              <ol className="list-decimal list-inside space-y-3 text-foreground mr-4">
+                <li><strong>أصحاب المنتجات:</strong> قم بإنشاء حساب وأضف حملتك الخاصة بتفاصيل المنتج والخدمات المطلوبة</li>
+                <li><strong>المستقلون:</strong> تصفح الحملات المتاحة واختر المهام التي تناسب خبراتك</li>
+                <li><strong>الإنجاز:</strong> يقوم المستقلون بتنفيذ المهام وتقديم التقارير التفصيلية</li>
+                <li><strong>المراجعة والدفع:</strong> يتم مراجعة العمل والموافقة عليه، ثم يتم الدفع بشكل آمن</li>
+              </ol>
+            </div>
+
+            <p className="text-lg text-foreground leading-relaxed mt-8">
+              انضم اليوم إلى <strong>مئات العملاء الراضين</strong> الذين يثقون بمنصة سُمُوّ لتطوير منتجاتهم الرقمية. سواء كنت صاحب منتج رقمي تبحث عن اختبارات موثوقة وتقييمات حقيقية، أو مستقل محترف يبحث عن فرص عمل مرنة ومربحة، <strong>منصة سُمُوّ هي خيارك الأمثل</strong>.
+            </p>
           </div>
         </div>
       </section>
@@ -389,9 +453,19 @@ export default function Home() {
             {services.map((service, index) => (
               <Card 
                 key={index} 
-                className="rounded-2xl shadow-md hover-elevate active-elevate-2 transition-all group overflow-hidden" 
+                className={`rounded-2xl shadow-md hover-elevate active-elevate-2 transition-all group overflow-hidden relative ${
+                  service.featured ? 'border-2 border-primary ring-2 ring-primary/20' : ''
+                }`}
                 data-testid={`card-service-${index}`}
               >
+                {service.featured && (
+                  <div className="absolute -top-3 -left-3 z-10">
+                    <Badge className="bg-primary text-white rounded-xl px-3 py-1 shadow-lg" data-testid="badge-featured-service">
+                      <Sparkles className="h-3 w-3 ml-1" />
+                      خدمة مميزة
+                    </Badge>
+                  </div>
+                )}
                 <div className={`h-2 ${service.color}`}></div>
                 <CardContent className="p-6 space-y-4">
                   <div className={`w-12 h-12 ${service.color} rounded-xl flex items-center justify-center transition-transform group-hover:scale-110`}>
