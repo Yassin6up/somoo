@@ -2,6 +2,21 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Tajawal Font as Primary */
+* {
+  font-family: 'Tajawal', 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+/* Bold for headings */
+h1, h2, h3, h4, h5, h6, .font-bold {
+  font-weight: 800; /* Extra Bold (Thick) */
+}
+
+/* Medium for buttons and important text */
+button, .font-medium {
+  font-weight: 700; /* Bold */
+}
+
 /* LIGHT MODE */
 :root {
   --button-outline: rgba(0,0,0, .10);

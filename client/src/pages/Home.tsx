@@ -4,6 +4,7 @@ import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { motion } from "framer-motion";
 import { 
   UserPlus, 
   FileCheck, 
@@ -20,15 +21,43 @@ import {
   Award,
   Clock,
   Globe,
-  MessageSquare
+  MessageSquare,
+  MapPin,
+  Apple
 } from "lucide-react";
 
 export default function Home() {
-  const stats = [
-    { icon: Users, value: "500+", label: "مستخدم نشط", color: "text-blue-500" },
-    { icon: CheckCircle2, value: "1,200+", label: "مهمة مكتملة", color: "text-green-500" },
-    { icon: Smartphone, value: "300+", label: "منتج مختبر", color: "text-purple-500" },
-    { icon: Star, value: "95%", label: "تقييم إيجابي", color: "text-amber-500" },
+  const reviewServices = [
+    { 
+      icon: MapPin, 
+      title: "تقييمات خرائط جوجل",
+      subtitle: "Google Maps Reviews", 
+      value: "1,200+", 
+      label: "تقييم تم", 
+      color: "text-red-500",
+      bgColor: "bg-red-500/10",
+      gradient: "from-red-500 to-red-600"
+    },
+    { 
+      icon: Smartphone, 
+      title: "تقييمات تطبيقات Android",
+      subtitle: "Android App Reviews", 
+      value: "850+", 
+      label: "تقييم تم", 
+      color: "text-green-500",
+      bgColor: "bg-green-500/10",
+      gradient: "from-green-500 to-green-600"
+    },
+    { 
+      icon: Apple, 
+      title: "تقييمات تطبيقات iOS",
+      subtitle: "iOS App Reviews", 
+      value: "620+", 
+      label: "تقييم تم", 
+      color: "text-blue-500",
+      bgColor: "bg-blue-500/10",
+      gradient: "from-blue-500 to-blue-600"
+    },
   ];
 
   const features = [
@@ -184,54 +213,99 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Right Side - Stats Dashboard Card */}
+            {/* Right Side - Review Services Card */}
             <div className="relative">
               <div className="absolute -top-6 -right-6 w-24 h-24 bg-amber-500/20 rounded-full blur-3xl"></div>
               <div className="absolute -bottom-6 -left-6 w-32 h-32 bg-primary/20 rounded-full blur-3xl"></div>
               
-              <Card className="rounded-3xl shadow-2xl border-2 relative overflow-hidden hover-elevate" data-testid="card-stats">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-primary/20 to-transparent rounded-full -translate-y-12 translate-x-12"></div>
-                
-                <CardContent className="p-8 space-y-6">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-xl font-bold">لوحة التحكم</h3>
-                    <Badge className="bg-primary/10 text-primary hover:bg-primary/20 rounded-xl px-3">
-                      <Star className="h-3 w-3 ml-1 fill-current" />
-                      نشط
-                    </Badge>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    {stats.map((stat, index) => (
-                      <div 
-                        key={index} 
-                        className="bg-muted/30 rounded-2xl p-4 hover-elevate active-elevate-2 transition-all group"
-                        data-testid={`stat-${index}`}
-                      >
-                        <div className="flex items-start justify-between mb-3">
-                          <div className={`p-2 rounded-xl bg-background shadow-sm ${stat.color}`}>
-                            <stat.icon className="h-5 w-5" />
-                          </div>
-                        </div>
-                        <div className="space-y-1">
-                          <div className="text-2xl font-bold">{stat.value}</div>
-                          <div className="text-xs text-muted-foreground">{stat.label}</div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="bg-primary/5 rounded-2xl p-4">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+              >
+                <Card className="rounded-3xl shadow-2xl border-2 relative overflow-hidden hover-elevate backdrop-blur-sm bg-card/95" data-testid="card-review-services">
+                  {/* Decorative gradient overlay */}
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-primary/20 to-transparent rounded-full -translate-y-12 translate-x-12"></div>
+                  
+                  <CardContent className="p-8 space-y-6">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium">تقدم الشهر</span>
-                      <span className="text-sm text-primary font-bold">75%</span>
+                      <h3 className="text-2xl font-bold bg-gradient-to-br from-primary to-primary/70 bg-clip-text text-transparent">خدماتنا المميزة</h3>
+                      <Badge className="bg-primary/10 text-primary hover:bg-primary/20 rounded-xl px-3 shadow-sm">
+                        <Sparkles className="h-3 w-3 ml-1" />
+                        احترافي
+                      </Badge>
                     </div>
-                    <div className="h-2 bg-background rounded-full overflow-hidden">
-                      <div className="h-full bg-gradient-to-r from-primary to-primary/70 rounded-full" style={{ width: '75%' }}></div>
+
+                    <div className="space-y-4">
+                      {reviewServices.map((service, index) => (
+                        <motion.div
+                          key={index}
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ duration: 0.5, delay: index * 0.1 }}
+                          whileHover={{ scale: 1.02 }}
+                          className="bg-gradient-to-br from-background to-muted/30 rounded-2xl p-5 hover-elevate active-elevate-2 transition-all group border border-border/50 shadow-sm"
+                          data-testid={`service-${index}`}
+                        >
+                          <div className="flex items-start gap-4">
+                            <motion.div
+                              animate={{ 
+                                rotate: [0, 5, -5, 0],
+                                scale: [1, 1.1, 1]
+                              }}
+                              transition={{ 
+                                duration: 2,
+                                repeat: Infinity,
+                                repeatDelay: 3
+                              }}
+                              className={`p-3 rounded-xl ${service.bgColor} shadow-lg`}
+                            >
+                              <service.icon className={`h-6 w-6 ${service.color}`} />
+                            </motion.div>
+                            
+                            <div className="flex-1 space-y-1">
+                              <h4 className="text-base font-bold text-foreground">{service.title}</h4>
+                              <p className="text-xs text-muted-foreground font-medium">{service.subtitle}</p>
+                              <div className="flex items-center gap-2 mt-2">
+                                <div className={`text-xl font-bold bg-gradient-to-r ${service.gradient} bg-clip-text text-transparent`}>
+                                  {service.value}
+                                </div>
+                                <span className="text-xs text-muted-foreground">{service.label}</span>
+                              </div>
+                            </div>
+
+                            <motion.div
+                              whileHover={{ scale: 1.2, rotate: 15 }}
+                              className={`p-2 rounded-full ${service.bgColor}`}
+                            >
+                              <Star className={`h-4 w-4 ${service.color} fill-current`} />
+                            </motion.div>
+                          </div>
+                        </motion.div>
+                      ))}
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
+
+                    {/* Bottom CTA */}
+                    <motion.div
+                      whileHover={{ scale: 1.02 }}
+                      className="bg-gradient-to-br from-primary/10 to-primary/5 rounded-2xl p-5 border border-primary/20 shadow-sm"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-bold text-foreground mb-1">جاهز للبدء؟</p>
+                          <p className="text-xs text-muted-foreground">انضم لأكثر من 500+ عميل راضٍ</p>
+                        </div>
+                        <Link href="/role-selection">
+                          <Button size="sm" className="rounded-xl shadow-md hover-elevate">
+                            <UserPlus className="h-4 w-4 ml-2" />
+                            ابدأ الآن
+                          </Button>
+                        </Link>
+                      </div>
+                    </motion.div>
+                  </CardContent>
+                </Card>
+              </motion.div>
             </div>
           </div>
         </div>

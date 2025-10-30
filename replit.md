@@ -244,6 +244,27 @@ npm run dev
 - ✅ Token storage in localStorage on successful login
 
 
+## Latest Updates (UI Redesign)
+
+**تحديث واجهة المنصة** ✅:
+- ✅ تغيير الخط الكامل للموقع إلى **Tajawal Bold/Thick** من Google Fonts
+- ✅ تعديل كارت الصفحة الرئيسية (يسار الشاشة) بالعناوين الجديدة:
+  - تقييمات خرائط جوجل (Google Maps Reviews)
+  - تقييمات تطبيقات Android (Android App Reviews) 
+  - تقييمات تطبيقات iOS (iOS App Reviews)
+- ✅ إضافة أيقونات متحركة باستخدام Framer Motion:
+  - حركة دوران بسيطة للأيقونات (rotate animation)
+  - تأثير تكبير عند المرور بالماوس (scale on hover)
+  - انتقالات سلسة مع تأخير متدرج (staggered animations)
+- ✅ تصميم مستطيل مع زوايا ناعمة (rounded-3xl)
+- ✅ ظلال احترافية وتدرجات خفيفة
+- ✅ تناسق مع ألوان المنصة الأساسية (Primary Green)
+- ✅ خلفية بيضاء ناعمة مع تأثيرات blur
+- ✅ أيقونات ملونة مع gradients:
+  - Google Maps: أحمر (Red)
+  - Android: أخضر (Green)
+  - iOS: أزرق (Blue)
+
 ## Latest Updates (Task 3)
 
 **Backend Implementation**:
