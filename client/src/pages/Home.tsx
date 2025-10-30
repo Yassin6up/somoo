@@ -4,7 +4,8 @@ import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { motion } from "framer-motion";
+import { motion, useInView } from "framer-motion";
+import { useRef } from "react";
 import { 
   UserPlus, 
   FileCheck, 
@@ -25,6 +26,23 @@ import {
   MapPin,
   Apple
 } from "lucide-react";
+
+// Component for fade-in animations on scroll
+function FadeInSection({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, margin: "-100px" });
+
+  return (
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0, y: 30 }}
+      animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+      transition={{ duration: 0.6, delay, ease: "easeOut" }}
+    >
+      {children}
+    </motion.div>
+  );
+}
 
 export default function Home() {
   const reviewServices = [
@@ -58,52 +76,6 @@ export default function Home() {
       bgColor: "bg-blue-500/10",
       gradient: "from-blue-500 to-blue-600"
     },
-  ];
-
-
-  const services = [
-    {
-      icon: Smartphone,
-      title: "اختبار التطبيقات",
-      description: "اختبار شامل للتطبيقات على iOS وAndroid مع تقارير مفصلة عن الأخطاء والأداء",
-      color: "bg-blue-500",
-      featured: false
-    },
-    {
-      icon: FileCheck,
-      title: "تقييمات Google Maps",
-      description: "تقييمات حقيقية على خرائط Google بعد تجربة فعلية لتحسين ترتيبك المحلي",
-      color: "bg-red-500",
-      featured: false
-    },
-    {
-      icon: TrendingUp,
-      title: "التفاعل مع السوشيال ميديا",
-      description: "زيادة التفاعل والانتشار على منشوراتك من خلال إعجابات وتعليقات ومشاركات حقيقية",
-      color: "bg-pink-500",
-      featured: true
-    },
-    {
-      icon: BarChart3,
-      title: "تحليل UX/UI",
-      description: "تحليل احترافي لتجربة المستخدم مع توصيات عملية لتحسين التصميم والتحويل",
-      color: "bg-purple-500",
-      featured: false
-    },
-    {
-      icon: Globe,
-      title: "اختبار المواقع",
-      description: "فحص شامل للمواقع الإلكترونية يشمل الأداء، الأمان، والتوافق",
-      color: "bg-green-500",
-      featured: false
-    },
-    {
-      icon: MessageSquare,
-      title: "تقييمات المستخدمين",
-      description: "آراء وتقييمات صادقة من مستخدمين فعليين على متاجر التطبيقات",
-      color: "bg-orange-500",
-      featured: false
-    }
   ];
 
   return (
@@ -304,181 +276,237 @@ export default function Home() {
       {/* About Platform - SEO Content */}
       <section id="about" className="py-20 bg-background">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <Badge className="mb-4 bg-primary/10 text-primary hover:bg-primary/20 rounded-xl px-4 py-1">
-              <Sparkles className="h-3 w-3 ml-1" />
-              عن المنصة
-            </Badge>
-            <h2 className="text-3xl sm:text-4xl font-bold mb-6" data-testid="text-about-title">
-              منصة سُمُوّ - الحل الأمثل لاختبار وتطوير المنتجات الرقمية
-            </h2>
-          </div>
+          <FadeInSection>
+            <div className="text-center mb-12">
+              <Badge className="mb-4 bg-primary/10 text-primary hover:bg-primary/20 rounded-xl px-4 py-1">
+                <Sparkles className="h-3 w-3 ml-1" />
+                عن المنصة
+              </Badge>
+              <h2 className="text-3xl sm:text-4xl font-bold mb-6" data-testid="text-about-title">
+                منصة سُمُوّ - الحل الأمثل لاختبار وتطوير المنتجات الرقمية
+              </h2>
+            </div>
+          </FadeInSection>
 
           <div className="prose prose-lg max-w-none text-right space-y-6">
-            <p className="text-lg text-foreground leading-relaxed">
-              <strong>منصة سُمُوّ</strong> هي المنصة الرائدة في المنطقة العربية التي تربط بين أصحاب المنتجات الرقمية والمستقلين المحترفين المتخصصين في اختبار التطبيقات، المواقع الإلكترونية، وتحسين تجربة المستخدم. نوفر لك حلولاً متكاملة لضمان جودة منتجك الرقمي وزيادة انتشاره على جميع المنصات.
-            </p>
+            <FadeInSection delay={0.1}>
+              <p className="text-lg text-foreground leading-relaxed">
+                <strong>منصة سُمُوّ</strong> هي المنصة الرائدة في المنطقة العربية التي تربط بين أصحاب المنتجات الرقمية والمستقلين المحترفين المتخصصين في اختبار التطبيقات، المواقع الإلكترونية، وتحسين تجربة المستخدم. نوفر لك حلولاً متكاملة لضمان جودة منتجك الرقمي وزيادة انتشاره على جميع المنصات.
+              </p>
+            </FadeInSection>
 
-            <h3 className="text-2xl font-bold text-foreground mt-8 mb-4">ما الذي تقدمه منصة سُمُوّ؟</h3>
-            <p className="text-foreground leading-relaxed">
-              نحن نقدم <strong>خدمات شاملة ومتنوعة</strong> تساعدك على تحسين منتجك الرقمي وزيادة انتشاره. من خلال شبكة واسعة من المستقلين المحترفين في جميع أنحاء الوطن العربي، نضمن لك الحصول على <strong>تقييمات حقيقية</strong> و<strong>اختبارات دقيقة</strong> و<strong>تفاعل فعّال</strong> على منصات التواصل الاجتماعي.
-            </p>
+            <FadeInSection delay={0.2}>
+              <h3 className="text-2xl font-bold text-foreground mt-8 mb-4">ما الذي تقدمه منصة سُمُوّ؟</h3>
+              <p className="text-foreground leading-relaxed">
+                نحن نقدم <strong>خدمات شاملة ومتنوعة</strong> تساعدك على تحسين منتجك الرقمي وزيادة انتشاره. من خلال شبكة واسعة من المستقلين المحترفين في جميع أنحاء الوطن العربي، نضمن لك الحصول على <strong>تقييمات حقيقية</strong> و<strong>اختبارات دقيقة</strong> و<strong>تفاعل فعّال</strong> على منصات التواصل الاجتماعي.
+              </p>
+            </FadeInSection>
 
-            <h3 className="text-2xl font-bold text-foreground mt-8 mb-4">خدماتنا المتخصصة</h3>
+            <FadeInSection delay={0.3}>
+              <h3 className="text-2xl font-bold text-foreground mt-8 mb-4">خدماتنا المتخصصة</h3>
+            </FadeInSection>
             
             <div className="space-y-4 text-foreground">
-              <div>
-                <h4 className="text-xl font-semibold text-primary mb-2">1. اختبار التطبيقات (iOS & Android)</h4>
-                <p className="leading-relaxed">
-                  نوفر <strong>اختبارات شاملة للتطبيقات</strong> على نظامي iOS وAndroid من قبل مختبرين محترفين. نقدم تقارير مفصلة تشمل اكتشاف الأخطاء، تحسين الأداء، وتجربة المستخدم، مما يساعدك على إطلاق تطبيق خالٍ من المشاكل وجاهز للمنافسة في متاجر التطبيقات.
-                </p>
-              </div>
-
-              <div>
-                <h4 className="text-xl font-semibold text-primary mb-2">2. تقييمات خرائط جوجل (Google Maps Reviews)</h4>
-                <p className="leading-relaxed">
-                  احصل على <strong>تقييمات حقيقية وموثوقة</strong> على Google Maps من مستخدمين فعليين قاموا بتجربة خدماتك. نساعدك على <strong>تحسين ترتيبك</strong> في نتائج البحث المحلية وزيادة ثقة العملاء الجدد، مما يؤدي إلى زيادة المبيعات والانتشار.
-                </p>
-              </div>
-
-              <div>
-                <h4 className="text-xl font-semibold text-primary mb-2">3. التفاعل مع منشورات السوشيال ميديا</h4>
-                <p className="leading-relaxed">
-                  <strong>خدمة حصرية</strong> تساعدك على <strong>زيادة التفاعل والانتشار</strong> لمحتواك على منصات التواصل الاجتماعي مثل Facebook، Instagram، Twitter، وLinkedIn. يقوم مستقلون حقيقيون بالتفاعل مع منشوراتك من خلال الإعجابات، التعليقات الحقيقية، والمشاركات، مما يعزز من <strong>ظهور المحتوى</strong> في خوارزميات السوشيال ميديا ويزيد من الوصول إلى جمهور أوسع. هذه الخدمة مثالية لـ:
-                </p>
-                <ul className="list-disc list-inside mr-6 space-y-2 mt-3">
-                  <li>أصحاب الأعمال الذين يرغبون في زيادة الوعي بعلامتهم التجارية</li>
-                  <li>المؤثرين والمبدعين الذين يسعون لزيادة التفاعل مع محتواهم</li>
-                  <li>الشركات الناشئة التي تحتاج إلى بناء حضور قوي على السوشيال ميديا</li>
-                  <li>الحملات التسويقية التي تستهدف الوصول لجمهور أكبر</li>
-                </ul>
-              </div>
-
-              <div>
-                <h4 className="text-xl font-semibold text-primary mb-2">4. تحليل تجربة المستخدم (UX/UI)</h4>
-                <p className="leading-relaxed">
-                  احصل على <strong>تحليل احترافي</strong> لتجربة المستخدم وواجهة التطبيق أو الموقع الخاص بك. نقدم توصيات عملية لتحسين التصميم، سهولة الاستخدام، وزيادة معدلات التحويل، مما يساعدك على <strong>تقليل معدل الارتداد</strong> وزيادة رضا المستخدمين.
-                </p>
-              </div>
-
-              <div>
-                <h4 className="text-xl font-semibold text-primary mb-2">5. اختبار المواقع الإلكترونية</h4>
-                <p className="leading-relaxed">
-                  فحص شامل لموقعك الإلكتروني يشمل اختبار الأداء، التوافق مع المتصفحات، الاستجابة على الأجهزة المختلفة، وأمان الموقع. نضمن لك موقع <strong>سريع، آمن، ومتوافق</strong> مع جميع الأجهزة.
-                </p>
-              </div>
-
-              <div>
-                <h4 className="text-xl font-semibold text-primary mb-2">6. تقييمات المستخدمين الحقيقية</h4>
-                <p className="leading-relaxed">
-                  احصل على <strong>آراء وتقييمات صادقة</strong> من مستخدمين فعليين على متاجر التطبيقات (App Store & Google Play). نساعدك على بناء <strong>سمعة قوية</strong> وزيادة التحميلات من خلال تقييمات إيجابية موثوقة.
-                </p>
-              </div>
-            </div>
-
-            <h3 className="text-2xl font-bold text-foreground mt-8 mb-4">لماذا تختار منصة سُمُوّ؟</h3>
-            <div className="grid md:grid-cols-2 gap-4 text-foreground">
-              <div className="flex items-start gap-3">
-                <CheckCircle2 className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
-                <div>
-                  <strong className="text-foreground">شبكة واسعة من المستقلين المحترفين</strong> في جميع أنحاء الوطن العربي
+              <FadeInSection delay={0.1}>
+                <div className="flex items-start gap-4 p-4 rounded-xl bg-gradient-to-l from-primary/5 to-transparent">
+                  <div className="w-10 h-10 bg-blue-500 rounded-xl flex items-center justify-center flex-shrink-0 mt-1">
+                    <Smartphone className="h-5 w-5 text-white" />
+                  </div>
+                  <div>
+                    <h4 className="text-xl font-semibold text-primary mb-2">اختبار التطبيقات (iOS & Android)</h4>
+                    <p className="leading-relaxed">
+                      نوفر <strong>اختبارات شاملة للتطبيقات</strong> على نظامي iOS وAndroid من قبل مختبرين محترفين. نقدم تقارير مفصلة تشمل اكتشاف الأخطاء، تحسين الأداء، وتجربة المستخدم، مما يساعدك على إطلاق تطبيق خالٍ من المشاكل وجاهز للمنافسة في متاجر التطبيقات.
+                    </p>
+                  </div>
                 </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <CheckCircle2 className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
-                <div>
-                  <strong className="text-foreground">نظام أمان متقدم</strong> لحماية بياناتك ومعاملاتك المالية
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <CheckCircle2 className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
-                <div>
-                  <strong className="text-foreground">سرعة في الإنجاز</strong> واحصل على النتائج في وقت قياسي
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <CheckCircle2 className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
-                <div>
-                  <strong className="text-foreground">دقة عالية</strong> في التقييمات والاختبارات من مختصين محترفين
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <CheckCircle2 className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
-                <div>
-                  <strong className="text-foreground">ضمان الجودة</strong> مع إمكانية إعادة الاختبار
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <CheckCircle2 className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
-                <div>
-                  <strong className="text-foreground">دعم فني على مدار الساعة</strong> لمساعدتك في أي وقت
-                </div>
-              </div>
-            </div>
+              </FadeInSection>
 
-            <div className="bg-primary/10 rounded-2xl p-6 mt-8 border border-primary/20">
-              <h3 className="text-2xl font-bold text-foreground mb-4">كيف تعمل المنصة؟</h3>
-              <ol className="list-decimal list-inside space-y-3 text-foreground mr-4">
-                <li><strong>أصحاب المنتجات:</strong> قم بإنشاء حساب وأضف حملتك الخاصة بتفاصيل المنتج والخدمات المطلوبة</li>
-                <li><strong>المستقلون:</strong> تصفح الحملات المتاحة واختر المهام التي تناسب خبراتك</li>
-                <li><strong>الإنجاز:</strong> يقوم المستقلون بتنفيذ المهام وتقديم التقارير التفصيلية</li>
-                <li><strong>المراجعة والدفع:</strong> يتم مراجعة العمل والموافقة عليه، ثم يتم الدفع بشكل آمن</li>
-              </ol>
-            </div>
+              <FadeInSection delay={0.15}>
+                <div className="flex items-start gap-4 p-4 rounded-xl bg-gradient-to-l from-primary/5 to-transparent">
+                  <div className="w-10 h-10 bg-red-500 rounded-xl flex items-center justify-center flex-shrink-0 mt-1">
+                    <MapPin className="h-5 w-5 text-white" />
+                  </div>
+                  <div>
+                    <h4 className="text-xl font-semibold text-primary mb-2">تقييمات خرائط جوجل (Google Maps Reviews)</h4>
+                    <p className="leading-relaxed">
+                      احصل على <strong>تقييمات حقيقية وموثوقة</strong> على Google Maps من مستخدمين فعليين قاموا بتجربة خدماتك. نساعدك على <strong>تحسين ترتيبك</strong> في نتائج البحث المحلية وزيادة ثقة العملاء الجدد، مما يؤدي إلى زيادة المبيعات والانتشار.
+                    </p>
+                  </div>
+                </div>
+              </FadeInSection>
 
-            <p className="text-lg text-foreground leading-relaxed mt-8">
-              انضم اليوم إلى <strong>مئات العملاء الراضين</strong> الذين يثقون بمنصة سُمُوّ لتطوير منتجاتهم الرقمية. سواء كنت صاحب منتج رقمي تبحث عن اختبارات موثوقة وتقييمات حقيقية، أو مستقل محترف يبحث عن فرص عمل مرنة ومربحة، <strong>منصة سُمُوّ هي خيارك الأمثل</strong>.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* Services Section */}
-      <section id="services" className="py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <Badge className="mb-4 bg-primary/10 text-primary hover:bg-primary/20 rounded-xl px-4 py-1">
-              <FileCheck className="h-3 w-3 ml-1" />
-              خدماتنا
-            </Badge>
-            <h2 className="text-3xl sm:text-4xl font-bold mb-4" data-testid="text-services-title">
-              حلول متكاملة لنمو منتجك
-            </h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              نوفر مجموعة شاملة من الخدمات لتحسين منتجك الرقمي
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {services.map((service, index) => (
-              <Card 
-                key={index} 
-                className={`rounded-2xl shadow-md hover-elevate active-elevate-2 transition-all group overflow-hidden relative ${
-                  service.featured ? 'border-2 border-primary ring-2 ring-primary/20' : ''
-                }`}
-                data-testid={`card-service-${index}`}
-              >
-                {service.featured && (
-                  <div className="absolute -top-3 -left-3 z-10">
-                    <Badge className="bg-primary text-white rounded-xl px-3 py-1 shadow-lg" data-testid="badge-featured-service">
+              <FadeInSection delay={0.2}>
+                <div className="flex items-start gap-4 p-4 rounded-xl bg-gradient-to-l from-pink-500/10 to-transparent border-2 border-pink-500/20 relative overflow-hidden">
+                  <div className="absolute top-2 left-2">
+                    <Badge className="bg-pink-500 text-white rounded-lg px-2 py-0.5 text-xs">
                       <Sparkles className="h-3 w-3 ml-1" />
-                      خدمة مميزة
+                      مميزة
                     </Badge>
                   </div>
-                )}
-                <div className={`h-2 ${service.color}`}></div>
-                <CardContent className="p-6 space-y-4">
-                  <div className={`w-12 h-12 ${service.color} rounded-xl flex items-center justify-center transition-transform group-hover:scale-110`}>
-                    <service.icon className="h-6 w-6 text-white" />
+                  <div className="w-10 h-10 bg-pink-500 rounded-xl flex items-center justify-center flex-shrink-0 mt-1">
+                    <TrendingUp className="h-5 w-5 text-white" />
                   </div>
-                  <h3 className="font-bold text-lg">{service.title}</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">{service.description}</p>
-                </CardContent>
-              </Card>
-            ))}
+                  <div>
+                    <h4 className="text-xl font-semibold text-pink-600 mb-2">التفاعل مع منشورات السوشيال ميديا</h4>
+                    <p className="leading-relaxed">
+                      <strong>خدمة حصرية</strong> تساعدك على <strong>زيادة التفاعل والانتشار</strong> لمحتواك على منصات التواصل الاجتماعي مثل Facebook، Instagram، Twitter، وLinkedIn. يقوم مستقلون حقيقيون بالتفاعل مع منشوراتك من خلال الإعجابات، التعليقات الحقيقية، والمشاركات، مما يعزز من <strong>ظهور المحتوى</strong> في خوارزميات السوشيال ميديا ويزيد من الوصول إلى جمهور أوسع. هذه الخدمة مثالية لـ:
+                    </p>
+                    <ul className="list-disc list-inside mr-6 space-y-2 mt-3 text-sm">
+                      <li>أصحاب الأعمال الذين يرغبون في زيادة الوعي بعلامتهم التجارية</li>
+                      <li>المؤثرين والمبدعين الذين يسعون لزيادة التفاعل مع محتواهم</li>
+                      <li>الشركات الناشئة التي تحتاج إلى بناء حضور قوي على السوشيال ميديا</li>
+                      <li>الحملات التسويقية التي تستهدف الوصول لجمهور أكبر</li>
+                    </ul>
+                  </div>
+                </div>
+              </FadeInSection>
+
+              <FadeInSection delay={0.25}>
+                <div className="flex items-start gap-4 p-4 rounded-xl bg-gradient-to-l from-primary/5 to-transparent">
+                  <div className="w-10 h-10 bg-purple-500 rounded-xl flex items-center justify-center flex-shrink-0 mt-1">
+                    <BarChart3 className="h-5 w-5 text-white" />
+                  </div>
+                  <div>
+                    <h4 className="text-xl font-semibold text-primary mb-2">تحليل تجربة المستخدم (UX/UI)</h4>
+                    <p className="leading-relaxed">
+                      احصل على <strong>تحليل احترافي</strong> لتجربة المستخدم وواجهة التطبيق أو الموقع الخاص بك. نقدم توصيات عملية لتحسين التصميم، سهولة الاستخدام، وزيادة معدلات التحويل، مما يساعدك على <strong>تقليل معدل الارتداد</strong> وزيادة رضا المستخدمين.
+                    </p>
+                  </div>
+                </div>
+              </FadeInSection>
+
+              <FadeInSection delay={0.3}>
+                <div className="flex items-start gap-4 p-4 rounded-xl bg-gradient-to-l from-primary/5 to-transparent">
+                  <div className="w-10 h-10 bg-green-500 rounded-xl flex items-center justify-center flex-shrink-0 mt-1">
+                    <Globe className="h-5 w-5 text-white" />
+                  </div>
+                  <div>
+                    <h4 className="text-xl font-semibold text-primary mb-2">اختبار المواقع الإلكترونية</h4>
+                    <p className="leading-relaxed">
+                      فحص شامل لموقعك الإلكتروني يشمل اختبار الأداء، التوافق مع المتصفحات، الاستجابة على الأجهزة المختلفة، وأمان الموقع. نضمن لك موقع <strong>سريع، آمن، ومتوافق</strong> مع جميع الأجهزة.
+                    </p>
+                  </div>
+                </div>
+              </FadeInSection>
+
+              <FadeInSection delay={0.35}>
+                <div className="flex items-start gap-4 p-4 rounded-xl bg-gradient-to-l from-primary/5 to-transparent">
+                  <div className="w-10 h-10 bg-orange-500 rounded-xl flex items-center justify-center flex-shrink-0 mt-1">
+                    <MessageSquare className="h-5 w-5 text-white" />
+                  </div>
+                  <div>
+                    <h4 className="text-xl font-semibold text-primary mb-2">تقييمات المستخدمين الحقيقية</h4>
+                    <p className="leading-relaxed">
+                      احصل على <strong>آراء وتقييمات صادقة</strong> من مستخدمين فعليين على متاجر التطبيقات (App Store & Google Play). نساعدك على بناء <strong>سمعة قوية</strong> وزيادة التحميلات من خلال تقييمات إيجابية موثوقة.
+                    </p>
+                  </div>
+                </div>
+              </FadeInSection>
+            </div>
+
+            <FadeInSection delay={0.4}>
+              <h3 className="text-2xl font-bold text-foreground mt-12 mb-6">لماذا تختار منصة سُمُوّ؟</h3>
+            </FadeInSection>
+            
+            <div className="grid md:grid-cols-2 gap-4 text-foreground">
+              <FadeInSection delay={0.1}>
+                <div className="flex items-start gap-3 p-3 rounded-lg hover:bg-primary/5 transition-colors">
+                  <CheckCircle2 className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
+                  <div>
+                    <strong className="text-foreground">شبكة واسعة من المستقلين المحترفين</strong> في جميع أنحاء الوطن العربي
+                  </div>
+                </div>
+              </FadeInSection>
+              <FadeInSection delay={0.15}>
+                <div className="flex items-start gap-3 p-3 rounded-lg hover:bg-primary/5 transition-colors">
+                  <CheckCircle2 className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
+                  <div>
+                    <strong className="text-foreground">نظام أمان متقدم</strong> لحماية بياناتك ومعاملاتك المالية
+                  </div>
+                </div>
+              </FadeInSection>
+              <FadeInSection delay={0.2}>
+                <div className="flex items-start gap-3 p-3 rounded-lg hover:bg-primary/5 transition-colors">
+                  <CheckCircle2 className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
+                  <div>
+                    <strong className="text-foreground">سرعة في الإنجاز</strong> واحصل على النتائج في وقت قياسي
+                  </div>
+                </div>
+              </FadeInSection>
+              <FadeInSection delay={0.25}>
+                <div className="flex items-start gap-3 p-3 rounded-lg hover:bg-primary/5 transition-colors">
+                  <CheckCircle2 className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
+                  <div>
+                    <strong className="text-foreground">دقة عالية</strong> في التقييمات والاختبارات من مختصين محترفين
+                  </div>
+                </div>
+              </FadeInSection>
+              <FadeInSection delay={0.3}>
+                <div className="flex items-start gap-3 p-3 rounded-lg hover:bg-primary/5 transition-colors">
+                  <CheckCircle2 className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
+                  <div>
+                    <strong className="text-foreground">ضمان الجودة</strong> مع إمكانية إعادة الاختبار
+                  </div>
+                </div>
+              </FadeInSection>
+              <FadeInSection delay={0.35}>
+                <div className="flex items-start gap-3 p-3 rounded-lg hover:bg-primary/5 transition-colors">
+                  <CheckCircle2 className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
+                  <div>
+                    <strong className="text-foreground">دعم فني على مدار الساعة</strong> لمساعدتك في أي وقت
+                  </div>
+                </div>
+              </FadeInSection>
+            </div>
+
+            <FadeInSection delay={0.5}>
+              <div className="bg-gradient-to-br from-primary/10 to-primary/5 rounded-2xl p-8 mt-12 border border-primary/20 shadow-lg">
+                <h3 className="text-2xl font-bold text-foreground mb-6 flex items-center gap-2">
+                  <Zap className="h-6 w-6 text-primary" />
+                  كيف تعمل المنصة؟
+                </h3>
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div className="flex items-start gap-4">
+                    <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center flex-shrink-0 text-white font-bold">1</div>
+                    <div>
+                      <strong className="text-foreground block mb-1">أصحاب المنتجات:</strong>
+                      <p className="text-sm text-muted-foreground">قم بإنشاء حساب وأضف حملتك الخاصة بتفاصيل المنتج والخدمات المطلوبة</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-4">
+                    <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center flex-shrink-0 text-white font-bold">2</div>
+                    <div>
+                      <strong className="text-foreground block mb-1">المستقلون:</strong>
+                      <p className="text-sm text-muted-foreground">تصفح الحملات المتاحة واختر المهام التي تناسب خبراتك</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-4">
+                    <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center flex-shrink-0 text-white font-bold">3</div>
+                    <div>
+                      <strong className="text-foreground block mb-1">الإنجاز:</strong>
+                      <p className="text-sm text-muted-foreground">يقوم المستقلون بتنفيذ المهام وتقديم التقارير التفصيلية</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-4">
+                    <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center flex-shrink-0 text-white font-bold">4</div>
+                    <div>
+                      <strong className="text-foreground block mb-1">المراجعة والدفع:</strong>
+                      <p className="text-sm text-muted-foreground">يتم مراجعة العمل والموافقة عليه، ثم يتم الدفع بشكل آمن</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </FadeInSection>
+
+            <FadeInSection delay={0.6}>
+              <p className="text-lg text-foreground leading-relaxed mt-12 text-center bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 p-6 rounded-2xl border border-primary/20">
+                انضم اليوم إلى <strong>مئات العملاء الراضين</strong> الذين يثقون بمنصة سُمُوّ لتطوير منتجاتهم الرقمية. سواء كنت صاحب منتج رقمي تبحث عن اختبارات موثوقة وتقييمات حقيقية، أو مستقل محترف يبحث عن فرص عمل مرنة ومربحة، <strong className="text-primary">منصة سُمُوّ هي خيارك الأمثل</strong>.
+              </p>
+            </FadeInSection>
           </div>
         </div>
       </section>
+
 
       {/* CTA Section */}
       <section className="py-20 bg-gradient-to-br from-primary/10 via-primary/5 to-background relative overflow-hidden">
