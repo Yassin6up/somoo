@@ -27,7 +27,7 @@ import {
   Apple
 } from "lucide-react";
 
-// Component for fade-in animations on scroll
+// Component for advanced fade-in animations on scroll with 3D effects
 function FadeInSection({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-100px" });
@@ -35,11 +35,72 @@ function FadeInSection({ children, delay = 0 }: { children: React.ReactNode; del
   return (
     <motion.div
       ref={ref}
-      initial={{ opacity: 0, y: 30 }}
-      animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
-      transition={{ duration: 0.6, delay, ease: "easeOut" }}
+      initial={{ opacity: 0, y: 50, rotateX: -15, scale: 0.95 }}
+      animate={isInView ? { 
+        opacity: 1, 
+        y: 0, 
+        rotateX: 0,
+        scale: 1
+      } : { 
+        opacity: 0, 
+        y: 50, 
+        rotateX: -15,
+        scale: 0.95
+      }}
+      transition={{ 
+        duration: 0.8, 
+        delay, 
+        ease: [0.25, 0.46, 0.45, 0.94] // Custom cubic-bezier
+      }}
+      style={{ transformStyle: "preserve-3d" }}
     >
       {children}
+    </motion.div>
+  );
+}
+
+// Advanced animated background particles
+function AnimatedParticle({ delay = 0, x = "0%", y = "0%" }: { delay?: number; x?: string; y?: string }) {
+  return (
+    <motion.div
+      className="absolute w-2 h-2 bg-primary/20 rounded-full"
+      style={{ left: x, top: y }}
+      animate={{
+        y: [0, -30, 0],
+        x: [0, 15, 0],
+        opacity: [0.2, 0.5, 0.2],
+        scale: [1, 1.5, 1],
+      }}
+      transition={{
+        duration: 4,
+        delay,
+        repeat: Infinity,
+        ease: "easeInOut"
+      }}
+    />
+  );
+}
+
+// Floating icon component with advanced motion
+function FloatingIcon({ icon: Icon, color, delay = 0 }: { icon: any; color: string; delay?: number }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0, rotate: -180 }}
+      animate={{ 
+        opacity: [0.4, 0.7, 0.4],
+        scale: [1, 1.2, 1],
+        rotate: [0, 360],
+        y: [0, -20, 0],
+      }}
+      transition={{
+        duration: 6,
+        delay,
+        repeat: Infinity,
+        ease: "easeInOut"
+      }}
+      className={`${color}`}
+    >
+      <Icon className="w-8 h-8" />
     </motion.div>
   );
 }
@@ -293,47 +354,193 @@ export default function Home() {
             
             <div className="space-y-4 text-foreground">
               <FadeInSection delay={0.1}>
-                <div className="flex items-start gap-4 p-4 rounded-xl bg-gradient-to-l from-primary/5 to-transparent">
-                  <div className="w-10 h-10 bg-blue-500 rounded-xl flex items-center justify-center flex-shrink-0 mt-1">
-                    <Smartphone className="h-5 w-5 text-white" />
-                  </div>
-                  <div>
-                    <h4 className="text-xl font-semibold text-primary mb-2">اختبار التطبيقات (iOS & Android)</h4>
-                    <p className="leading-relaxed">
+                <motion.div 
+                  className="relative flex items-start gap-4 p-6 rounded-2xl bg-gradient-to-l from-blue-500/10 to-transparent overflow-hidden group"
+                  whileHover={{ scale: 1.02, x: 5 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  {/* Animated background particles */}
+                  <AnimatedParticle delay={0} x="10%" y="20%" />
+                  <AnimatedParticle delay={0.5} x="80%" y="60%" />
+                  <AnimatedParticle delay={1} x="50%" y="40%" />
+                  
+                  {/* Floating decorative icons */}
+                  <motion.div className="absolute top-4 left-4 opacity-20">
+                    <FloatingIcon icon={Apple} color="text-blue-400" delay={0} />
+                  </motion.div>
+                  
+                  <motion.div 
+                    className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg relative z-10"
+                    whileHover={{ rotate: [0, -10, 10, 0], scale: 1.1 }}
+                    transition={{ duration: 0.5 }}
+                  >
+                    <motion.div
+                      animate={{
+                        y: [0, -5, 0],
+                        rotate: [0, 5, -5, 0]
+                      }}
+                      transition={{
+                        duration: 3,
+                        repeat: Infinity,
+                        ease: "easeInOut"
+                      }}
+                    >
+                      <Smartphone className="h-8 w-8 text-white" />
+                    </motion.div>
+                  </motion.div>
+                  <div className="flex-1 relative z-10">
+                    <h4 className="text-xl font-bold text-blue-600 mb-2 flex items-center gap-2">
+                      اختبار التطبيقات (iOS & Android)
+                      <motion.span
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                        className="inline-block"
+                      >
+                        ⚡
+                      </motion.span>
+                    </h4>
+                    <p className="leading-relaxed text-foreground">
                       نوفر <strong>اختبارات شاملة للتطبيقات</strong> على نظامي iOS وAndroid من قبل مختبرين محترفين. نقدم تقارير مفصلة تشمل اكتشاف الأخطاء، تحسين الأداء، وتجربة المستخدم، مما يساعدك على إطلاق تطبيق خالٍ من المشاكل وجاهز للمنافسة في متاجر التطبيقات.
                     </p>
                   </div>
-                </div>
+                </motion.div>
               </FadeInSection>
 
               <FadeInSection delay={0.15}>
-                <div className="flex items-start gap-4 p-4 rounded-xl bg-gradient-to-l from-primary/5 to-transparent">
-                  <div className="w-10 h-10 bg-red-500 rounded-xl flex items-center justify-center flex-shrink-0 mt-1">
-                    <MapPin className="h-5 w-5 text-white" />
-                  </div>
-                  <div>
-                    <h4 className="text-xl font-semibold text-primary mb-2">تقييمات خرائط جوجل (Google Maps Reviews)</h4>
-                    <p className="leading-relaxed">
+                <motion.div 
+                  className="relative flex items-start gap-4 p-6 rounded-2xl bg-gradient-to-l from-red-500/10 to-transparent overflow-hidden group"
+                  whileHover={{ scale: 1.02, x: 5 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  {/* Animated background particles */}
+                  <AnimatedParticle delay={0.2} x="15%" y="30%" />
+                  <AnimatedParticle delay={0.7} x="75%" y="50%" />
+                  <AnimatedParticle delay={1.2} x="45%" y="70%" />
+                  
+                  {/* Floating star ratings */}
+                  <motion.div className="absolute top-6 left-6 opacity-20">
+                    <FloatingIcon icon={Star} color="text-red-400" delay={0.3} />
+                  </motion.div>
+                  
+                  <motion.div 
+                    className="w-16 h-16 bg-gradient-to-br from-red-500 to-red-600 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg relative z-10"
+                    whileHover={{ rotate: [0, -10, 10, 0], scale: 1.1 }}
+                    transition={{ duration: 0.5 }}
+                  >
+                    <motion.div
+                      animate={{
+                        y: [0, -5, 0],
+                        scale: [1, 1.1, 1]
+                      }}
+                      transition={{
+                        duration: 2.5,
+                        repeat: Infinity,
+                        ease: "easeInOut"
+                      }}
+                    >
+                      <MapPin className="h-8 w-8 text-white" />
+                    </motion.div>
+                  </motion.div>
+                  <div className="flex-1 relative z-10">
+                    <h4 className="text-xl font-bold text-red-600 mb-2 flex items-center gap-2">
+                      تقييمات خرائط جوجل (Google Maps Reviews)
+                      <motion.span
+                        animate={{ scale: [1, 1.2, 1] }}
+                        transition={{ duration: 1.5, repeat: Infinity }}
+                        className="inline-block"
+                      >
+                        📍
+                      </motion.span>
+                    </h4>
+                    <p className="leading-relaxed text-foreground">
                       احصل على <strong>تقييمات حقيقية وموثوقة</strong> على Google Maps من مستخدمين فعليين قاموا بتجربة خدماتك. نساعدك على <strong>تحسين ترتيبك</strong> في نتائج البحث المحلية وزيادة ثقة العملاء الجدد، مما يؤدي إلى زيادة المبيعات والانتشار.
                     </p>
                   </div>
-                </div>
+                </motion.div>
               </FadeInSection>
 
               <FadeInSection delay={0.2}>
-                <div className="flex items-start gap-4 p-4 rounded-xl bg-gradient-to-l from-pink-500/10 to-transparent border-2 border-pink-500/20 relative overflow-hidden">
-                  <div className="absolute top-2 left-2">
-                    <Badge className="bg-pink-500 text-white rounded-lg px-2 py-0.5 text-xs">
-                      <Sparkles className="h-3 w-3 ml-1" />
+                <motion.div 
+                  className="relative flex items-start gap-4 p-6 rounded-2xl bg-gradient-to-l from-pink-500/15 to-transparent border-2 border-pink-500/30 overflow-hidden group"
+                  whileHover={{ scale: 1.02, x: 5, borderColor: "rgba(236, 72, 153, 0.5)" }}
+                  transition={{ duration: 0.3 }}
+                >
+                  {/* Featured badge with animation */}
+                  <motion.div 
+                    className="absolute top-3 left-3 z-20"
+                    animate={{
+                      y: [0, -5, 0],
+                    }}
+                    transition={{
+                      duration: 2,
+                      repeat: Infinity,
+                      ease: "easeInOut"
+                    }}
+                  >
+                    <Badge className="bg-gradient-to-r from-pink-500 to-pink-600 text-white rounded-lg px-3 py-1 shadow-lg border-0">
+                      <motion.span
+                        animate={{ rotate: [0, 20, -20, 0] }}
+                        transition={{ duration: 2, repeat: Infinity }}
+                        className="inline-block"
+                      >
+                        <Sparkles className="h-3 w-3 ml-1" />
+                      </motion.span>
                       مميزة
                     </Badge>
-                  </div>
-                  <div className="w-10 h-10 bg-pink-500 rounded-xl flex items-center justify-center flex-shrink-0 mt-1">
-                    <TrendingUp className="h-5 w-5 text-white" />
-                  </div>
-                  <div>
-                    <h4 className="text-xl font-semibold text-pink-600 mb-2">التفاعل مع منشورات السوشيال ميديا</h4>
-                    <p className="leading-relaxed">
+                  </motion.div>
+                  
+                  {/* Animated background particles - more for featured */}
+                  <AnimatedParticle delay={0} x="20%" y="25%" />
+                  <AnimatedParticle delay={0.3} x="70%" y="45%" />
+                  <AnimatedParticle delay={0.6} x="40%" y="65%" />
+                  <AnimatedParticle delay={0.9} x="85%" y="30%" />
+                  
+                  {/* Floating social icons */}
+                  <motion.div className="absolute top-8 right-8 opacity-15">
+                    <FloatingIcon icon={Users} color="text-pink-400" delay={0.5} />
+                  </motion.div>
+                  
+                  <motion.div 
+                    className="w-16 h-16 bg-gradient-to-br from-pink-500 via-pink-600 to-pink-700 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-xl relative z-10"
+                    whileHover={{ rotate: [0, -15, 15, 0], scale: 1.15 }}
+                    transition={{ duration: 0.5 }}
+                    animate={{
+                      boxShadow: [
+                        "0 0 20px rgba(236, 72, 153, 0.3)",
+                        "0 0 30px rgba(236, 72, 153, 0.5)",
+                        "0 0 20px rgba(236, 72, 153, 0.3)"
+                      ]
+                    }}
+                  >
+                    <motion.div
+                      animate={{
+                        y: [0, -8, 0],
+                        rotate: [0, 10, -10, 0]
+                      }}
+                      transition={{
+                        duration: 3,
+                        repeat: Infinity,
+                        ease: "easeInOut"
+                      }}
+                    >
+                      <TrendingUp className="h-8 w-8 text-white" />
+                    </motion.div>
+                  </motion.div>
+                  <div className="flex-1 relative z-10 pt-8">
+                    <h4 className="text-xl font-bold text-pink-600 mb-2 flex items-center gap-2">
+                      التفاعل مع منشورات السوشيال ميديا
+                      <motion.span
+                        animate={{ 
+                          scale: [1, 1.3, 1],
+                          rotate: [0, 10, -10, 0]
+                        }}
+                        transition={{ duration: 2, repeat: Infinity }}
+                        className="inline-block"
+                      >
+                        💫
+                      </motion.span>
+                    </h4>
+                    <p className="leading-relaxed text-foreground">
                       <strong>خدمة حصرية</strong> تساعدك على <strong>زيادة التفاعل والانتشار</strong> لمحتواك على منصات التواصل الاجتماعي مثل Facebook، Instagram، Twitter، وLinkedIn. يقوم مستقلون حقيقيون بالتفاعل مع منشوراتك من خلال الإعجابات، التعليقات الحقيقية، والمشاركات، مما يعزز من <strong>ظهور المحتوى</strong> في خوارزميات السوشيال ميديا ويزيد من الوصول إلى جمهور أوسع. هذه الخدمة مثالية لـ:
                     </p>
                     <ul className="list-disc list-inside mr-6 space-y-2 mt-3 text-sm">
@@ -343,49 +550,159 @@ export default function Home() {
                       <li>الحملات التسويقية التي تستهدف الوصول لجمهور أكبر</li>
                     </ul>
                   </div>
-                </div>
+                </motion.div>
               </FadeInSection>
 
               <FadeInSection delay={0.25}>
-                <div className="flex items-start gap-4 p-4 rounded-xl bg-gradient-to-l from-primary/5 to-transparent">
-                  <div className="w-10 h-10 bg-purple-500 rounded-xl flex items-center justify-center flex-shrink-0 mt-1">
-                    <BarChart3 className="h-5 w-5 text-white" />
-                  </div>
-                  <div>
-                    <h4 className="text-xl font-semibold text-primary mb-2">تحليل تجربة المستخدم (UX/UI)</h4>
-                    <p className="leading-relaxed">
+                <motion.div 
+                  className="relative flex items-start gap-4 p-6 rounded-2xl bg-gradient-to-l from-purple-500/10 to-transparent overflow-hidden group"
+                  whileHover={{ scale: 1.02, x: 5 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <AnimatedParticle delay={0.4} x="25%" y="35%" />
+                  <AnimatedParticle delay={0.9} x="65%" y="55%" />
+                  <AnimatedParticle delay={1.4} x="55%" y="75%" />
+                  
+                  <motion.div className="absolute top-6 right-6 opacity-15">
+                    <FloatingIcon icon={Target} color="text-purple-400" delay={0.6} />
+                  </motion.div>
+                  
+                  <motion.div 
+                    className="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg relative z-10"
+                    whileHover={{ rotate: [0, -10, 10, 0], scale: 1.1 }}
+                    transition={{ duration: 0.5 }}
+                  >
+                    <motion.div
+                      animate={{
+                        scale: [1, 1.1, 1],
+                        rotate: [0, -5, 5, 0]
+                      }}
+                      transition={{
+                        duration: 3.5,
+                        repeat: Infinity,
+                        ease: "easeInOut"
+                      }}
+                    >
+                      <BarChart3 className="h-8 w-8 text-white" />
+                    </motion.div>
+                  </motion.div>
+                  <div className="flex-1 relative z-10">
+                    <h4 className="text-xl font-bold text-purple-600 mb-2 flex items-center gap-2">
+                      تحليل تجربة المستخدم (UX/UI)
+                      <motion.span
+                        animate={{ y: [0, -3, 0] }}
+                        transition={{ duration: 1.8, repeat: Infinity }}
+                        className="inline-block"
+                      >
+                        🎨
+                      </motion.span>
+                    </h4>
+                    <p className="leading-relaxed text-foreground">
                       احصل على <strong>تحليل احترافي</strong> لتجربة المستخدم وواجهة التطبيق أو الموقع الخاص بك. نقدم توصيات عملية لتحسين التصميم، سهولة الاستخدام، وزيادة معدلات التحويل، مما يساعدك على <strong>تقليل معدل الارتداد</strong> وزيادة رضا المستخدمين.
                     </p>
                   </div>
-                </div>
+                </motion.div>
               </FadeInSection>
 
               <FadeInSection delay={0.3}>
-                <div className="flex items-start gap-4 p-4 rounded-xl bg-gradient-to-l from-primary/5 to-transparent">
-                  <div className="w-10 h-10 bg-green-500 rounded-xl flex items-center justify-center flex-shrink-0 mt-1">
-                    <Globe className="h-5 w-5 text-white" />
-                  </div>
-                  <div>
-                    <h4 className="text-xl font-semibold text-primary mb-2">اختبار المواقع الإلكترونية</h4>
-                    <p className="leading-relaxed">
+                <motion.div 
+                  className="relative flex items-start gap-4 p-6 rounded-2xl bg-gradient-to-l from-green-500/10 to-transparent overflow-hidden group"
+                  whileHover={{ scale: 1.02, x: 5 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <AnimatedParticle delay={0.6} x="30%" y="40%" />
+                  <AnimatedParticle delay={1.1} x="60%" y="60%" />
+                  <AnimatedParticle delay={1.6} x="50%" y="80%" />
+                  
+                  <motion.div className="absolute bottom-8 left-8 opacity-15">
+                    <FloatingIcon icon={Zap} color="text-green-400" delay={0.8} />
+                  </motion.div>
+                  
+                  <motion.div 
+                    className="w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg relative z-10"
+                    whileHover={{ rotate: [0, -10, 10, 0], scale: 1.1 }}
+                    transition={{ duration: 0.5 }}
+                  >
+                    <motion.div
+                      animate={{
+                        rotate: [0, 360],
+                      }}
+                      transition={{
+                        duration: 8,
+                        repeat: Infinity,
+                        ease: "linear"
+                      }}
+                    >
+                      <Globe className="h-8 w-8 text-white" />
+                    </motion.div>
+                  </motion.div>
+                  <div className="flex-1 relative z-10">
+                    <h4 className="text-xl font-bold text-green-600 mb-2 flex items-center gap-2">
+                      اختبار المواقع الإلكترونية
+                      <motion.span
+                        animate={{ rotate: [0, 10, -10, 0] }}
+                        transition={{ duration: 2.2, repeat: Infinity }}
+                        className="inline-block"
+                      >
+                        🌐
+                      </motion.span>
+                    </h4>
+                    <p className="leading-relaxed text-foreground">
                       فحص شامل لموقعك الإلكتروني يشمل اختبار الأداء، التوافق مع المتصفحات، الاستجابة على الأجهزة المختلفة، وأمان الموقع. نضمن لك موقع <strong>سريع، آمن، ومتوافق</strong> مع جميع الأجهزة.
                     </p>
                   </div>
-                </div>
+                </motion.div>
               </FadeInSection>
 
               <FadeInSection delay={0.35}>
-                <div className="flex items-start gap-4 p-4 rounded-xl bg-gradient-to-l from-primary/5 to-transparent">
-                  <div className="w-10 h-10 bg-orange-500 rounded-xl flex items-center justify-center flex-shrink-0 mt-1">
-                    <MessageSquare className="h-5 w-5 text-white" />
-                  </div>
-                  <div>
-                    <h4 className="text-xl font-semibold text-primary mb-2">تقييمات المستخدمين الحقيقية</h4>
-                    <p className="leading-relaxed">
+                <motion.div 
+                  className="relative flex items-start gap-4 p-6 rounded-2xl bg-gradient-to-l from-orange-500/10 to-transparent overflow-hidden group"
+                  whileHover={{ scale: 1.02, x: 5 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <AnimatedParticle delay={0.8} x="35%" y="45%" />
+                  <AnimatedParticle delay={1.3} x="70%" y="65%" />
+                  <AnimatedParticle delay={1.8} x="45%" y="85%" />
+                  
+                  <motion.div className="absolute top-8 left-8 opacity-15">
+                    <FloatingIcon icon={Award} color="text-orange-400" delay={1} />
+                  </motion.div>
+                  
+                  <motion.div 
+                    className="w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg relative z-10"
+                    whileHover={{ rotate: [0, -10, 10, 0], scale: 1.1 }}
+                    transition={{ duration: 0.5 }}
+                  >
+                    <motion.div
+                      animate={{
+                        y: [0, -7, 0],
+                        scale: [1, 1.15, 1]
+                      }}
+                      transition={{
+                        duration: 2.8,
+                        repeat: Infinity,
+                        ease: "easeInOut"
+                      }}
+                    >
+                      <MessageSquare className="h-8 w-8 text-white" />
+                    </motion.div>
+                  </motion.div>
+                  <div className="flex-1 relative z-10">
+                    <h4 className="text-xl font-bold text-orange-600 mb-2 flex items-center gap-2">
+                      تقييمات المستخدمين الحقيقية
+                      <motion.span
+                        animate={{ scale: [1, 1.4, 1] }}
+                        transition={{ duration: 2.5, repeat: Infinity }}
+                        className="inline-block"
+                      >
+                        ⭐
+                      </motion.span>
+                    </h4>
+                    <p className="leading-relaxed text-foreground">
                       احصل على <strong>آراء وتقييمات صادقة</strong> من مستخدمين فعليين على متاجر التطبيقات (App Store & Google Play). نساعدك على بناء <strong>سمعة قوية</strong> وزيادة التحميلات من خلال تقييمات إيجابية موثوقة.
                     </p>
                   </div>
-                </div>
+                </motion.div>
               </FadeInSection>
             </div>
 
