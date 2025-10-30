@@ -154,7 +154,7 @@ export default function Home() {
                 <span className="text-sm font-medium text-primary">المنصة الأولى في المنطقة</span>
               </div>
 
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight" data-testid="text-hero-title">
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight" data-testid="text-hero-title">
                 <span className="block mb-2">
                   اختبر تطبيقك، حسّن
                 </span>
@@ -214,16 +214,38 @@ export default function Home() {
             </div>
 
             {/* Right Side - Review Services Card */}
-            <div className="relative">
+            <div className="relative" style={{ perspective: '1000px' }}>
               <div className="absolute -top-6 -right-6 w-24 h-24 bg-amber-500/20 rounded-full blur-3xl"></div>
               <div className="absolute -bottom-6 -left-6 w-32 h-32 bg-primary/20 rounded-full blur-3xl"></div>
               
               <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5 }}
+                initial={{ opacity: 0, y: 20, rotateX: -15 }}
+                animate={{ 
+                  opacity: 1, 
+                  y: [0, -10, 0],
+                  rotateX: 0
+                }}
+                transition={{ 
+                  opacity: { duration: 0.5 },
+                  rotateX: { duration: 0.5 },
+                  y: { 
+                    duration: 3,
+                    repeat: Infinity,
+                    repeatType: "reverse",
+                    ease: "easeInOut"
+                  }
+                }}
+                whileHover={{
+                  rotateY: 5,
+                  rotateX: 5,
+                  scale: 1.02,
+                  transition: { duration: 0.3 }
+                }}
+                style={{
+                  transformStyle: 'preserve-3d',
+                }}
               >
-                <Card className="rounded-3xl shadow-2xl border-2 relative overflow-hidden hover-elevate backdrop-blur-sm bg-card/95" data-testid="card-review-services">
+                <Card className="rounded-3xl shadow-2xl border-2 relative overflow-visible hover-elevate backdrop-blur-sm bg-card/95 max-w-md mx-auto" data-testid="card-review-services" style={{ transform: 'translateZ(50px)' }}>
                   {/* Decorative gradient overlay */}
                   <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-primary/20 to-transparent rounded-full -translate-y-12 translate-x-12"></div>
                   

@@ -244,7 +244,7 @@ npm run dev
 - ✅ Token storage in localStorage on successful login
 
 
-## Latest Updates (UI Redesign)
+## Latest Updates (UI Redesign + 3D Effects)
 
 **تحديث واجهة المنصة** ✅:
 - ✅ تغيير الخط الكامل للموقع إلى **Tajawal Bold/Thick** من Google Fonts
@@ -264,6 +264,17 @@ npm run dev
   - Google Maps: أحمر (Red)
   - Android: أخضر (Green)
   - iOS: أزرق (Blue)
+
+**تحديثات تصميمية إضافية** ✅:
+- ✅ تصغير العنوان الرئيسي (من text-6xl إلى text-5xl)
+- ✅ تحويل الكارت إلى شكل مستطيل أكثر (max-w-md)
+- ✅ إضافة تأثيرات 3D احترافية للكارت:
+  - Perspective 3D (1000px) على الحاوية الرئيسية
+  - حركة Floating عمودية (y: [0, -10, 0]) متكررة كل 3 ثواني
+  - تأثير Tilt/Rotate عند hover (rotateY: 5deg, rotateX: 5deg)
+  - Transform preserve-3d لعمق ثلاثي الأبعاد
+  - translateZ(50px) للكارت نفسه
+  - انتقالات سلسة ومهنية بين الحركات
 
 ## Latest Updates (Task 3)
 
