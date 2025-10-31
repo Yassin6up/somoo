@@ -199,6 +199,62 @@ export const withdrawals = pgTable("withdrawals", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// Orders schema - الطلبات المباشرة من أصحاب المشاريع للجروبات
+export const orders = pgTable("orders", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  productOwnerId: varchar("product_owner_id").notNull().references(() => productOwners.id),
+  groupId: varchar("group_id").notNull().references(() => groups.id),
+  serviceType: text("service_type").notNull(), // google_play_reviews, ios_reviews, website_reviews, ux_testing, software_testing, social_media, google_maps
+  quantity: integer("quantity").notNull(), // عدد المراجعات/المهام المطلوبة
+  pricePerUnit: decimal("price_per_unit", { precision: 10, scale: 2 }).notNull(), // السعر لكل وحدة
+  totalAmount: decimal("total_amount", { precision: 10, scale: 2 }).notNull(), // الإجمالي
+  paymentMethod: text("payment_method").notNull(), // vodafone_cash, etisalat_cash, orange_cash, bank_card
+  paymentDetails: text("payment_details"), // رقم الهاتف أو بيانات البطاقة
+  status: text("status").notNull().default("pending"), // pending, payment_confirmed, in_progress, completed, cancelled
+  paidAt: timestamp("paid_at"),
+  completedAt: timestamp("completed_at"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Group Join Requests schema - طلبات الانضمام للجروبات
+export const groupJoinRequests = pgTable("group_join_requests", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  groupId: varchar("group_id").notNull().references(() => groups.id),
+  freelancerId: varchar("freelancer_id").notNull().references(() => freelancers.id),
+  message: text("message"), // رسالة من المتقدم
+  status: text("status").notNull().default("pending"), // pending, approved, rejected
+  reviewedAt: timestamp("reviewed_at"),
+  reviewNotes: text("review_notes"), // ملاحظات من قائد الجروب
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({
+  uniqueJoinRequest: uniqueIndex("unique_join_request_idx").on(table.groupId, table.freelancerId),
+}));
+
+// Conversations schema - المحادثات المباشرة
+export const conversations = pgTable("conversations", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  productOwnerId: varchar("product_owner_id").notNull().references(() => productOwners.id),
+  groupId: varchar("group_id").notNull().references(() => groups.id),
+  leaderId: varchar("leader_id").notNull().references(() => freelancers.id),
+  lastMessageAt: timestamp("last_message_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({
+  uniqueConversation: uniqueIndex("unique_conversation_idx").on(table.productOwnerId, table.groupId),
+}));
+
+// Conversation Messages schema - رسائل المحادثة المباشرة
+export const conversationMessages = pgTable("conversation_messages", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  conversationId: varchar("conversation_id").notNull().references(() => conversations.id),
+  senderId: varchar("sender_id").notNull(), // يمكن أن يكون product owner أو freelancer
+  senderType: text("sender_type").notNull(), // product_owner, freelancer
+  content: text("content").notNull(),
+  isRead: boolean("is_read").default(false).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 // Relations
 export const freelancersRelations = relations(freelancers, ({ one, many }) => ({
   wallet: one(wallets, { fields: [freelancers.id], references: [wallets.freelancerId] }),
@@ -207,12 +263,15 @@ export const freelancersRelations = relations(freelancers, ({ one, many }) => ({
   groupMemberships: many(groupMembers),
   withdrawals: many(withdrawals),
   messages: many(messages),
+  groupJoinRequests: many(groupJoinRequests),
 }));
 
 export const productOwnersRelations = relations(productOwners, ({ many }) => ({
   campaigns: many(campaigns),
   payments: many(payments),
   projects: many(projects),
+  orders: many(orders),
+  conversations: many(conversations),
 }));
 
 export const campaignsRelations = relations(campaigns, ({ one, many }) => ({
@@ -250,6 +309,9 @@ export const groupsRelations = relations(groups, ({ one, many }) => ({
   tasks: many(tasks),
   messages: many(messages),
   acceptedProjects: many(projects),
+  orders: many(orders),
+  joinRequests: many(groupJoinRequests),
+  conversations: many(conversations),
 }));
 
 export const groupMembersRelations = relations(groupMembers, ({ one }) => ({
@@ -272,6 +334,27 @@ export const messagesRelations = relations(messages, ({ one }) => ({
 
 export const withdrawalsRelations = relations(withdrawals, ({ one }) => ({
   freelancer: one(freelancers, { fields: [withdrawals.freelancerId], references: [freelancers.id] }),
+}));
+
+export const ordersRelations = relations(orders, ({ one }) => ({
+  productOwner: one(productOwners, { fields: [orders.productOwnerId], references: [productOwners.id] }),
+  group: one(groups, { fields: [orders.groupId], references: [groups.id] }),
+}));
+
+export const groupJoinRequestsRelations = relations(groupJoinRequests, ({ one }) => ({
+  group: one(groups, { fields: [groupJoinRequests.groupId], references: [groups.id] }),
+  freelancer: one(freelancers, { fields: [groupJoinRequests.freelancerId], references: [freelancers.id] }),
+}));
+
+export const conversationsRelations = relations(conversations, ({ one, many }) => ({
+  productOwner: one(productOwners, { fields: [conversations.productOwnerId], references: [productOwners.id] }),
+  group: one(groups, { fields: [conversations.groupId], references: [groups.id] }),
+  leader: one(freelancers, { fields: [conversations.leaderId], references: [freelancers.id] }),
+  messages: many(conversationMessages),
+}));
+
+export const conversationMessagesRelations = relations(conversationMessages, ({ one }) => ({
+  conversation: one(conversations, { fields: [conversationMessages.conversationId], references: [conversations.id] }),
 }));
 
 // Insert schemas for validation
@@ -346,6 +429,27 @@ export const insertWithdrawalSchema = createInsertSchema(withdrawals).omit({
   createdAt: true,
 });
 
+export const insertOrderSchema = createInsertSchema(orders).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertGroupJoinRequestSchema = createInsertSchema(groupJoinRequests).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertConversationSchema = createInsertSchema(conversations).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertConversationMessageSchema = createInsertSchema(conversationMessages).omit({
+  id: true,
+  createdAt: true,
+});
+
 // TypeScript types
 export type Freelancer = typeof freelancers.$inferSelect;
 export type InsertFreelancer = z.infer<typeof insertFreelancerSchema>;
@@ -373,6 +477,14 @@ export type Message = typeof messages.$inferSelect;
 export type InsertMessage = z.infer<typeof insertMessageSchema>;
 export type Withdrawal = typeof withdrawals.$inferSelect;
 export type InsertWithdrawal = z.infer<typeof insertWithdrawalSchema>;
+export type Order = typeof orders.$inferSelect;
+export type InsertOrder = z.infer<typeof insertOrderSchema>;
+export type GroupJoinRequest = typeof groupJoinRequests.$inferSelect;
+export type InsertGroupJoinRequest = z.infer<typeof insertGroupJoinRequestSchema>;
+export type Conversation = typeof conversations.$inferSelect;
+export type InsertConversation = z.infer<typeof insertConversationSchema>;
+export type ConversationMessage = typeof conversationMessages.$inferSelect;
+export type InsertConversationMessage = z.infer<typeof insertConversationMessageSchema>;
 
 // Service options
 export const serviceOptions = [

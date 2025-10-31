@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertFreelancerSchema, insertProductOwnerSchema, insertCampaignSchema, type Campaign } from "@shared/schema";
+import { insertFreelancerSchema, insertProductOwnerSchema, insertCampaignSchema, insertOrderSchema, type Campaign } from "@shared/schema";
 import { z } from "zod";
 import OpenAI from "openai";
 import multer from "multer";
@@ -2020,6 +2020,99 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching unread count:", error);
       res.status(500).json({ error: "حدث خطأ أثناء جلب عدد الإشعارات" });
+    }
+  });
+
+  // ============================================
+  // ORDERS MANAGEMENT
+  // ============================================
+
+  // Create new order
+  app.post("/api/orders", authMiddleware, requireRole(["product_owner"]), async (req: AuthRequest, res) => {
+    try {
+      const validatedData = insertOrderSchema.parse(req.body);
+      
+      const order = await storage.createOrder({
+        ...validatedData,
+        productOwnerId: req.user!.userId,
+      });
+
+      // Create notification for group leader
+      const group = await storage.getGroupById(validatedData.groupId);
+      if (group) {
+        await storage.createNotification({
+          userId: group.leaderId,
+          userType: "freelancer",
+          title: "طلب خدمة جديد",
+          message: `لديك طلب خدمة جديد بقيمة $${validatedData.totalAmount}`,
+          type: "order_created",
+        });
+      }
+
+      res.status(201).json(order);
+    } catch (error: any) {
+      console.error("Error creating order:", error);
+      res.status(400).json({ error: error.message || "فشل في إنشاء الطلب" });
+    }
+  });
+
+  // Get all orders (filtered by user role)
+  app.get("/api/orders", authMiddleware, async (req: AuthRequest, res) => {
+    try {
+      const { userId, userType } = req.user!;
+      
+      let orders;
+      if (userType === "product_owner") {
+        orders = await storage.getOrdersByProductOwner(userId);
+      } else if (userType === "freelancer") {
+        // Get orders for groups led by this freelancer
+        orders = await storage.getOrdersByGroupLeader(userId);
+      } else {
+        orders = [];
+      }
+
+      res.json(orders);
+    } catch (error) {
+      console.error("Error fetching orders:", error);
+      res.status(500).json({ error: "حدث خطأ أثناء جلب الطلبات" });
+    }
+  });
+
+  // Get specific order
+  app.get("/api/orders/:id", authMiddleware, async (req: AuthRequest, res) => {
+    try {
+      const order = await storage.getOrderById(req.params.id);
+      
+      if (!order) {
+        return res.status(404).json({ error: "الطلب غير موجود" });
+      }
+
+      res.json(order);
+    } catch (error) {
+      console.error("Error fetching order:", error);
+      res.status(500).json({ error: "حدث خطأ أثناء جلب الطلب" });
+    }
+  });
+
+  // Update order status
+  app.patch("/api/orders/:id/status", authMiddleware, async (req: AuthRequest, res) => {
+    try {
+      const { status } = req.body;
+      
+      if (!status) {
+        return res.status(400).json({ error: "الحالة مطلوبة" });
+      }
+
+      const order = await storage.updateOrderStatus(req.params.id, status);
+      
+      if (!order) {
+        return res.status(404).json({ error: "الطلب غير موجود" });
+      }
+
+      res.json(order);
+    } catch (error) {
+      console.error("Error updating order:", error);
+      res.status(500).json({ error: "حدث خطأ أثناء تحديث الطلب" });
     }
   });
 

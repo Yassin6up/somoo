@@ -27,6 +27,8 @@ import {
   type InsertMessage,
   type Withdrawal,
   type InsertWithdrawal,
+  type Order,
+  type InsertOrder,
   users,
   freelancers,
   productOwners,
@@ -41,6 +43,7 @@ import {
   projects,
   messages,
   withdrawals,
+  orders,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, or, desc } from "drizzle-orm";
@@ -137,6 +140,18 @@ export interface IStorage {
   getAllWithdrawals(): Promise<Withdrawal[]>;
   createWithdrawal(withdrawal: InsertWithdrawal): Promise<Withdrawal>;
   updateWithdrawal(id: string, updates: Partial<Withdrawal>): Promise<Withdrawal | undefined>;
+
+  // Order methods
+  getOrderById(id: string): Promise<Order | undefined>;
+  getOrdersByProductOwner(productOwnerId: string): Promise<Order[]>;
+  getOrdersByGroupLeader(leaderId: string): Promise<Order[]>;
+  createOrder(order: InsertOrder): Promise<Order>;
+  updateOrderStatus(id: string, status: string): Promise<Order | undefined>;
+
+  // Helper methods for orders
+  getGroupById(id: string): Promise<Group | undefined>;
+  markAllNotificationsAsRead(userId: string, userType: string): Promise<void>;
+  getUnreadNotificationCount(userId: string, userType: string): Promise<number>;
 }
 
 export class MemStorage implements IStorage {
@@ -654,6 +669,78 @@ export class DatabaseStorage implements IStorage {
   async updateWithdrawal(id: string, updates: Partial<Withdrawal>): Promise<Withdrawal | undefined> {
     const [updated] = await db.update(withdrawals).set(updates).where(eq(withdrawals.id, id)).returning();
     return updated || undefined;
+  }
+
+  // Order methods
+  async getOrderById(id: string): Promise<Order | undefined> {
+    const [order] = await db.select().from(orders).where(eq(orders.id, id));
+    return order || undefined;
+  }
+
+  async getOrdersByProductOwner(productOwnerId: string): Promise<Order[]> {
+    return await db.select().from(orders).where(eq(orders.productOwnerId, productOwnerId)).orderBy(desc(orders.createdAt));
+  }
+
+  async getOrdersByGroupLeader(leaderId: string): Promise<Order[]> {
+    // Get all groups led by this freelancer
+    const leaderGroups = await db.select().from(groups).where(eq(groups.leaderId, leaderId));
+    const groupIds = leaderGroups.map(g => g.id);
+    
+    if (groupIds.length === 0) {
+      return [];
+    }
+
+    // Get all orders for these groups
+    const groupOrders: Order[] = [];
+    for (const groupId of groupIds) {
+      const ordersForGroup = await db.select().from(orders).where(eq(orders.groupId, groupId)).orderBy(desc(orders.createdAt));
+      groupOrders.push(...ordersForGroup);
+    }
+    
+    return groupOrders;
+  }
+
+  async createOrder(insertOrder: InsertOrder): Promise<Order> {
+    const [order] = await db.insert(orders).values(insertOrder).returning();
+    return order;
+  }
+
+  async updateOrderStatus(id: string, status: string): Promise<Order | undefined> {
+    const now = new Date();
+    const updateData: any = { status, updatedAt: now };
+    
+    if (status === "payment_confirmed") {
+      updateData.paidAt = now;
+    } else if (status === "completed") {
+      updateData.completedAt = now;
+    }
+
+    const [updated] = await db.update(orders).set(updateData).where(eq(orders.id, id)).returning();
+    return updated || undefined;
+  }
+
+  // Helper methods
+  async getGroupById(id: string): Promise<Group | undefined> {
+    return await this.getGroup(id);
+  }
+
+  async markAllNotificationsAsRead(userId: string, userType: string): Promise<void> {
+    await db.update(notifications)
+      .set({ isRead: true })
+      .where(and(
+        eq(notifications.userId, userId),
+        eq(notifications.userType, userType),
+        eq(notifications.isRead, false)
+      ));
+  }
+
+  async getUnreadNotificationCount(userId: string, userType: string): Promise<number> {
+    const result = await db.select().from(notifications).where(and(
+      eq(notifications.userId, userId),
+      eq(notifications.userType, userType),
+      eq(notifications.isRead, false)
+    ));
+    return result.length;
   }
 }
 
