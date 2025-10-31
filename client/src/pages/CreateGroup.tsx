@@ -117,12 +117,12 @@ export default function CreateGroup() {
 
   const createGroupMutation = useMutation({
     mutationFn: async (data: CreateGroupForm) => {
-      if (!user || !user.userId) {
+      if (!user || !user.id) {
         throw new Error("يجب تسجيل الدخول أولاً");
       }
       const groupData = {
         ...data,
-        leaderId: user.userId,
+        leaderId: user.id,
       };
       return await apiRequest("/api/groups", "POST", groupData);
     },
