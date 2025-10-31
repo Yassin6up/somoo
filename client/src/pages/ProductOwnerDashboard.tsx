@@ -21,9 +21,11 @@ import {
   Clock,
   FileText,
   TrendingUp,
-  Calendar
+  Calendar,
+  ShoppingCart,
+  Package
 } from "lucide-react";
-import type { Campaign, Task } from "@shared/schema";
+import type { Campaign, Task, Order } from "@shared/schema";
 
 interface TaskWithCampaign extends Task {
   campaign?: Campaign;
@@ -45,6 +47,11 @@ export default function ProductOwnerDashboard() {
     enabled: campaigns.length > 0,
   });
 
+  // Fetch orders from direct purchase system
+  const { data: orders = [], isLoading: ordersLoading } = useQuery<Order[]>({
+    queryKey: ["/api/orders"],
+  });
+
   // Calculate statistics
   const stats = {
     activeCampaigns: campaigns.filter(c => c.status === "active").length,
@@ -52,6 +59,10 @@ export default function ProductOwnerDashboard() {
     submittedTasks: allTasks.filter(t => t.status === "submitted").length,
     completedTasks: allTasks.filter(t => t.status === "approved").length,
     totalSpent: campaigns.reduce((sum, c) => sum + Number(c.budget), 0),
+    totalOrders: orders.length,
+    pendingOrders: orders.filter(o => o.status === "pending").length,
+    completedOrders: orders.filter(o => o.status === "completed").length,
+    totalOrdersAmount: orders.reduce((sum, o) => sum + Number(o.totalAmount), 0),
   };
 
   // Approve task mutation
@@ -135,7 +146,23 @@ export default function ProductOwnerDashboard() {
     );
   };
 
-  if (campaignsLoading || tasksLoading) {
+  const getOrderStatusBadge = (status: string) => {
+    const statusConfig: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
+      pending: { label: "قيد الانتظار", variant: "outline" },
+      payment_confirmed: { label: "تم تأكيد الدفع", variant: "secondary" },
+      in_progress: { label: "قيد التنفيذ", variant: "default" },
+      completed: { label: "مكتمل", variant: "default" },
+    };
+
+    const config = statusConfig[status] || { label: status, variant: "outline" as const };
+    return (
+      <Badge variant={config.variant} className="rounded-lg" data-testid={`badge-order-status-${status}`}>
+        {config.label}
+      </Badge>
+    );
+  };
+
+  if (campaignsLoading || tasksLoading || ordersLoading) {
     return (
       <div className="min-h-screen flex flex-col">
         <Navbar />
@@ -169,7 +196,21 @@ export default function ProductOwnerDashboard() {
           </div>
 
           {/* Statistics Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+            <Card className="rounded-2xl shadow-md hover-elevate" data-testid="stat-total-orders">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">إجمالي الطلبات</p>
+                    <p className="text-3xl font-bold mt-1 text-primary">{stats.totalOrders}</p>
+                  </div>
+                  <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
+                    <ShoppingCart className="h-6 w-6 text-primary" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
             <Card className="rounded-2xl shadow-md hover-elevate" data-testid="stat-active-campaigns">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
@@ -228,8 +269,12 @@ export default function ProductOwnerDashboard() {
           </div>
 
           {/* Main Content */}
-          <Tabs defaultValue="submitted" className="space-y-6" data-testid="tabs-main">
+          <Tabs defaultValue="orders" className="space-y-6" data-testid="tabs-main">
             <TabsList className="bg-muted/50 p-1 rounded-2xl w-full sm:w-auto">
+              <TabsTrigger value="orders" className="rounded-xl" data-testid="tab-orders">
+                <ShoppingCart className="h-4 w-4 ml-2" />
+                طلباتي ({stats.totalOrders})
+              </TabsTrigger>
               <TabsTrigger value="submitted" className="rounded-xl" data-testid="tab-submitted">
                 <Clock className="h-4 w-4 ml-2" />
                 قيد المراجعة ({stats.submittedTasks})
@@ -243,6 +288,70 @@ export default function ProductOwnerDashboard() {
                 جميع المهام
               </TabsTrigger>
             </TabsList>
+
+            {/* Orders Tab */}
+            <TabsContent value="orders" className="space-y-4">
+              <h2 className="text-xl font-bold mb-4">طلباتي من الجروبات</h2>
+
+              {orders.length === 0 ? (
+                <Card className="rounded-2xl shadow-md">
+                  <CardContent className="p-12 text-center">
+                    <Package className="h-16 w-16 mx-auto mb-4 text-muted-foreground/50" />
+                    <h3 className="text-xl font-bold mb-2">لا توجد طلبات</h3>
+                    <p className="text-muted-foreground mb-4">ابحث عن جروبات المطورين واطلب خدماتهم</p>
+                    <Button className="rounded-xl" data-testid="button-browse-groups">
+                      <Users className="h-4 w-4 ml-2" />
+                      تصفح الجروبات
+                    </Button>
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="grid grid-cols-1 gap-4">
+                  {orders.map((order) => (
+                    <Card key={order.id} className="rounded-2xl shadow-md hover-elevate" data-testid={`card-order-${order.id}`}>
+                      <CardContent className="p-6">
+                        <div className="flex items-start justify-between mb-4">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3 mb-2">
+                              <h3 className="text-lg font-bold">{order.serviceType}</h3>
+                              {getOrderStatusBadge(order.status)}
+                            </div>
+                            <p className="text-sm text-muted-foreground mb-3">
+                              الكمية: {order.quantity} • السعر لكل وحدة: ${order.pricePerUnit}
+                            </p>
+                            <div className="flex items-center gap-4 text-sm">
+                              <span className="flex items-center gap-1 text-primary font-bold">
+                                <Wallet className="h-4 w-4" />
+                                ${order.totalAmount}
+                              </span>
+                              <span className="flex items-center gap-1 text-muted-foreground">
+                                <Calendar className="h-4 w-4" />
+                                {new Date(order.createdAt).toLocaleDateString('ar-SA')}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="bg-muted/50 rounded-xl p-4">
+                          <div className="grid grid-cols-2 gap-3 text-sm">
+                            <div>
+                              <p className="text-muted-foreground mb-1">طريقة الدفع:</p>
+                              <p className="font-semibold">{order.paymentMethod === 'vodafone_cash' ? 'فودافون كاش' : 
+                                order.paymentMethod === 'etisalat_cash' ? 'اتصالات كاش' :
+                                order.paymentMethod === 'orange_cash' ? 'أورانج كاش' : 'البطاقة البنكية'}</p>
+                            </div>
+                            <div>
+                              <p className="text-muted-foreground mb-1">بيانات الدفع:</p>
+                              <p className="font-semibold">{order.paymentDetails}</p>
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </TabsContent>
 
             {/* Submitted Tasks Tab */}
             <TabsContent value="submitted" className="space-y-4">

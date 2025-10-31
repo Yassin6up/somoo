@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import type { Task, Wallet } from "@shared/schema";
+import type { Task, Wallet, Order } from "@shared/schema";
 import { 
   Wallet as WalletIcon, 
   FileCheck, 
@@ -21,7 +21,10 @@ import {
   CheckCircle2,
   AlertCircle,
   Send,
-  Play
+  Play,
+  ShoppingCart,
+  Calendar,
+  Package
 } from "lucide-react";
 
 export default function FreelancerDashboard() {
@@ -44,6 +47,11 @@ export default function FreelancerDashboard() {
   // Fetch wallet
   const { data: wallet } = useQuery<Wallet>({
     queryKey: ["/api/wallet"],
+  });
+
+  // Fetch orders for groups led by this freelancer
+  const { data: orders = [] } = useQuery<Order[]>({
+    queryKey: ["/api/orders"],
   });
 
   // Accept task mutation
@@ -146,6 +154,8 @@ export default function FreelancerDashboard() {
   const completedTasks = myTasks.filter((t) => t.status === "approved").length;
   const activeTasks = myTasks.filter((t) => t.status === "assigned" || t.status === "in_progress").length;
   const pendingTasks = myTasks.filter((t) => t.status === "submitted").length;
+  const totalOrders = orders.length;
+  const pendingOrders = orders.filter((o) => o.status === "pending" || o.status === "payment_confirmed").length;
 
   const getStatusBadge = (status: string, taskId: string) => {
     const statusMap: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
@@ -159,6 +169,22 @@ export default function FreelancerDashboard() {
     
     const statusInfo = statusMap[status] || { label: status, variant: "outline" as const };
     return <Badge variant={statusInfo.variant} data-testid={`badge-status-${taskId}`}>{statusInfo.label}</Badge>;
+  };
+
+  const getOrderStatusBadge = (status: string) => {
+    const statusConfig: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
+      pending: { label: "قيد الانتظار", variant: "outline" },
+      payment_confirmed: { label: "تم تأكيد الدفع", variant: "secondary" },
+      in_progress: { label: "قيد التنفيذ", variant: "default" },
+      completed: { label: "مكتمل", variant: "default" },
+    };
+
+    const config = statusConfig[status] || { label: status, variant: "outline" as const };
+    return (
+      <Badge variant={config.variant} className="rounded-lg" data-testid={`badge-order-status-${status}`}>
+        {config.label}
+      </Badge>
+    );
   };
 
   return (
@@ -238,9 +264,13 @@ export default function FreelancerDashboard() {
             </Card>
           </div>
 
-          {/* Tabs for Available Tasks and My Tasks */}
-          <Tabs defaultValue="available" className="space-y-6">
-            <TabsList className="grid w-full max-w-md grid-cols-2" data-testid="tabs-tasks">
+          {/* Tabs for Available Tasks, My Tasks, and Orders */}
+          <Tabs defaultValue="orders" className="space-y-6">
+            <TabsList className="grid w-full max-w-2xl grid-cols-3" data-testid="tabs-tasks">
+              <TabsTrigger value="orders" data-testid="tab-orders">
+                <ShoppingCart className="h-4 w-4 ml-2" />
+                الطلبات ({totalOrders})
+              </TabsTrigger>
               <TabsTrigger value="available" data-testid="tab-available-tasks">
                 المهام المتاحة ({filteredAvailableTasks.length})
               </TabsTrigger>
@@ -248,6 +278,66 @@ export default function FreelancerDashboard() {
                 مهامي ({myTasks.length})
               </TabsTrigger>
             </TabsList>
+
+            {/* Orders Tab */}
+            <TabsContent value="orders" className="space-y-4">
+              <h2 className="text-xl font-bold mb-4">الطلبات الواردة من أصحاب المنتجات</h2>
+
+              {orders.length === 0 ? (
+                <Card className="rounded-2xl shadow-md">
+                  <CardContent className="p-12 text-center">
+                    <Package className="h-16 w-16 mx-auto mb-4 text-muted-foreground/50" />
+                    <h3 className="text-xl font-bold mb-2">لا توجد طلبات</h3>
+                    <p className="text-muted-foreground">سيتم عرض الطلبات الواردة من أصحاب المنتجات هنا</p>
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="grid grid-cols-1 gap-4">
+                  {orders.map((order) => (
+                    <Card key={order.id} className="rounded-2xl shadow-md hover-elevate" data-testid={`card-order-${order.id}`}>
+                      <CardContent className="p-6">
+                        <div className="flex items-start justify-between mb-4">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3 mb-2">
+                              <h3 className="text-lg font-bold">{order.serviceType}</h3>
+                              {getOrderStatusBadge(order.status)}
+                            </div>
+                            <p className="text-sm text-muted-foreground mb-3">
+                              الكمية: {order.quantity} • السعر لكل وحدة: ${order.pricePerUnit}
+                            </p>
+                            <div className="flex items-center gap-4 text-sm">
+                              <span className="flex items-center gap-1 text-primary font-bold">
+                                <WalletIcon className="h-4 w-4" />
+                                ${order.totalAmount}
+                              </span>
+                              <span className="flex items-center gap-1 text-muted-foreground">
+                                <Calendar className="h-4 w-4" />
+                                {new Date(order.createdAt).toLocaleDateString('ar-SA')}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="bg-muted/50 rounded-xl p-4">
+                          <div className="grid grid-cols-2 gap-3 text-sm">
+                            <div>
+                              <p className="text-muted-foreground mb-1">طريقة الدفع:</p>
+                              <p className="font-semibold">{order.paymentMethod === 'vodafone_cash' ? 'فودافون كاش' : 
+                                order.paymentMethod === 'etisalat_cash' ? 'اتصالات كاش' :
+                                order.paymentMethod === 'orange_cash' ? 'أورانج كاش' : 'البطاقة البنكية'}</p>
+                            </div>
+                            <div>
+                              <p className="text-muted-foreground mb-1">بيانات الدفع:</p>
+                              <p className="font-semibold">{order.paymentDetails}</p>
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </TabsContent>
 
             {/* Available Tasks Tab */}
             <TabsContent value="available" className="space-y-4">

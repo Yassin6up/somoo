@@ -3,6 +3,7 @@ import { Menu, X, LogIn, UserPlus, User, LogOut, LayoutDashboard, Settings } fro
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { NotificationsDropdown } from "@/components/NotificationsDropdown";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -114,18 +115,20 @@ export function Navbar() {
           {/* Desktop CTA Buttons / User Profile */}
           <div className="hidden md:flex items-center gap-3">
             {user ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button className="flex items-center gap-2 hover-elevate active-elevate-2 rounded-xl px-3 py-2" data-testid="button-user-menu">
-                    <Avatar className="h-8 w-8" data-testid="avatar-user">
-                      <AvatarImage src={user.profileImage} alt={user.fullName} />
-                      <AvatarFallback className="bg-primary/10 text-primary text-sm font-semibold">
-                        {getUserInitials()}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span className="text-sm font-medium">{user.fullName}</span>
-                  </button>
-                </DropdownMenuTrigger>
+              <>
+                <NotificationsDropdown />
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button className="flex items-center gap-2 hover-elevate active-elevate-2 rounded-xl px-3 py-2" data-testid="button-user-menu">
+                      <Avatar className="h-8 w-8" data-testid="avatar-user">
+                        <AvatarImage src={user.profileImage} alt={user.fullName} />
+                        <AvatarFallback className="bg-primary/10 text-primary text-sm font-semibold">
+                          {getUserInitials()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="text-sm font-medium">{user.fullName}</span>
+                    </button>
+                  </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56 rounded-xl">
                   <DropdownMenuLabel className="font-normal">
                     <div className="flex flex-col space-y-1">
@@ -149,6 +152,7 @@ export function Navbar() {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
+              </>
             ) : (
               <>
                 <Link href="/login">
