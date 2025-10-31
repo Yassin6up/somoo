@@ -20,8 +20,8 @@ The platform is built with a modern web stack, featuring a modular project struc
 **Technical Implementations & Feature Specifications:**
 - **Frontend:** React with TypeScript, Wouter for routing, Tailwind CSS, Shadcn UI, React Hook Form with Zod for validation, and TanStack Query for data management.
 - **Backend:** Express.js, with PostgreSQL database (Neon) for production, In-Memory Storage for testing.
-- **Forms:** Multi-step forms for registration (Freelancer and Product Owner) with robust validation. Fixed infinite render loop issue by using `field.value` instead of `form.watch` in checkbox components.
-- **User Authentication:** Login system with JWT-based sessions and role-based authorization. Navbar synchronizes immediately after signup/login via custom "userLoggedIn" event - no page reload required. Profile page shows graceful error state when user data is missing instead of infinite loading spinner.
+- **Forms:** Multi-step forms for registration (Freelancer and Product Owner) with robust validation. Fixed infinite render loop issue by using `field.value` instead of `form.watch` in checkbox components. All auth forms include autocomplete attributes (email="email", password="new-password" for signups, "current-password" for login) to support password managers.
+- **User Authentication:** Login system with JWT-based sessions and role-based authorization. Navbar synchronizes immediately after signup/login via custom "userLoggedIn" event - no page reload required. Profile page shows graceful error state when user data is missing instead of infinite loading spinner. User data always read from localStorage at form submission time, not at component mount.
 
 **NEW: Group-Based Work System (نظام العمل الجماعي):**
 - **Groups (الجروبات):**
@@ -68,12 +68,18 @@ The platform is built with a modern web stack, featuring a modular project struc
   - **Withdrawals:** POST/GET /api/withdrawals, request and track withdrawals
   - All secured with authMiddleware and role-based authorization
 
+- **Product Owner Signup (نموذج تسجيل صاحب المنتج):**
+  - **Simplified 3-Step Form:** Basic Info → Service Selection & Calculation → Confirmation
+  - **7 Service Types:** Google Play reviews ($1), iOS reviews ($1), Website reviews ($1), UX testing ($1), Software testing ($1), Social Media engagement ($1), Google Maps reviews ($2)
+  - **Automatic Cost Calculation:** User enters number of reviews needed (1-1000), system calculates total cost based on service type pricing
+  - **Removed Fields:** Company name, phone number (kept: fullName, email, password only)
+  - **Cost Summary Display:** Shows service type, review count, price per review, and total cost before confirmation
+
 - **Original Features (Still Available):**
   - **Dashboards:** Freelancer & Product Owner dashboards with real-time stats
   - **Campaign Management:** Full CRUD operations for campaigns (legacy system)
   - **Freelancer Listing:** `/freelancers` page with search and filter
   - **File Uploads:** Profile images, ID verification, and task proof images using `multer`
-  - **Service Offerings:** Packages (Basic, Pro, Growth) and services
   - **SEO & Social Media:** Optimized content and engagement services
   - **Motion Graphics:** Framer Motion animations on homepage
   - **Testing Infrastructure:** Comprehensive data-testid attributes for Playwright
