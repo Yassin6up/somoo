@@ -381,12 +381,12 @@ export default function ProductOwnerSignup() {
                                     field.value === pkg.id 
                                       ? "ring-2 ring-primary shadow-lg" 
                                       : "shadow-md",
-                                    pkg.recommended && "border-primary"
+                                    'recommended' in pkg && pkg.recommended && "border-primary"
                                   )}
                                   data-testid={`card-package-${pkg.id}`}
                                 >
                               <CardContent className="p-6 space-y-4">
-                                {pkg.recommended && (
+                                {'recommended' in pkg && pkg.recommended && (
                                   <div className="inline-block px-3 py-1 bg-primary text-primary-foreground text-xs font-semibold rounded-full">
                                     الأكثر طلبًا
                                   </div>
