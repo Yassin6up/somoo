@@ -1948,6 +1948,82 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // ============================================
+  // NOTIFICATIONS ROUTES - الإشعارات
+  // ============================================
+
+  // Get notifications for current user
+  app.get("/api/notifications", authMiddleware, async (req: AuthRequest, res) => {
+    try {
+      if (!req.user?.userId || !req.user?.userType) {
+        return res.status(401).json({ error: "غير مصرح" });
+      }
+
+      const notifications = await storage.getUserNotifications(req.user.userId, req.user.userType);
+      res.json(notifications);
+    } catch (error) {
+      console.error("Error fetching notifications:", error);
+      res.status(500).json({ error: "حدث خطأ أثناء جلب الإشعارات" });
+    }
+  });
+
+  // Mark notification as read
+  app.patch("/api/notifications/:id/read", authMiddleware, async (req: AuthRequest, res) => {
+    try {
+      const { id } = req.params;
+
+      if (!req.user?.userId) {
+        return res.status(401).json({ error: "غير مصرح" });
+      }
+
+      const notification = await storage.getNotification(id);
+      if (!notification) {
+        return res.status(404).json({ error: "الإشعار غير موجود" });
+      }
+
+      // Verify ownership
+      if (notification.userId !== req.user.userId) {
+        return res.status(403).json({ error: "ليس لديك صلاحية لتحديث هذا الإشعار" });
+      }
+
+      const updated = await storage.markNotificationAsRead(id);
+      res.json(updated);
+    } catch (error) {
+      console.error("Error marking notification as read:", error);
+      res.status(500).json({ error: "حدث خطأ أثناء تحديث الإشعار" });
+    }
+  });
+
+  // Mark all notifications as read
+  app.patch("/api/notifications/mark-all-read", authMiddleware, async (req: AuthRequest, res) => {
+    try {
+      if (!req.user?.userId || !req.user?.userType) {
+        return res.status(401).json({ error: "غير مصرح" });
+      }
+
+      await storage.markAllNotificationsAsRead(req.user.userId, req.user.userType);
+      res.json({ message: "تم تحديد جميع الإشعارات كمقروءة" });
+    } catch (error) {
+      console.error("Error marking all notifications as read:", error);
+      res.status(500).json({ error: "حدث خطأ أثناء تحديث الإشعارات" });
+    }
+  });
+
+  // Get unread notification count
+  app.get("/api/notifications/unread/count", authMiddleware, async (req: AuthRequest, res) => {
+    try {
+      if (!req.user?.userId || !req.user?.userType) {
+        return res.status(401).json({ error: "غير مصرح" });
+      }
+
+      const count = await storage.getUnreadNotificationCount(req.user.userId, req.user.userType);
+      res.json({ count });
+    } catch (error) {
+      console.error("Error fetching unread count:", error);
+      res.status(500).json({ error: "حدث خطأ أثناء جلب عدد الإشعارات" });
+    }
+  });
+
+  // ============================================
   // HEALTH CHECK
   // ============================================
 

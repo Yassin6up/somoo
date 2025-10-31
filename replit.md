@@ -22,23 +22,57 @@ The platform is built with a modern web stack, featuring a modular project struc
 - **Backend:** Express.js, with PostgreSQL database (Neon) for production, In-Memory Storage for testing.
 - **Forms:** Multi-step forms for registration (Freelancer and Product Owner) with robust validation. Fixed infinite render loop issue by using `field.value` instead of `form.watch` in checkbox components.
 - **User Authentication:** Login system with JWT-based sessions and role-based authorization. Navbar synchronizes immediately after signup/login via custom "userLoggedIn" event - no page reload required. Profile page shows graceful error state when user data is missing instead of infinite loading spinner.
-- **Dashboards:** 
-  - **Freelancer Dashboard:** Real-time statistics (active, submitted, completed tasks, earnings), tabbed task views, search/filter for available tasks, task cards with details, and task management (accept, start, submit with report).
-  - **Product Owner Dashboard:** Real-time statistics (active campaigns, submitted/completed tasks, total spent), three tabs (Submitted for Review, All Campaigns, All Tasks), task review dialog with approve/reject functionality, comprehensive campaign overview cards.
-- **Campaign Management:** Full CRUD operations including delete functionality for product owners to manage campaigns.
-- **Task Management:** Complete workflow from available → assigned → in_progress → submitted → approved/rejected. Product owners can review, approve, or reject submitted tasks with feedback. Approval updates freelancer wallet and creates notifications.
-- **Freelancer Listing:** `/freelancers` page with search, filter, and detailed freelancer cards.
-- **API Endpoints:** 
-  - Comprehensive CRUD APIs for freelancers, product owners, and campaigns
-  - Task management: GET /api/tasks/available, /api/tasks/my-tasks, /api/tasks/owner
-  - Task actions: POST /api/tasks/:id/accept, PATCH /api/tasks/:id/start, /api/tasks/:id/submit, /api/tasks/:id/approve, /api/tasks/:id/reject
-  - Campaign deletion: DELETE /api/campaigns/:id
-  - All secured by authentication and authorization middleware
-- **File Uploads:** System for profile images and ID verification using `multer`.
-- **Service Offerings:** Defined packages (Basic, Pro, Growth) and services (app testing, Google Maps reviews, UX/UI reviews, social media engagement).
-- **SEO & Social Media Integration:** Comprehensive SEO-optimized content for the homepage and a dedicated social media interaction service to boost engagement across platforms (Facebook, Instagram, Twitter, LinkedIn).
-- **Homepage Motion Graphics:** Utilizes Framer Motion for professional animations including 3D transforms (rotateX/rotateY), floating animations on horizontal "سُمُوّ" card, perspective effects, animated background particles, floating decorative icons, and interactive hover effects on service cards. Each service card has unique animated icons, background particles, and color gradients.
-- **Testing Infrastructure:** Comprehensive data-testid attributes on all interactive elements for end-to-end testing with Playwright.
+
+**NEW: Group-Based Work System (نظام العمل الجماعي):**
+- **Groups (الجروبات):**
+  - Freelancers can create groups with up to 700 members max
+  - Group leader manages members and accepts projects
+  - Composite unique constraint on (groupId, freelancerId) prevents duplicate memberships
+  - Leaders earn 5% commission on completed tasks
+  - Real-time member count tracking with activity validation
+  
+- **Projects (المشاريع):**
+  - Product owners create projects with budget and task requirements
+  - Group leaders browse pending projects and accept them
+  - Projects linked to accepting group for task distribution
+  - Complete workflow: pending → accepted → in_progress → completed
+  
+- **Tasks (المهام):**
+  - Leaders create and assign tasks to group members
+  - Task lifecycle: available → assigned → in_progress → submitted → approved/rejected
+  - Members submit proof images and reports
+  - Leaders review and approve/reject with feedback
+  - Approval triggers earnings distribution
+  
+- **Internal Messaging (الرسائل الداخلية):**
+  - Group members can send/receive messages
+  - Message types: text, file, project-related
+  - Real-time message synchronization
+  
+- **Earnings & Withdrawals (الأرباح والسحوبات):**
+  - Automatic earnings calculation with 5% leader commission
+  - Wallet balance tracking for freelancers
+  - Withdrawal requests with payment method support
+  - Status tracking: pending → approved → completed/rejected
+
+- **API Endpoints (الواجهات البرمجية):**
+  - **Groups:** POST/GET/PATCH /api/groups, JOIN/LEAVE endpoints, member management
+  - **Projects:** POST/GET/PATCH/DELETE /api/projects, accept/update/list endpoints
+  - **Tasks:** POST/GET/PATCH /api/tasks, assign/start/submit/approve/reject workflows
+  - **Messages:** POST/GET /api/groups/:groupId/messages, read status updates
+  - **Notifications:** GET /api/notifications, mark as read, unread count
+  - **Withdrawals:** POST/GET /api/withdrawals, request and track withdrawals
+  - All secured with authMiddleware and role-based authorization
+
+- **Original Features (Still Available):**
+  - **Dashboards:** Freelancer & Product Owner dashboards with real-time stats
+  - **Campaign Management:** Full CRUD operations for campaigns (legacy system)
+  - **Freelancer Listing:** `/freelancers` page with search and filter
+  - **File Uploads:** Profile images, ID verification, and task proof images using `multer`
+  - **Service Offerings:** Packages (Basic, Pro, Growth) and services
+  - **SEO & Social Media:** Optimized content and engagement services
+  - **Motion Graphics:** Framer Motion animations on homepage
+  - **Testing Infrastructure:** Comprehensive data-testid attributes for Playwright
 
 **System Design Choices:**
 - **Data Schemas:** Shared TypeScript data models for consistency across the stack.
