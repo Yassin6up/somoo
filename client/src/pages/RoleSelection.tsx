@@ -1,7 +1,6 @@
 import { Link } from "wouter";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
-import { Button } from "@/components/ui/button";
 import { Users, Briefcase, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -26,39 +25,31 @@ export default function RoleSelection() {
           </div>
 
           <div className="flex justify-center gap-4 flex-wrap">
-            <motion.div
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              transition={{ duration: 0.2 }}
-            >
-              <Link href="/freelancer-signup">
-                <Button 
-                  variant="default"
-                  className="rounded-full py-6 px-12 text-lg font-bold shadow-lg h-auto"
-                  data-testid="button-freelancer"
-                >
-                  <Users className="ml-2 h-6 w-6" />
-                  مستقل محترف
-                </Button>
-              </Link>
-            </motion.div>
+            <Link href="/freelancer-signup">
+              <motion.div
+                className="inline-flex items-center justify-center gap-2 rounded-full py-6 px-12 text-lg font-bold shadow-lg bg-primary text-primary-foreground hover-elevate active-elevate-2 cursor-pointer transition-all"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                transition={{ duration: 0.2 }}
+                data-testid="button-freelancer"
+              >
+                <Users className="h-6 w-6" />
+                <span>مستقل محترف</span>
+              </motion.div>
+            </Link>
 
-            <motion.div
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              transition={{ duration: 0.2 }}
-            >
-              <Link href="/product-owner-signup">
-                <Button 
-                  variant="default"
-                  className="rounded-full py-6 px-12 text-lg font-bold shadow-lg h-auto"
-                  data-testid="button-owner"
-                >
-                  <Briefcase className="ml-2 h-6 w-6" />
-                  صاحب منتج رقمي
-                </Button>
-              </Link>
-            </motion.div>
+            <Link href="/product-owner-signup">
+              <motion.div
+                className="inline-flex items-center justify-center gap-2 rounded-full py-6 px-12 text-lg font-bold shadow-lg bg-primary text-primary-foreground hover-elevate active-elevate-2 cursor-pointer transition-all"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                transition={{ duration: 0.2 }}
+                data-testid="button-owner"
+              >
+                <Briefcase className="h-6 w-6" />
+                <span>صاحب منتج رقمي</span>
+              </motion.div>
+            </Link>
           </div>
 
           <div className="text-center mt-8">
