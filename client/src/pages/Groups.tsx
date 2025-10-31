@@ -166,17 +166,30 @@ export default function Groups() {
                 onClick={() => navigate(`/groups/${group.id}`)}
                 data-testid={`card-group-${group.id}`}
               >
-                {/* Group Image */}
-                {group.groupImage && (
-                  <div className="w-full h-48 overflow-hidden bg-muted">
-                    <img
-                      src={group.groupImage}
-                      alt={group.name}
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        e.currentTarget.style.display = 'none';
-                      }}
-                    />
+                {/* Portfolio Images Gallery */}
+                {group.portfolioImages && group.portfolioImages.length > 0 && (
+                  <div className="w-full bg-muted/30 p-3">
+                    <div className="flex gap-2 overflow-x-auto scrollbar-hide" style={{ scrollbarWidth: 'none' }}>
+                      {group.portfolioImages.slice(0, 12).map((image, idx) => (
+                        <div
+                          key={idx}
+                          className="flex-shrink-0 w-24 h-24 rounded-md overflow-hidden bg-muted hover-elevate"
+                          data-testid={`img-portfolio-${group.id}-${idx}`}
+                        >
+                          <img
+                            src={image}
+                            alt={`نموذج عمل ${idx + 1}`}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              e.currentTarget.src = `https://placehold.co/200x200/e5e7eb/6b7280?text=${idx + 1}`;
+                            }}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                    <p className="text-xs text-center text-muted-foreground mt-2">
+                      نماذج من أعمال سابقة (قبل وبعد)
+                    </p>
                   </div>
                 )}
 
