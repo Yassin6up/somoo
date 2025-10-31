@@ -107,6 +107,7 @@ export interface IStorage {
 
   // Group methods
   getGroup(id: string): Promise<Group | undefined>;
+  getAllGroups(): Promise<Group[]>;
   getGroupsByLeader(leaderId: string): Promise<Group[]>;
   getGroupsByMember(freelancerId: string): Promise<Group[]>;
   createGroup(group: InsertGroup): Promise<Group>;
@@ -524,6 +525,10 @@ export class DatabaseStorage implements IStorage {
   async getGroup(id: string): Promise<Group | undefined> {
     const [group] = await db.select().from(groups).where(eq(groups.id, id));
     return group || undefined;
+  }
+
+  async getAllGroups(): Promise<Group[]> {
+    return await db.select().from(groups).orderBy(desc(groups.createdAt));
   }
 
   async getGroupsByLeader(leaderId: string): Promise<Group[]> {
