@@ -94,17 +94,21 @@ export function Navbar() {
                 الرئيسية
               </div>
             </Link>
+            <Link href="/groups">
+              <div className="px-4 py-2 hover-elevate active-elevate-2 rounded-xl transition-all text-sm font-medium cursor-pointer" data-testid="link-groups-nav">
+                الجروبات
+              </div>
+            </Link>
+            <Link href="/projects">
+              <div className="px-4 py-2 hover-elevate active-elevate-2 rounded-xl transition-all text-sm font-medium cursor-pointer" data-testid="link-projects-nav">
+                المشاريع
+              </div>
+            </Link>
             <Link href="/freelancers">
               <div className="px-4 py-2 hover-elevate active-elevate-2 rounded-xl transition-all text-sm font-medium cursor-pointer" data-testid="link-freelancers-nav">
                 المستقلين
               </div>
             </Link>
-            <a href="#services" className="px-4 py-2 hover-elevate active-elevate-2 rounded-xl transition-all text-sm font-medium" data-testid="link-services">
-              الخدمات
-            </a>
-            <a href="#how-it-works" className="px-4 py-2 hover-elevate active-elevate-2 rounded-xl transition-all text-sm font-medium" data-testid="link-how-it-works">
-              كيف تعمل
-            </a>
           </div>
 
           {/* Desktop CTA Buttons / User Profile */}
@@ -181,17 +185,21 @@ export function Navbar() {
                 الرئيسية
               </div>
             </Link>
+            <Link href="/groups">
+              <div className="block px-4 py-2 hover-elevate active-elevate-2 rounded-xl text-sm font-medium cursor-pointer" data-testid="link-groups-mobile">
+                الجروبات
+              </div>
+            </Link>
+            <Link href="/projects">
+              <div className="block px-4 py-2 hover-elevate active-elevate-2 rounded-xl text-sm font-medium cursor-pointer" data-testid="link-projects-mobile">
+                المشاريع
+              </div>
+            </Link>
             <Link href="/freelancers">
               <div className="block px-4 py-2 hover-elevate active-elevate-2 rounded-xl text-sm font-medium cursor-pointer" data-testid="link-freelancers-mobile">
                 المستقلين
               </div>
             </Link>
-            <a href="#services" className="block px-4 py-2 hover-elevate active-elevate-2 rounded-xl text-sm font-medium" data-testid="link-services-mobile">
-              الخدمات
-            </a>
-            <a href="#how-it-works" className="block px-4 py-2 hover-elevate active-elevate-2 rounded-xl text-sm font-medium" data-testid="link-how-it-works-mobile">
-              كيف تعمل
-            </a>
             
             <div className="pt-2 flex flex-col gap-2">
               {user ? (

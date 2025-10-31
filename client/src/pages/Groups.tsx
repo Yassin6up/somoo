@@ -45,7 +45,7 @@ export default function Groups() {
   // Filter groups based on search
   const filteredGroups = groups.filter((group) =>
     group.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    group.description?.toLowerCase().includes(searchTerm.toLowerCase())
+    (group.description?.toLowerCase()?.includes(searchTerm.toLowerCase()) ?? false)
   );
 
   return (

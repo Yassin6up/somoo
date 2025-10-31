@@ -18,6 +18,9 @@ import Profile from "@/pages/Profile";
 import Groups from "@/pages/Groups";
 import CreateGroup from "@/pages/CreateGroup";
 import GroupDetails from "@/pages/GroupDetails";
+import Projects from "@/pages/Projects";
+import CreateProject from "@/pages/CreateProject";
+import MyTasks from "@/pages/MyTasks";
 
 function Router() {
   return (
@@ -36,6 +39,9 @@ function Router() {
       <Route path="/groups" component={Groups} />
       <Route path="/groups/create" component={CreateGroup} />
       <Route path="/groups/:id" component={GroupDetails} />
+      <Route path="/projects" component={Projects} />
+      <Route path="/projects/create" component={CreateProject} />
+      <Route path="/my-tasks" component={MyTasks} />
       <Route component={NotFound} />
     </Switch>
   );
