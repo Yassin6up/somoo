@@ -47,15 +47,15 @@ button, .font-medium {
 
   --sidebar-border: 0 0% 86%;
 
-  --sidebar-primary: 142 71% 45%;
+  --sidebar-primary: 212 100% 31%;
 
   --sidebar-primary-foreground: 0 0% 100%;
 
-  --sidebar-accent: 142 15% 85%;
+  --sidebar-accent: 212 15% 85%;
 
-  --sidebar-accent-foreground: 142 30% 25%;
+  --sidebar-accent-foreground: 212 30% 25%;
 
-  --sidebar-ring: 142 71% 45%;
+  --sidebar-ring: 212 100% 31%;
 
   --popover: 0 0% 92%;
 
@@ -63,31 +63,31 @@ button, .font-medium {
 
   --popover-border: 0 0% 84%;
 
-  --primary: 140.67deg 35.43% 50.2%;
+  --primary: 212 100% 31%;
 
   --primary-foreground: 0 0% 100%;
 
-  --secondary: 142 8% 88%;
+  --secondary: 212 8% 88%;
 
-  --secondary-foreground: 142 15% 20%;
+  --secondary-foreground: 212 15% 20%;
 
-  --muted: 145.12deg 45.26% 81.37%;
+  --muted: 212 20% 85%;
 
-  --muted-foreground: 142 12% 35%;
+  --muted-foreground: 212 12% 35%;
 
-  --accent: 142 12% 87%;
+  --accent: 212 12% 87%;
 
-  --accent-foreground: 142 20% 25%;
+  --accent-foreground: 212 20% 25%;
 
   --destructive: 0 84% 42%;
 
   --destructive-foreground: 0 0% 100%;
 
   --input: 0deg 100% 97.45%;
-  --ring: 142 71% 45%;
-  --chart-1: 142 71% 35%;
-  --chart-2: 142 50% 50%;
-  --chart-3: 142 30% 60%;
+  --ring: 212 100% 31%;
+  --chart-1: 212 100% 31%;
+  --chart-2: 212 80% 40%;
+  --chart-3: 212 60% 50%;
   --chart-4: 0 0% 40%;
   --chart-5: 0 0% 60%;
 
@@ -165,15 +165,15 @@ button, .font-medium {
 
   --sidebar-border: 0 0% 22%;
 
-  --sidebar-primary: 142 71% 35%;
+  --sidebar-primary: 212 80% 45%;
 
   --sidebar-primary-foreground: 0 0% 100%;
 
-  --sidebar-accent: 142 12% 18%;
+  --sidebar-accent: 212 12% 18%;
 
-  --sidebar-accent-foreground: 142 30% 85%;
+  --sidebar-accent-foreground: 212 30% 85%;
 
-  --sidebar-ring: 142 71% 45%;
+  --sidebar-ring: 212 80% 45%;
 
   --popover: 0 0% 15%;
 
@@ -181,31 +181,31 @@ button, .font-medium {
 
   --popover-border: 0 0% 24%;
 
-  --primary: 142 71% 35%;
+  --primary: 212 80% 45%;
 
   --primary-foreground: 0 0% 100%;
 
-  --secondary: 142 8% 20%;
+  --secondary: 212 8% 20%;
 
-  --secondary-foreground: 142 15% 90%;
+  --secondary-foreground: 212 15% 90%;
 
-  --muted: 142 10% 17%;
+  --muted: 212 10% 17%;
 
-  --muted-foreground: 142 12% 75%;
+  --muted-foreground: 212 12% 75%;
 
-  --accent: 142 12% 19%;
+  --accent: 212 12% 19%;
 
-  --accent-foreground: 142 20% 85%;
+  --accent-foreground: 212 20% 85%;
 
   --destructive: 0 84% 32%;
 
   --destructive-foreground: 0 0% 100%;
 
   --input: 0 0% 35%;
-  --ring: 142 71% 45%;
-  --chart-1: 142 71% 65%;
-  --chart-2: 142 50% 55%;
-  --chart-3: 142 30% 45%;
+  --ring: 212 80% 45%;
+  --chart-1: 212 80% 60%;
+  --chart-2: 212 60% 50%;
+  --chart-3: 212 40% 40%;
   --chart-4: 0 0% 65%;
   --chart-5: 0 0% 50%;
 

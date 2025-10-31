@@ -122,11 +122,22 @@ export default function FreelancerSignup() {
 
   // Memoize default values to prevent re-initialization
   const defaultFormValues = useMemo(() => ({
-    ...formData,
+    fullName: formData.fullName || "",
+    username: formData.username || "",
+    email: formData.email || "",
+    phone: formData.phone || "",
     countryCode: formData.countryCode || "+966",
+    password: formData.password || "",
+    bio: formData.bio || "",
+    jobTitle: formData.jobTitle || "",
     teamSize: formData.teamSize || "1",
     services: formData.services || [],
-  }), [currentStep]);
+    aboutMe: formData.aboutMe || "",
+    profileImage: formData.profileImage || "",
+    idVerification: formData.idVerification || "",
+    paymentMethod: formData.paymentMethod || "",
+    accountNumber: formData.accountNumber || "",
+  }), [currentStep, formData]);
 
   const form = useForm<FormData>({
     resolver: zodResolver(getSchemaForStep(currentStep)),
