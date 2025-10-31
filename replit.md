@@ -62,6 +62,21 @@ The platform is built with a modern web stack, featuring a modular project struc
   - Withdrawal requests with payment method support
   - Status tracking: pending → approved → completed/rejected
 
+- **Direct Purchase System (نظام الشراء المباشر):**
+  - Product owners can purchase services directly from group leaders
+  - **Purchase Flow:** View Groups → Contact/Purchase → Service Selection → Payment Method → Confirmation
+  - **Service Types:** Google Play reviews ($1), iOS reviews ($1), Website reviews ($1), UX testing ($1), Software testing ($1), Social Media engagement ($1), Google Maps reviews ($2)
+  - **Payment Methods:** Vodafone Cash, Etisalat Cash, Orange Cash, Bank Card
+  - **Order Management:** 
+    - Status tracking: pending → payment_confirmed → in_progress → completed
+    - Orders table stores: service type, quantity, total amount, payment method, payment details
+    - Automatic notifications to group leaders upon new orders
+    - Authentication protection: only logged-in product owners can purchase
+  - **User Flow Updates:**
+    - Freelancers redirected to /groups after signup (to join or create groups)
+    - Product Owners see "شراء الخدمة" and "تواصل معي" buttons on group cards
+    - PurchaseService page protected with authentication check (redirects to login if not authorized)
+
 - **API Endpoints (الواجهات البرمجية):**
   - **Groups:** POST/GET/PATCH /api/groups, JOIN/LEAVE endpoints, member management
   - **Projects:** POST/GET/PATCH/DELETE /api/projects, accept/update/list endpoints
@@ -69,6 +84,7 @@ The platform is built with a modern web stack, featuring a modular project struc
   - **Messages:** POST/GET /api/groups/:groupId/messages, read status updates
   - **Notifications:** GET /api/notifications, mark as read, unread count
   - **Withdrawals:** POST/GET /api/withdrawals, request and track withdrawals
+  - **Orders:** POST/GET /api/orders, GET /api/orders/:id, PATCH /api/orders/:id/status
   - All secured with authMiddleware and role-based authorization
 
 - **Product Owner Signup (نموذج تسجيل صاحب المنتج):**

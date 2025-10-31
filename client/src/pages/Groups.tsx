@@ -21,8 +21,9 @@ export default function Groups() {
 
   // Get current user from localStorage
   const currentUser = JSON.parse(localStorage.getItem("user") || "null");
-  const isProductOwner = currentUser?.role === "product_owner";
-  const isFreelancer = currentUser?.role === "freelancer";
+  const userType = localStorage.getItem("userType");
+  const isProductOwner = userType === "product_owner";
+  const isFreelancer = userType === "freelancer";
 
   // Fetch all groups
   const { data: groups = [], isLoading } = useQuery<Group[]>({

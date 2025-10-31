@@ -47,8 +47,9 @@ export default function PurchaseService() {
   useEffect(() => {
     const currentUser = JSON.parse(localStorage.getItem("user") || "null");
     const token = localStorage.getItem("token");
+    const userType = localStorage.getItem("userType");
     
-    if (!currentUser || !token || currentUser.role !== "product_owner") {
+    if (!currentUser || !token || userType !== "product_owner") {
       toast({
         title: "غير مصرح",
         description: "يجب تسجيل الدخول كصاحب منتج للوصول لهذه الصفحة",
@@ -74,7 +75,7 @@ export default function PurchaseService() {
     mutationFn: async () => {
       const currentUser = JSON.parse(localStorage.getItem("user") || "null");
       
-      return await apiRequest("/api/orders", "POST", {
+      return await apiRequest("POST", "/api/orders", {
         productOwnerId: currentUser?.id,
         groupId: groupId,
         serviceType,
