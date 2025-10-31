@@ -15,6 +15,9 @@ import Login from "@/pages/Login";
 import Campaigns from "@/pages/Campaigns";
 import Freelancers from "@/pages/Freelancers";
 import Profile from "@/pages/Profile";
+import Groups from "@/pages/Groups";
+import CreateGroup from "@/pages/CreateGroup";
+import GroupDetails from "@/pages/GroupDetails";
 
 function Router() {
   return (
@@ -30,6 +33,9 @@ function Router() {
       <Route path="/profile" component={Profile} />
       <Route path="/campaigns" component={Campaigns} />
       <Route path="/freelancers" component={Freelancers} />
+      <Route path="/groups" component={Groups} />
+      <Route path="/groups/create" component={CreateGroup} />
+      <Route path="/groups/:id" component={GroupDetails} />
       <Route component={NotFound} />
     </Switch>
   );
