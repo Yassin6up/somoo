@@ -191,7 +191,7 @@ export default function Home() {
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             {/* Left Side - Main Content */}
             <div className="space-y-8 text-center lg:text-right">
-              <div className="inline-flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-full">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full">
                 <Sparkles className="h-4 w-4 text-primary" />
                 <span className="text-sm font-medium text-primary">المنصة الأولى في المنطقة</span>
               </div>
@@ -294,7 +294,7 @@ export default function Home() {
                   <CardContent className="p-6 lg:p-8">
                     <div className="flex items-center justify-between mb-6">
                       <h3 className="text-xl lg:text-2xl font-bold bg-gradient-to-br from-primary to-primary/70 bg-clip-text text-transparent">خدماتنا المميزة</h3>
-                      <Badge className="bg-primary/10 text-primary hover:bg-primary/20 rounded-xl px-3 shadow-sm">
+                      <Badge className="text-primary rounded-xl px-3 shadow-sm" variant="outline">
                         <Sparkles className="h-3 w-3 ml-1" />
                         احترافي
                       </Badge>
@@ -309,7 +309,7 @@ export default function Home() {
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ duration: 0.5, delay: index * 0.1 }}
                           whileHover={{ y: -5, scale: 1.02 }}
-                          className="bg-gradient-to-br from-background to-muted/30 rounded-2xl p-5 hover-elevate active-elevate-2 transition-all group border border-border/50 shadow-sm text-center"
+                          className="rounded-2xl p-5 hover-elevate active-elevate-2 transition-all group border border-border/50 shadow-sm text-center"
                           data-testid={`service-${index}`}
                         >
                           <motion.div
@@ -354,7 +354,7 @@ export default function Home() {
                     {/* Bottom CTA */}
                     <motion.div
                       whileHover={{ scale: 1.02 }}
-                      className="bg-gradient-to-br from-primary/10 to-primary/5 rounded-2xl p-5 border border-primary/20 shadow-sm mt-6"
+                      className="rounded-2xl p-5 mt-6"
                     >
                       <div className="flex items-center justify-between flex-wrap gap-3">
                         <div>
@@ -382,7 +382,7 @@ export default function Home() {
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <FadeInSection>
             <div className="text-center mb-12">
-              <Badge className="mb-4 bg-primary/10 text-primary hover:bg-primary/20 rounded-xl px-4 py-1">
+              <Badge className="mb-4 text-primary rounded-xl px-4 py-1" variant="outline">
                 <Sparkles className="h-3 w-3 ml-1" />
                 عن المنصة
               </Badge>
@@ -413,7 +413,7 @@ export default function Home() {
             <div className="space-y-4 text-foreground">
               <FadeInSection delay={0.1}>
                 <motion.div 
-                  className="relative flex items-start gap-4 p-6 rounded-2xl bg-gradient-to-l from-primary/10 to-transparent overflow-hidden group"
+                  className="relative flex items-start gap-4 p-6 rounded-2xl overflow-hidden group"
                   whileHover={{ scale: 1.02, x: 5 }}
                   transition={{ duration: 0.3 }}
                 >
@@ -458,7 +458,7 @@ export default function Home() {
 
               <FadeInSection delay={0.15}>
                 <motion.div 
-                  className="relative flex items-start gap-4 p-6 rounded-2xl bg-gradient-to-l from-primary/10 to-transparent overflow-hidden group"
+                  className="relative flex items-start gap-4 p-6 rounded-2xl overflow-hidden group"
                   whileHover={{ scale: 1.02, x: 5 }}
                   transition={{ duration: 0.3 }}
                 >
@@ -503,8 +503,8 @@ export default function Home() {
 
               <FadeInSection delay={0.2}>
                 <motion.div 
-                  className="relative flex items-start gap-4 p-6 rounded-2xl bg-gradient-to-l from-primary/15 to-transparent border-2 border-primary/30 overflow-hidden group"
-                  whileHover={{ scale: 1.02, x: 5, borderColor: "rgba(236, 72, 153, 0.5)" }}
+                  className="relative flex items-start gap-4 p-6 rounded-2xl overflow-hidden group"
+                  whileHover={{ scale: 1.02, x: 5 }}
                   transition={{ duration: 0.3 }}
                 >
                   {/* Featured badge with animation */}
@@ -519,7 +519,7 @@ export default function Home() {
                       ease: "easeInOut"
                     }}
                   >
-                    <Badge className="bg-gradient-to-r from-primary to-primary text-white rounded-lg px-3 py-1 shadow-lg border-0">
+                    <Badge className="text-primary rounded-lg px-3 py-1 shadow-lg" variant="outline">
                       <motion.span
                         animate={{ rotate: [0, 20, -20, 0] }}
                         transition={{ duration: 2, repeat: Infinity }}
@@ -584,7 +584,7 @@ export default function Home() {
 
               <FadeInSection delay={0.25}>
                 <motion.div 
-                  className="relative flex items-start gap-4 p-6 rounded-2xl bg-gradient-to-l from-primary/10 to-transparent overflow-hidden group"
+                  className="relative flex items-start gap-4 p-6 rounded-2xl overflow-hidden group"
                   whileHover={{ scale: 1.02, x: 5 }}
                   transition={{ duration: 0.3 }}
                 >
@@ -627,7 +627,7 @@ export default function Home() {
 
               <FadeInSection delay={0.3}>
                 <motion.div 
-                  className="relative flex items-start gap-4 p-6 rounded-2xl bg-gradient-to-l from-green-500/10 to-transparent overflow-hidden group"
+                  className="relative flex items-start gap-4 p-6 rounded-2xl overflow-hidden group"
                   whileHover={{ scale: 1.02, x: 5 }}
                   transition={{ duration: 0.3 }}
                 >
@@ -670,7 +670,7 @@ export default function Home() {
 
               <FadeInSection delay={0.35}>
                 <motion.div 
-                  className="relative flex items-start gap-4 p-6 rounded-2xl bg-gradient-to-l from-primary/10 to-transparent overflow-hidden group"
+                  className="relative flex items-start gap-4 p-6 rounded-2xl overflow-hidden group"
                   whileHover={{ scale: 1.02, x: 5 }}
                   transition={{ duration: 0.3 }}
                 >
@@ -768,7 +768,7 @@ export default function Home() {
             </div>
 
             <FadeInSection delay={0.5}>
-              <div className="bg-gradient-to-br from-primary/10 to-primary/5 rounded-2xl p-8 mt-12 border border-primary/20 shadow-lg">
+              <div className="rounded-2xl p-8 mt-12">
                 <h3 className="text-2xl font-bold text-foreground mb-6 flex items-center gap-2">
                   <Zap className="h-6 w-6 text-primary" />
                   كيف تعمل المنصة؟
@@ -807,7 +807,7 @@ export default function Home() {
             </FadeInSection>
 
             <FadeInSection delay={0.6}>
-              <p className="text-lg text-foreground leading-relaxed mt-12 text-center bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 p-6 rounded-2xl border border-primary/20">
+              <p className="text-lg text-foreground leading-relaxed mt-12 text-center p-6 rounded-2xl">
                 انضم اليوم إلى <strong>مئات العملاء الراضين</strong> الذين يثقون بمنصة سُمُوّ لتطوير منتجاتهم الرقمية. سواء كنت صاحب منتج رقمي تبحث عن اختبارات موثوقة وتقييمات حقيقية، أو مستقل محترف يبحث عن فرص عمل مرنة ومربحة، <strong className="text-primary">منصة سُمُوّ هي خيارك الأمثل</strong>.
               </p>
             </FadeInSection>
@@ -817,10 +817,10 @@ export default function Home() {
 
 
       {/* CTA Section */}
-      <section className="py-20 bg-gradient-to-br from-primary/10 via-primary/5 to-background relative overflow-hidden">
+      <section className="py-20 bg-background relative overflow-hidden">
         <div className="absolute inset-0 bg-grid-pattern opacity-5"></div>
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-8 relative">
-          <div className="inline-flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-full mb-4">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-4">
             <Sparkles className="h-4 w-4 text-primary" />
             <span className="text-sm font-medium text-primary">انضم الآن</span>
           </div>
