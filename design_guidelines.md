@@ -6,6 +6,12 @@
 
 **Core Principles**: Spacious layouts, professional yet approachable, clear visual hierarchy, breathing room between elements.
 
+## Brand Identity
+
+**Primary Color**: Teal/Turquoise (#58D1B7 - HSL: 167, 60%, 58%) - A modern, professional cyan-green that conveys trust, innovation, and growth.
+
+**Color Psychology**: The teal color represents reliability (from blue) combined with growth and vitality (from green), perfectly suited for a platform connecting professionals and digital product owners.
+
 ## Typography
 
 **Fonts**: Cairo (Arabic primary, RTL-optimized) + Inter (Latin fallback) via Google Fonts CDN
@@ -46,13 +52,13 @@
 
 **Landing Header**: Fixed/sticky, backdrop-blur, logo right (RTL)/left (LTR), nav links gap-8 weight-500, CTA rounded-2xl shadow-sm
 
-**Dashboard Sidebar**: 280px fixed, icons from Heroicons, active state with green accent strip, collapsible mobile overlay
+**Dashboard Sidebar**: 280px fixed, icons from Heroicons, active state with teal accent strip, collapsible mobile overlay
 
 ### Forms & Inputs
 
-**Text Inputs**: 1px border, rounded-xl, px-4 py-3, green ring on focus, red border for errors, icons right (RTL) with mr-3
+**Text Inputs**: 1px border, rounded-xl, px-4 py-3, teal ring on focus, red border for errors, icons right (RTL) with mr-3
 
-**Multi-Step Forms**: Progress indicator with step numbers/connecting lines, current step green, completed with checkmarks, max-w-2xl centered, prev/next buttons at bottom
+**Multi-Step Forms**: Progress indicator with step numbers/connecting lines, current step teal, completed with checkmarks, max-w-2xl centered, prev/next buttons at bottom
 
 **File Upload**: Dashed border rounded-xl, drag-drop zone, uploaded files list with remove button, circular preview (profile), rectangular (docs)
 
@@ -66,7 +72,7 @@
 
 **Primary Card**: White bg, rounded-2xl, shadow-md, p-6/p-8, hover: shadow-lg + scale-105
 
-**Feature Cards**: Large circular icon (light green bg), title weight-600 text-lg, 2-3 line description, optional "Learn more" link
+**Feature Cards**: Large circular icon (light teal bg), title weight-600 text-lg, 2-3 line description, optional "Learn more" link
 
 **Pricing Cards**: Vertical layout, badge for "Popular", bold package name, large price, checkmark feature list, full-width CTA at bottom
 
@@ -74,17 +80,17 @@
 
 ### Buttons
 
-**Primary**: Green (#4CAF50) bg, white text weight-600, rounded-2xl, px-8 py-3/px-6 py-2.5, shadow-md, hover: scale-105 transition-all 200ms
+**Primary**: Teal (#58D1B7) bg, white text weight-600, rounded-2xl, px-8 py-3/px-6 py-2.5, shadow-md, hover: scale-105 transition-all 200ms
 
 **On Hero Images**: backdrop-blur-md, semi-transparent bg, rounded-2xl, shadow
 
-**Secondary**: 2px green border, transparent/white bg, green text, same sizing
+**Secondary**: 2px teal border, transparent/white bg, teal text, same sizing
 
 **Icon**: p-2/p-3, rounded-xl, hover bg treatment
 
 ### Dashboard Elements
 
-**Sidebar Items**: Icon + label gap-3, px-4 py-3, rounded-xl, active: green tint bg + green text, hover: light bg
+**Sidebar Items**: Icon + label gap-3, px-4 py-3, rounded-xl, active: teal tint bg + teal text, hover: light bg
 
 **Data Tables**: Header row bg tint weight-600, subtle row dividers, row hover light bg, icon buttons for actions, centered pagination
 
@@ -98,7 +104,7 @@
 
 **Structure**: Semi-transparent dark backdrop, centered rounded-2xl container, close button top-right (RTL: top-left), bold title, comfortable padding, action buttons aligned right (RTL: left)
 
-**Confirmations**: Circular green checkmark icon, centered message, single primary button
+**Confirmations**: Circular teal checkmark icon, centered message, single primary button
 
 ## Landing Page Sections
 
@@ -153,4 +159,21 @@
 
 ---
 
-**Quick Reference**: Green primary (#4CAF50), rounded-2xl standard radius, Cairo/Inter fonts, RTL-first mirroring, shadow-md standard elevation, transition-all duration-200ms standard animation
+**Quick Reference**: Teal primary (#58D1B7 / HSL: 167, 60%, 58%), rounded-2xl standard radius, Cairo/Inter fonts, RTL-first mirroring, shadow-md standard elevation, transition-all duration-200ms standard animation
+
+## Color Palette
+
+**Primary Colors**:
+- Teal/Turquoise: `hsl(167, 60%, 58%)` - Main brand color
+- Teal Dark (for dark mode): `hsl(167, 60%, 48%)` - Darker variant for dark backgrounds
+
+**Accent Colors**:
+- Teal Light: `hsl(167, 15%, 85%)` - For subtle backgrounds
+- Teal Muted: `hsl(167, 10%, 90%)` - For muted elements
+
+**Usage Guidelines**:
+- Use primary teal for CTAs, active states, links, and key UI elements
+- Use teal accents for hover states, focus rings, and highlights
+- Maintain sufficient contrast ratios for accessibility (WCAG AA minimum)
+- Pair with neutral grays for backgrounds and text
+- Use sparingly to maintain visual hierarchy

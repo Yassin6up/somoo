@@ -11,7 +11,7 @@ The platform is built with a modern web stack, featuring a modular project struc
 
 **UI/UX Decisions:**
 - **Design Language:** Modern SaaS aesthetic with soft shadows, rounded edges, and a clean layout (inspired by Figma, Notion).
-- **Color Scheme:** Primary green (#4CAF50), white background (#FAFAFA).
+- **Color Scheme:** Primary teal/turquoise (#58D1B7 - HSL: 167, 60%, 58%), white background (#FAFAFA). Updated to modern teal color for professional, trustworthy brand identity.
 - **Typography:** Tajawal Bold/Thick (Arabic), Inter (English).
 - **Responsiveness & RTL:** Fully responsive design with comprehensive Right-to-Left (RTL) support.
 - **Interactive Elements:** Hover effects, 3D elevations, and Framer Motion animations for icons and card elements.
