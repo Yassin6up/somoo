@@ -69,6 +69,7 @@ export const groups = pgTable("groups", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   name: text("name").notNull(),
   description: text("description"),
+  groupImage: text("group_image"), // صورة الجروب
   leaderId: varchar("leader_id").notNull().references(() => freelancers.id),
   maxMembers: integer("max_members").default(700).notNull(),
   currentMembers: integer("current_members").default(1).notNull(),

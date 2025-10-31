@@ -162,10 +162,24 @@ export default function Groups() {
             {filteredGroups.map((group) => (
               <Card
                 key={group.id}
-                className="hover-elevate cursor-pointer transition-all"
+                className="hover-elevate cursor-pointer transition-all overflow-hidden"
                 onClick={() => navigate(`/groups/${group.id}`)}
                 data-testid={`card-group-${group.id}`}
               >
+                {/* Group Image */}
+                {group.groupImage && (
+                  <div className="w-full h-48 overflow-hidden bg-muted">
+                    <img
+                      src={group.groupImage}
+                      alt={group.name}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                      }}
+                    />
+                  </div>
+                )}
+
                 <CardHeader>
                   <div className="flex items-start justify-between mb-2">
                     <CardTitle className="text-xl" style={{ fontFamily: "Tajawal, sans-serif" }}>

@@ -149,7 +149,21 @@ export default function GroupDetails() {
         </Button>
 
         {/* Group Header */}
-        <Card className="mb-6">
+        <Card className="mb-6 overflow-hidden">
+          {/* Group Image */}
+          {group.groupImage && (
+            <div className="w-full h-64 overflow-hidden bg-muted">
+              <img
+                src={group.groupImage}
+                alt={group.name}
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  e.currentTarget.parentElement!.style.display = 'none';
+                }}
+              />
+            </div>
+          )}
+
           <CardHeader>
             <div className="flex items-start justify-between">
               <div className="flex-1">

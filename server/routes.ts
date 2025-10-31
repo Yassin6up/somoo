@@ -335,9 +335,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "نوع الملف غير مدعوم. يسمح فقط بالصور (JPEG, PNG, GIF, WebP) و PDF" });
       }
 
-      const { type } = req.body; // 'profile' or 'verification'
+      const { type } = req.body; // 'profile', 'verification', or 'group'
       
-      if (type !== "profile" && type !== "verification") {
+      if (type !== "profile" && type !== "verification" && type !== "group") {
         return res.status(400).json({ error: "نوع الملف غير صحيح" });
       }
 

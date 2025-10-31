@@ -26,10 +26,14 @@ The platform is built with a modern web stack, featuring a modular project struc
 **NEW: Group-Based Work System (نظام العمل الجماعي):**
 - **Groups (الجروبات):**
   - Freelancers can create groups with up to 700 members max
+  - **Group image upload** - Leaders can upload custom images from device gallery (max 5MB)
+  - Image preview shown next to "أنشئ جروب وابدأ باستقبال أعضاء والعمل على المشاريع" text
+  - Images stored using object storage and displayed in group cards and detail pages
   - Group leader manages members and accepts projects
   - Composite unique constraint on (groupId, freelancerId) prevents duplicate memberships
   - Leaders earn 5% commission on completed tasks
   - Real-time member count tracking with activity validation
+  - Error handling for failed image uploads with clear user feedback
   
 - **Projects (المشاريع):**
   - Product owners create projects with budget and task requirements
