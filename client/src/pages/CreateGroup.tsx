@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
@@ -26,14 +26,6 @@ export default function CreateGroup() {
   const { toast } = useToast();
   const [imagePreview, setImagePreview] = useState<string>("");
   const [isUploading, setIsUploading] = useState(false);
-  const [user, setUser] = useState<any>(null);
-
-  useEffect(() => {
-    const userData = localStorage.getItem("user");
-    if (userData) {
-      setUser(JSON.parse(userData));
-    }
-  }, []);
 
   const form = useForm<CreateGroupForm>({
     resolver: zodResolver(createGroupSchema),
@@ -117,13 +109,22 @@ export default function CreateGroup() {
 
   const createGroupMutation = useMutation({
     mutationFn: async (data: CreateGroupForm) => {
-      if (!user || !user.id) {
+      // Get user data from localStorage at the time of submission
+      const userDataStr = localStorage.getItem("user");
+      if (!userDataStr) {
         throw new Error("يجب تسجيل الدخول أولاً");
       }
+      
+      const userData = JSON.parse(userDataStr);
+      if (!userData || !userData.id) {
+        throw new Error("بيانات المستخدم غير صحيحة. يرجى تسجيل الدخول مرة أخرى");
+      }
+      
       const groupData = {
         ...data,
-        leaderId: user.id,
+        leaderId: userData.id,
       };
+      
       return await apiRequest("/api/groups", "POST", groupData);
     },
     onSuccess: (data: any) => {
