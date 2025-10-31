@@ -131,6 +131,8 @@ export default function Login() {
                             placeholder="example@email.com" 
                             className="rounded-xl h-11" 
                             data-testid="input-email"
+                            autoComplete="email"
+                            name="email"
                           />
                         </FormControl>
                         <FormMessage />
@@ -155,6 +157,8 @@ export default function Login() {
                             placeholder="••••••••" 
                             className="rounded-xl h-11" 
                             data-testid="input-password"
+                            autoComplete="current-password"
+                            name="password"
                           />
                         </FormControl>
                         <FormMessage />

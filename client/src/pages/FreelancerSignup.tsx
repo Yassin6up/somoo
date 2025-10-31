@@ -232,7 +232,7 @@ export default function FreelancerSignup() {
                           <FormItem>
                             <FormLabel>البريد الإلكتروني *</FormLabel>
                             <FormControl>
-                              <Input {...field} type="email" placeholder="ahmed@example.com" className="rounded-xl" data-testid="input-email" />
+                              <Input {...field} type="email" placeholder="ahmed@example.com" className="rounded-xl" data-testid="input-email" autoComplete="email" name="email" />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -304,7 +304,7 @@ export default function FreelancerSignup() {
                           <FormItem>
                             <FormLabel>كلمة المرور *</FormLabel>
                             <FormControl>
-                              <Input {...field} type="password" placeholder="••••••••" className="rounded-xl" data-testid="input-password" />
+                              <Input {...field} type="password" placeholder="••••••••" className="rounded-xl" data-testid="input-password" autoComplete="new-password" name="password" />
                             </FormControl>
                             <PasswordStrength password={field.value || ""} />
                             <FormMessage />
