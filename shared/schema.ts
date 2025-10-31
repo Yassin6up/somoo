@@ -70,6 +70,7 @@ export const groups = pgTable("groups", {
   name: text("name").notNull(),
   description: text("description"),
   groupImage: text("group_image"), // صورة الجروب
+  portfolioImages: text("portfolio_images").array().default(sql`ARRAY[]::text[]`), // صور البورتفوليو (قبل وبعد)
   leaderId: varchar("leader_id").notNull().references(() => freelancers.id),
   maxMembers: integer("max_members").default(700).notNull(),
   currentMembers: integer("current_members").default(1).notNull(),
