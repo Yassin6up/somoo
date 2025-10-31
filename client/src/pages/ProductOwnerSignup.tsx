@@ -149,14 +149,6 @@ export default function ProductOwnerSignup() {
     }
   };
 
-  const toggleService = (service: string) => {
-    const current = form.getValues("services") || [];
-    const updated = current.includes(service)
-      ? current.filter(s => s !== service)
-      : [...current, service];
-    form.setValue("services", updated);
-  };
-
   const selectPackage = (packageId: string) => {
     form.setValue("package", packageId);
   };
@@ -346,18 +338,32 @@ export default function ProductOwnerSignup() {
                             <FormLabel>الخدمات المطلوبة *</FormLabel>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
                               {serviceOptions.map((service) => (
-                                <div
+                                <FormField
                                   key={service}
-                                  onClick={() => toggleService(service)}
-                                  className="flex items-start gap-2 p-3 rounded-xl border cursor-pointer hover-elevate transition-all"
-                                  data-testid={`checkbox-service-${service}`}
-                                >
-                                  <Checkbox
-                                    checked={(field.value || []).includes(service)}
-                                    className="mt-0.5"
-                                  />
-                                  <span className="text-sm">{service}</span>
-                                </div>
+                                  control={form.control}
+                                  name="services"
+                                  render={({ field }) => (
+                                    <FormItem className="flex items-start gap-2 p-3 rounded-xl border hover-elevate transition-all">
+                                      <FormControl>
+                                        <Checkbox
+                                          checked={(field.value || []).includes(service)}
+                                          onCheckedChange={(checked) => {
+                                            const current = field.value || [];
+                                            const updated = checked
+                                              ? [...current, service]
+                                              : current.filter((s) => s !== service);
+                                            field.onChange(updated);
+                                          }}
+                                          className="mt-0.5"
+                                          data-testid={`checkbox-service-${service}`}
+                                        />
+                                      </FormControl>
+                                      <FormLabel className="text-sm font-normal cursor-pointer">
+                                        {service}
+                                      </FormLabel>
+                                    </FormItem>
+                                  )}
+                                />
                               ))}
                             </div>
                             <FormMessage />
