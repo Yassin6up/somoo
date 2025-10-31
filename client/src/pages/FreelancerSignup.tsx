@@ -15,7 +15,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDes
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Briefcase, Users as UsersIcon, Puzzle, Edit3, Camera, CreditCard, ArrowRight, ArrowLeft, Upload } from "lucide-react";
-import { serviceOptions, paymentMethods } from "@shared/schema";
+import { serviceOptions, paymentMethods, paymentMethodDetails } from "@shared/schema";
 import { useLocation } from "wouter";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -523,19 +523,44 @@ export default function FreelancerSignup() {
                             )}
                           />
 
-                          <FormField
-                            control={form.control}
-                            name="accountNumber"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>رقم الحساب أو المحفظة</FormLabel>
-                                <FormControl>
-                                  <Input {...field} placeholder="مثال: 1234 5678 9012 3456" className="rounded-xl" data-testid="input-account-number" />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
+                          {form.watch("paymentMethod") && form.watch("paymentMethod") !== "محفظة سُمُوّ" && (
+                            <FormField
+                              control={form.control}
+                              name="accountNumber"
+                              render={({ field }) => {
+                                const selectedMethod = form.watch("paymentMethod");
+                                const methodDetails = paymentMethodDetails[selectedMethod];
+                                
+                                return (
+                                  <FormItem>
+                                    <FormLabel>{methodDetails?.label || "رقم الحساب أو المحفظة"}</FormLabel>
+                                    <FormControl>
+                                      <Input 
+                                        {...field} 
+                                        type={methodDetails?.inputType || "text"}
+                                        placeholder={methodDetails?.placeholder || "مثال: 1234 5678 9012 3456"} 
+                                        className="rounded-xl" 
+                                        data-testid="input-account-number" 
+                                      />
+                                    </FormControl>
+                                    <FormDescription className="text-xs">
+                                      {selectedMethod === "التحويل البنكي" && "أدخل رقم الحساب البنكي الدولي (IBAN)"}
+                                      {selectedMethod.includes("كاش") && "أدخل رقم هاتف المحفظة"}
+                                    </FormDescription>
+                                    <FormMessage />
+                                  </FormItem>
+                                );
+                              }}
+                            />
+                          )}
+                          
+                          {form.watch("paymentMethod") === "محفظة سُمُوّ" && (
+                            <div className="p-4 bg-primary/10 rounded-xl border border-primary/20">
+                              <p className="text-sm text-muted-foreground">
+                                ℹ️ سيتم إنشاء محفظة سُمُوّ تلقائيًا لك عند إنشاء الحساب. يمكنك استخدامها لاستلام المدفوعات مباشرة في المنصة.
+                              </p>
+                            </div>
+                          )}
                         </CardContent>
                       </Card>
 

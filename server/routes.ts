@@ -307,8 +307,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // FILE UPLOAD (Object Storage)
   // ============================================
 
-  // Upload profile image or ID verification (protected)
-  app.post("/api/upload", authMiddleware, upload.single("file"), async (req: AuthRequest, res) => {
+  // Upload profile image or ID verification (public - used during signup)
+  app.post("/api/upload", upload.single("file"), async (req, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ error: "لم يتم رفع أي ملف" });

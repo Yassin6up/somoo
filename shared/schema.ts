@@ -253,11 +253,41 @@ export const productTypes = [
 
 // Payment methods
 export const paymentMethods = [
+  "فودافون كاش",
+  "اتصالات كاش",
+  "أورانج كاش",
+  "التحويل البنكي",
   "محفظة سُمُوّ",
-  "PayPal",
-  "STC Pay",
-  "تحويل بنكي",
 ] as const;
+
+// Payment method details configuration
+export const paymentMethodDetails: Record<string, { label: string; placeholder: string; inputType: string }> = {
+  "فودافون كاش": {
+    label: "رقم محفظة فودافون كاش",
+    placeholder: "مثال: 01012345678",
+    inputType: "tel",
+  },
+  "اتصالات كاش": {
+    label: "رقم محفظة اتصالات كاش",
+    placeholder: "مثال: 01112345678",
+    inputType: "tel",
+  },
+  "أورانج كاش": {
+    label: "رقم محفظة أورانج كاش",
+    placeholder: "مثال: 01212345678",
+    inputType: "tel",
+  },
+  "التحويل البنكي": {
+    label: "رقم الحساب البنكي (IBAN)",
+    placeholder: "مثال: SA1234567890123456789012",
+    inputType: "text",
+  },
+  "محفظة سُمُوّ": {
+    label: "معرف محفظة سُمُوّ",
+    placeholder: "سيتم إنشاؤه تلقائيًا",
+    inputType: "text",
+  },
+};
 
 // Packages
 export const packages = [
