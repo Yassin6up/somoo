@@ -221,10 +221,8 @@ export default function Login() {
                   <div className="text-center space-y-3">
                     <p className="text-sm text-muted-foreground">
                       ليس لديك حساب؟{" "}
-                      <Link href="/role-selection">
-                        <a className="text-primary font-semibold hover:underline" data-testid="link-signup">
-                          أنشئ حسابًا جديدًا
-                        </a>
+                      <Link href="/role-selection" className="text-primary font-semibold hover:underline" data-testid="link-signup">
+                        أنشئ حسابًا جديدًا
                       </Link>
                     </p>
                   </div>

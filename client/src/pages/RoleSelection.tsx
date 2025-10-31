@@ -47,21 +47,19 @@ export default function RoleSelection() {
             className="w-full" 
             dir="rtl"
           >
-            <TabsList className="grid w-full grid-cols-2 mb-8 p-1 bg-muted rounded-2xl h-auto" data-testid="tabs-list">
+            <TabsList className="flex justify-center gap-3 mb-8 p-0 bg-transparent h-auto" data-testid="tabs-list">
               <TabsTrigger 
                 value="freelancer" 
-                className="rounded-xl py-4 px-6 text-base font-bold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all"
+                className="rounded-full py-3 px-8 text-base font-bold shadow-md bg-background hover-elevate data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg transition-all border border-primary/20"
                 data-testid="tab-freelancer"
               >
-                <Users className="ml-2 h-5 w-5" />
                 مستقل محترف
               </TabsTrigger>
               <TabsTrigger 
                 value="owner" 
-                className="rounded-xl py-4 px-6 text-base font-bold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all"
+                className="rounded-full py-3 px-8 text-base font-bold shadow-md bg-background hover-elevate data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg transition-all border border-primary/20"
                 data-testid="tab-owner"
               >
-                <Briefcase className="ml-2 h-5 w-5" />
                 صاحب منتج
               </TabsTrigger>
             </TabsList>
@@ -120,8 +118,8 @@ export default function RoleSelection() {
 
                     <p className="text-center text-sm text-muted-foreground">
                       لديك حساب بالفعل؟{" "}
-                      <Link href="/login">
-                        <a className="text-primary font-medium hover:underline" data-testid="link-login-freelancer">تسجيل الدخول</a>
+                      <Link href="/login" className="text-primary font-medium hover:underline" data-testid="link-login-freelancer">
+                        تسجيل الدخول
                       </Link>
                     </p>
                   </CardContent>
@@ -183,8 +181,8 @@ export default function RoleSelection() {
 
                     <p className="text-center text-sm text-muted-foreground">
                       لديك حساب بالفعل؟{" "}
-                      <Link href="/login">
-                        <a className="text-primary font-medium hover:underline" data-testid="link-login-owner">تسجيل الدخول</a>
+                      <Link href="/login" className="text-primary font-medium hover:underline" data-testid="link-login-owner">
+                        تسجيل الدخول
                       </Link>
                     </p>
                   </CardContent>

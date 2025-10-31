@@ -42,7 +42,7 @@ export function Navbar() {
           {/* Desktop CTA Buttons */}
           <div className="hidden md:flex items-center gap-3">
             <Link href="/login">
-              <Button variant="ghost" className="rounded-2xl" data-testid="button-login">
+              <Button variant="ghost" className="rounded-2xl" data-testid="button-login-header">
                 <LogIn className="ml-2 h-4 w-4" />
                 تسجيل الدخول
               </Button>
