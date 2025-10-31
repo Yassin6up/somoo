@@ -21,7 +21,7 @@ The platform is built with a modern web stack, featuring a modular project struc
 - **Frontend:** React with TypeScript, Wouter for routing, Tailwind CSS, Shadcn UI, React Hook Form with Zod for validation, and TanStack Query for data management.
 - **Backend:** Express.js, with PostgreSQL database (Neon) for production, In-Memory Storage for testing.
 - **Forms:** Multi-step forms for registration (Freelancer and Product Owner) with robust validation. Fixed infinite render loop issue by using `field.value` instead of `form.watch` in checkbox components.
-- **User Authentication:** Login system with JWT-based sessions and role-based authorization.
+- **User Authentication:** Login system with JWT-based sessions and role-based authorization. Navbar synchronizes immediately after signup/login via custom "userLoggedIn" event - no page reload required. Profile page shows graceful error state when user data is missing instead of infinite loading spinner.
 - **Dashboards:** 
   - **Freelancer Dashboard:** Real-time statistics (active, submitted, completed tasks, earnings), tabbed task views, search/filter for available tasks, task cards with details, and task management (accept, start, submit with report).
   - **Product Owner Dashboard:** Real-time statistics (active campaigns, submitted/completed tasks, total spent), three tabs (Submitted for Review, All Campaigns, All Tasks), task review dialog with approve/reject functionality, comprehensive campaign overview cards.
