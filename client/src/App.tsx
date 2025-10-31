@@ -14,6 +14,7 @@ import ProductOwnerDashboard from "@/pages/ProductOwnerDashboard";
 import Login from "@/pages/Login";
 import Campaigns from "@/pages/Campaigns";
 import Freelancers from "@/pages/Freelancers";
+import Profile from "@/pages/Profile";
 
 function Router() {
   return (
@@ -26,6 +27,7 @@ function Router() {
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/freelancer-dashboard" component={FreelancerDashboard} />
       <Route path="/product-owner-dashboard" component={ProductOwnerDashboard} />
+      <Route path="/profile" component={Profile} />
       <Route path="/campaigns" component={Campaigns} />
       <Route path="/freelancers" component={Freelancers} />
       <Route component={NotFound} />

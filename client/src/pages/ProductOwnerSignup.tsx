@@ -87,6 +87,9 @@ export default function ProductOwnerSignup() {
       localStorage.setItem("user", JSON.stringify(data.user));
       localStorage.setItem("userType", "product_owner");
       
+      // Dispatch custom event to update Navbar
+      window.dispatchEvent(new Event("userLoggedIn"));
+      
       toast({
         title: "تم إنشاء الحساب بنجاح!",
         description: "مرحبًا بك في منصة سُمُوّ",

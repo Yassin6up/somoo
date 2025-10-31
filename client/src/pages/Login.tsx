@@ -56,6 +56,9 @@ export default function Login() {
       localStorage.setItem("user", JSON.stringify(data.user));
       localStorage.setItem("userType", data.userType);
       
+      // Dispatch custom event to update Navbar
+      window.dispatchEvent(new Event("userLoggedIn"));
+      
       toast({
         title: "تم تسجيل الدخول بنجاح!",
         description: "مرحبًا بعودتك إلى منصة سُمُوّ",
