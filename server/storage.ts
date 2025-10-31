@@ -17,6 +17,16 @@ import {
   type InsertPayment,
   type Notification,
   type InsertNotification,
+  type Group,
+  type InsertGroup,
+  type GroupMember,
+  type InsertGroupMember,
+  type Project,
+  type InsertProject,
+  type Message,
+  type InsertMessage,
+  type Withdrawal,
+  type InsertWithdrawal,
   users,
   freelancers,
   productOwners,
@@ -26,6 +36,11 @@ import {
   transactions,
   payments,
   notifications,
+  groups,
+  groupMembers,
+  projects,
+  messages,
+  withdrawals,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, or, desc } from "drizzle-orm";
@@ -89,6 +104,38 @@ export interface IStorage {
   getNotificationsByUser(userId: string, userType: string): Promise<Notification[]>;
   createNotification(notification: InsertNotification): Promise<Notification>;
   markNotificationAsRead(id: string): Promise<void>;
+
+  // Group methods
+  getGroup(id: string): Promise<Group | undefined>;
+  getGroupsByLeader(leaderId: string): Promise<Group[]>;
+  getGroupsByMember(freelancerId: string): Promise<Group[]>;
+  createGroup(group: InsertGroup): Promise<Group>;
+  updateGroup(id: string, updates: Partial<Group>): Promise<Group | undefined>;
+
+  // Group Member methods
+  getGroupMembers(groupId: string): Promise<GroupMember[]>;
+  addGroupMember(member: InsertGroupMember): Promise<GroupMember>;
+  removeGroupMember(groupId: string, freelancerId: string): Promise<void>;
+  isGroupMember(groupId: string, freelancerId: string): Promise<boolean>;
+
+  // Project methods
+  getProject(id: string): Promise<Project | undefined>;
+  getProjectsByOwner(productOwnerId: string): Promise<Project[]>;
+  getPendingProjects(): Promise<Project[]>;
+  getProjectsByGroup(groupId: string): Promise<Project[]>;
+  createProject(project: InsertProject): Promise<Project>;
+  updateProject(id: string, updates: Partial<Project>): Promise<Project | undefined>;
+  acceptProject(projectId: string, groupId: string): Promise<Project | undefined>;
+
+  // Message methods
+  getMessagesByGroup(groupId: string): Promise<Message[]>;
+  createMessage(message: InsertMessage): Promise<Message>;
+
+  // Withdrawal methods
+  getWithdrawalsByFreelancer(freelancerId: string): Promise<Withdrawal[]>;
+  getAllWithdrawals(): Promise<Withdrawal[]>;
+  createWithdrawal(withdrawal: InsertWithdrawal): Promise<Withdrawal>;
+  updateWithdrawal(id: string, updates: Partial<Withdrawal>): Promise<Withdrawal | undefined>;
 }
 
 export class MemStorage implements IStorage {
@@ -241,6 +288,28 @@ export class MemStorage implements IStorage {
   async getNotificationsByUser(): Promise<Notification[]> { throw new Error("Not implemented in MemStorage"); }
   async createNotification(): Promise<Notification> { throw new Error("Not implemented in MemStorage"); }
   async markNotificationAsRead(): Promise<void> { throw new Error("Not implemented in MemStorage"); }
+  async getGroup(): Promise<Group | undefined> { throw new Error("Not implemented in MemStorage"); }
+  async getGroupsByLeader(): Promise<Group[]> { throw new Error("Not implemented in MemStorage"); }
+  async getGroupsByMember(): Promise<Group[]> { throw new Error("Not implemented in MemStorage"); }
+  async createGroup(): Promise<Group> { throw new Error("Not implemented in MemStorage"); }
+  async updateGroup(): Promise<Group | undefined> { throw new Error("Not implemented in MemStorage"); }
+  async getGroupMembers(): Promise<GroupMember[]> { throw new Error("Not implemented in MemStorage"); }
+  async addGroupMember(): Promise<GroupMember> { throw new Error("Not implemented in MemStorage"); }
+  async removeGroupMember(): Promise<void> { throw new Error("Not implemented in MemStorage"); }
+  async isGroupMember(): Promise<boolean> { throw new Error("Not implemented in MemStorage"); }
+  async getProject(): Promise<Project | undefined> { throw new Error("Not implemented in MemStorage"); }
+  async getProjectsByOwner(): Promise<Project[]> { throw new Error("Not implemented in MemStorage"); }
+  async getPendingProjects(): Promise<Project[]> { throw new Error("Not implemented in MemStorage"); }
+  async getProjectsByGroup(): Promise<Project[]> { throw new Error("Not implemented in MemStorage"); }
+  async createProject(): Promise<Project> { throw new Error("Not implemented in MemStorage"); }
+  async updateProject(): Promise<Project | undefined> { throw new Error("Not implemented in MemStorage"); }
+  async acceptProject(): Promise<Project | undefined> { throw new Error("Not implemented in MemStorage"); }
+  async getMessagesByGroup(): Promise<Message[]> { throw new Error("Not implemented in MemStorage"); }
+  async createMessage(): Promise<Message> { throw new Error("Not implemented in MemStorage"); }
+  async getWithdrawalsByFreelancer(): Promise<Withdrawal[]> { throw new Error("Not implemented in MemStorage"); }
+  async getAllWithdrawals(): Promise<Withdrawal[]> { throw new Error("Not implemented in MemStorage"); }
+  async createWithdrawal(): Promise<Withdrawal> { throw new Error("Not implemented in MemStorage"); }
+  async updateWithdrawal(): Promise<Withdrawal | undefined> { throw new Error("Not implemented in MemStorage"); }
 }
 
 // Database Storage Implementation
@@ -449,6 +518,137 @@ export class DatabaseStorage implements IStorage {
 
   async markNotificationAsRead(id: string): Promise<void> {
     await db.update(notifications).set({ isRead: true }).where(eq(notifications.id, id));
+  }
+
+  // Group methods
+  async getGroup(id: string): Promise<Group | undefined> {
+    const [group] = await db.select().from(groups).where(eq(groups.id, id));
+    return group || undefined;
+  }
+
+  async getGroupsByLeader(leaderId: string): Promise<Group[]> {
+    return await db.select().from(groups).where(eq(groups.leaderId, leaderId)).orderBy(desc(groups.createdAt));
+  }
+
+  async getGroupsByMember(freelancerId: string): Promise<Group[]> {
+    const memberGroups = await db
+      .select({ group: groups })
+      .from(groupMembers)
+      .innerJoin(groups, eq(groupMembers.groupId, groups.id))
+      .where(eq(groupMembers.freelancerId, freelancerId));
+    return memberGroups.map(mg => mg.group);
+  }
+
+  async createGroup(insertGroup: InsertGroup): Promise<Group> {
+    const [group] = await db.insert(groups).values(insertGroup).returning();
+    // Add leader as a member
+    await this.addGroupMember({
+      groupId: group.id,
+      freelancerId: group.leaderId,
+      role: "leader",
+    });
+    return group;
+  }
+
+  async updateGroup(id: string, updates: Partial<Group>): Promise<Group | undefined> {
+    const [updated] = await db.update(groups).set(updates).where(eq(groups.id, id)).returning();
+    return updated || undefined;
+  }
+
+  // Group Member methods
+  async getGroupMembers(groupId: string): Promise<GroupMember[]> {
+    return await db.select().from(groupMembers).where(eq(groupMembers.groupId, groupId)).orderBy(desc(groupMembers.joinedAt));
+  }
+
+  async addGroupMember(member: InsertGroupMember): Promise<GroupMember> {
+    const [newMember] = await db.insert(groupMembers).values(member).returning();
+    // Update group's current members count
+    await db.update(groups)
+      .set({ currentMembers: db.select({ count: groupMembers.id }).from(groupMembers).where(eq(groupMembers.groupId, member.groupId)) as any })
+      .where(eq(groups.id, member.groupId));
+    return newMember;
+  }
+
+  async removeGroupMember(groupId: string, freelancerId: string): Promise<void> {
+    await db.delete(groupMembers).where(and(eq(groupMembers.groupId, groupId), eq(groupMembers.freelancerId, freelancerId)));
+    // Update group's current members count
+    const count = await db.select().from(groupMembers).where(eq(groupMembers.groupId, groupId));
+    await db.update(groups).set({ currentMembers: count.length }).where(eq(groups.id, groupId));
+  }
+
+  async isGroupMember(groupId: string, freelancerId: string): Promise<boolean> {
+    const [member] = await db.select().from(groupMembers)
+      .where(and(eq(groupMembers.groupId, groupId), eq(groupMembers.freelancerId, freelancerId)));
+    return !!member;
+  }
+
+  // Project methods
+  async getProject(id: string): Promise<Project | undefined> {
+    const [project] = await db.select().from(projects).where(eq(projects.id, id));
+    return project || undefined;
+  }
+
+  async getProjectsByOwner(productOwnerId: string): Promise<Project[]> {
+    return await db.select().from(projects).where(eq(projects.productOwnerId, productOwnerId)).orderBy(desc(projects.createdAt));
+  }
+
+  async getPendingProjects(): Promise<Project[]> {
+    return await db.select().from(projects).where(eq(projects.status, "pending")).orderBy(desc(projects.createdAt));
+  }
+
+  async getProjectsByGroup(groupId: string): Promise<Project[]> {
+    return await db.select().from(projects).where(eq(projects.acceptedByGroupId, groupId)).orderBy(desc(projects.createdAt));
+  }
+
+  async createProject(insertProject: InsertProject): Promise<Project> {
+    const [project] = await db.insert(projects).values(insertProject).returning();
+    return project;
+  }
+
+  async updateProject(id: string, updates: Partial<Project>): Promise<Project | undefined> {
+    const [updated] = await db.update(projects).set({ ...updates, updatedAt: new Date() }).where(eq(projects.id, id)).returning();
+    return updated || undefined;
+  }
+
+  async acceptProject(projectId: string, groupId: string): Promise<Project | undefined> {
+    const [updated] = await db.update(projects)
+      .set({ 
+        status: "accepted", 
+        acceptedByGroupId: groupId,
+        updatedAt: new Date() 
+      })
+      .where(and(eq(projects.id, projectId), eq(projects.status, "pending")))
+      .returning();
+    return updated || undefined;
+  }
+
+  // Message methods
+  async getMessagesByGroup(groupId: string): Promise<Message[]> {
+    return await db.select().from(messages).where(eq(messages.groupId, groupId)).orderBy(desc(messages.createdAt));
+  }
+
+  async createMessage(insertMessage: InsertMessage): Promise<Message> {
+    const [message] = await db.insert(messages).values(insertMessage).returning();
+    return message;
+  }
+
+  // Withdrawal methods
+  async getWithdrawalsByFreelancer(freelancerId: string): Promise<Withdrawal[]> {
+    return await db.select().from(withdrawals).where(eq(withdrawals.freelancerId, freelancerId)).orderBy(desc(withdrawals.createdAt));
+  }
+
+  async getAllWithdrawals(): Promise<Withdrawal[]> {
+    return await db.select().from(withdrawals).orderBy(desc(withdrawals.createdAt));
+  }
+
+  async createWithdrawal(insertWithdrawal: InsertWithdrawal): Promise<Withdrawal> {
+    const [withdrawal] = await db.insert(withdrawals).values(insertWithdrawal).returning();
+    return withdrawal;
+  }
+
+  async updateWithdrawal(id: string, updates: Partial<Withdrawal>): Promise<Withdrawal | undefined> {
+    const [updated] = await db.update(withdrawals).set(updates).where(eq(withdrawals.id, id)).returning();
+    return updated || undefined;
   }
 }
 

@@ -1,5 +1,5 @@
 import { sql, relations } from "drizzle-orm";
-import { pgTable, text, varchar, integer, timestamp, decimal, boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, integer, timestamp, decimal, boolean, uniqueIndex } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -64,10 +64,40 @@ export const campaigns = pgTable("campaigns", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+// Groups schema - الجروبات (MOVED BEFORE TASKS)
+export const groups = pgTable("groups", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  description: text("description"),
+  leaderId: varchar("leader_id").notNull().references(() => freelancers.id),
+  maxMembers: integer("max_members").default(700).notNull(),
+  currentMembers: integer("current_members").default(1).notNull(),
+  status: text("status").notNull().default("active"), // active, inactive
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Projects schema - المشاريع من أصحاب المشاريع (MOVED BEFORE TASKS)
+export const projects = pgTable("projects", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  productOwnerId: varchar("product_owner_id").notNull().references(() => productOwners.id),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  targetCountry: text("target_country").notNull(),
+  tasksCount: integer("tasks_count").notNull(), // عدد المهام المطلوبة
+  budget: decimal("budget", { precision: 10, scale: 2 }).notNull(),
+  deadline: timestamp("deadline"),
+  status: text("status").notNull().default("pending"), // pending, accepted, in_progress, completed, cancelled
+  acceptedByGroupId: varchar("accepted_by_group_id").references(() => groups.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 // Tasks schema (individual testing tasks assigned to freelancers)
 export const tasks = pgTable("tasks", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  campaignId: varchar("campaign_id").notNull().references(() => campaigns.id),
+  campaignId: varchar("campaign_id").references(() => campaigns.id),
+  projectId: varchar("project_id").references(() => projects.id),
+  groupId: varchar("group_id").references(() => groups.id),
   freelancerId: varchar("freelancer_id").references(() => freelancers.id),
   title: text("title").notNull(),
   description: text("description").notNull(),
@@ -78,7 +108,9 @@ export const tasks = pgTable("tasks", {
   submittedAt: timestamp("submitted_at"),
   completedAt: timestamp("completed_at"),
   submission: text("submission"), // Freelancer's submission/report
-  feedback: text("feedback"), // Product owner's feedback
+  proofImage: text("proof_image"), // صورة الإثبات
+  taskUrl: text("task_url"), // رابط المهمة
+  feedback: text("feedback"), // Product owner's or leader's feedback
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -130,15 +162,55 @@ export const notifications = pgTable("notifications", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// Group Members schema - أعضاء الجروبات
+export const groupMembers = pgTable("group_members", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  groupId: varchar("group_id").notNull().references(() => groups.id),
+  freelancerId: varchar("freelancer_id").notNull().references(() => freelancers.id),
+  role: text("role").notNull().default("member"), // leader, member
+  joinedAt: timestamp("joined_at").defaultNow().notNull(),
+}, (table) => ({
+  uniqueGroupMember: uniqueIndex("unique_group_member_idx").on(table.groupId, table.freelancerId),
+}));
+
+// Messages schema - الرسائل الداخلية
+export const messages = pgTable("messages", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  groupId: varchar("group_id").notNull().references(() => groups.id),
+  senderId: varchar("sender_id").notNull().references(() => freelancers.id),
+  content: text("content").notNull(),
+  type: text("type").notNull().default("text"), // text, task_post, image
+  relatedProjectId: varchar("related_project_id").references(() => projects.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Withdrawals schema - طلبات السحب
+export const withdrawals = pgTable("withdrawals", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  freelancerId: varchar("freelancer_id").notNull().references(() => freelancers.id),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  paymentMethod: text("payment_method").notNull(),
+  accountNumber: text("account_number").notNull(),
+  status: text("status").notNull().default("pending"), // pending, processing, completed, rejected
+  processedAt: timestamp("processed_at"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 // Relations
 export const freelancersRelations = relations(freelancers, ({ one, many }) => ({
   wallet: one(wallets, { fields: [freelancers.id], references: [wallets.freelancerId] }),
   tasks: many(tasks),
+  groupsLeading: many(groups),
+  groupMemberships: many(groupMembers),
+  withdrawals: many(withdrawals),
+  messages: many(messages),
 }));
 
 export const productOwnersRelations = relations(productOwners, ({ many }) => ({
   campaigns: many(campaigns),
   payments: many(payments),
+  projects: many(projects),
 }));
 
 export const campaignsRelations = relations(campaigns, ({ one, many }) => ({
@@ -149,6 +221,8 @@ export const campaignsRelations = relations(campaigns, ({ one, many }) => ({
 
 export const tasksRelations = relations(tasks, ({ one, many }) => ({
   campaign: one(campaigns, { fields: [tasks.campaignId], references: [campaigns.id] }),
+  project: one(projects, { fields: [tasks.projectId], references: [projects.id] }),
+  group: one(groups, { fields: [tasks.groupId], references: [groups.id] }),
   freelancer: one(freelancers, { fields: [tasks.freelancerId], references: [freelancers.id] }),
   transactions: many(transactions),
 }));
@@ -166,6 +240,36 @@ export const transactionsRelations = relations(transactions, ({ one }) => ({
 export const paymentsRelations = relations(payments, ({ one }) => ({
   campaign: one(campaigns, { fields: [payments.campaignId], references: [campaigns.id] }),
   productOwner: one(productOwners, { fields: [payments.productOwnerId], references: [productOwners.id] }),
+}));
+
+export const groupsRelations = relations(groups, ({ one, many }) => ({
+  leader: one(freelancers, { fields: [groups.leaderId], references: [freelancers.id] }),
+  members: many(groupMembers),
+  tasks: many(tasks),
+  messages: many(messages),
+  acceptedProjects: many(projects),
+}));
+
+export const groupMembersRelations = relations(groupMembers, ({ one }) => ({
+  group: one(groups, { fields: [groupMembers.groupId], references: [groups.id] }),
+  freelancer: one(freelancers, { fields: [groupMembers.freelancerId], references: [freelancers.id] }),
+}));
+
+export const projectsRelations = relations(projects, ({ one, many }) => ({
+  productOwner: one(productOwners, { fields: [projects.productOwnerId], references: [productOwners.id] }),
+  acceptedByGroup: one(groups, { fields: [projects.acceptedByGroupId], references: [groups.id] }),
+  tasks: many(tasks),
+  messages: many(messages),
+}));
+
+export const messagesRelations = relations(messages, ({ one }) => ({
+  group: one(groups, { fields: [messages.groupId], references: [groups.id] }),
+  sender: one(freelancers, { fields: [messages.senderId], references: [freelancers.id] }),
+  relatedProject: one(projects, { fields: [messages.relatedProjectId], references: [projects.id] }),
+}));
+
+export const withdrawalsRelations = relations(withdrawals, ({ one }) => ({
+  freelancer: one(freelancers, { fields: [withdrawals.freelancerId], references: [freelancers.id] }),
 }));
 
 // Insert schemas for validation
@@ -213,6 +317,33 @@ export const insertNotificationSchema = createInsertSchema(notifications).omit({
   createdAt: true,
 });
 
+export const insertGroupSchema = createInsertSchema(groups).omit({
+  id: true,
+  currentMembers: true,
+  createdAt: true,
+});
+
+export const insertGroupMemberSchema = createInsertSchema(groupMembers).omit({
+  id: true,
+  joinedAt: true,
+});
+
+export const insertProjectSchema = createInsertSchema(projects).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertMessageSchema = createInsertSchema(messages).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertWithdrawalSchema = createInsertSchema(withdrawals).omit({
+  id: true,
+  createdAt: true,
+});
+
 // TypeScript types
 export type Freelancer = typeof freelancers.$inferSelect;
 export type InsertFreelancer = z.infer<typeof insertFreelancerSchema>;
@@ -230,6 +361,16 @@ export type Payment = typeof payments.$inferSelect;
 export type InsertPayment = z.infer<typeof insertPaymentSchema>;
 export type Notification = typeof notifications.$inferSelect;
 export type InsertNotification = z.infer<typeof insertNotificationSchema>;
+export type Group = typeof groups.$inferSelect;
+export type InsertGroup = z.infer<typeof insertGroupSchema>;
+export type GroupMember = typeof groupMembers.$inferSelect;
+export type InsertGroupMember = z.infer<typeof insertGroupMemberSchema>;
+export type Project = typeof projects.$inferSelect;
+export type InsertProject = z.infer<typeof insertProjectSchema>;
+export type Message = typeof messages.$inferSelect;
+export type InsertMessage = z.infer<typeof insertMessageSchema>;
+export type Withdrawal = typeof withdrawals.$inferSelect;
+export type InsertWithdrawal = z.infer<typeof insertWithdrawalSchema>;
 
 // Service options
 export const serviceOptions = [
