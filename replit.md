@@ -106,6 +106,24 @@ The platform is built with a modern web stack, featuring a modular project struc
 **System Design Choices:**
 - **Data Schemas:** Shared TypeScript data models for consistency across the stack.
 
+**Recent Technical Updates (October 2025):**
+- **Authentication Architecture:**
+  - User authentication now stores three separate items in localStorage: `user` (JSON object without role field), `userType` (string: "freelancer" or "product_owner"), and `token` (JWT string)
+  - All role-based checks now read `userType` directly from localStorage instead of `user.role` (which doesn't exist)
+  - Fixed Groups.tsx and PurchaseService.tsx to use `localStorage.getItem("userType")` pattern
+  
+- **API Request Layer:**
+  - `apiRequest()` function in queryClient.ts now automatically includes JWT token in Authorization header
+  - Signature: `apiRequest(method, url, data)` - parameter order critical for correct operation
+  - All authenticated mutations automatically include `Authorization: Bearer {token}` header
+  - Fixed 401 Unauthorized errors by ensuring token transmission on all protected endpoints
+  
+- **Direct Purchase System Testing:**
+  - End-to-end Playwright tests confirm complete purchase flow works: signup → groups → purchase → order creation
+  - Verified authentication protection: unauthenticated users correctly redirected to /login when accessing /purchase routes
+  - All API endpoints (POST/GET/PATCH /api/orders) tested and working with proper authorization
+  - Service pricing calculations verified: $1 per review (Google Play, iOS, Website, UX, Software, Social Media), $2 per Google Maps review
+
 ## External Dependencies
 - **OpenAI (via Replit AI Integrations):** For AI-powered suggestions (e.g., bio, product descriptions).
 - **Object Storage:** Planned for file uploads (e.g., profile pictures, ID verifications).
