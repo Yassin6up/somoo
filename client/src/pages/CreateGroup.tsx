@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
@@ -17,7 +17,7 @@ import { z } from "zod";
 
 const createGroupSchema = insertGroupSchema.extend({
   maxMembers: z.number().min(2, "يجب أن يكون الحد الأقصى للأعضاء 2 على الأقل").max(700, "الحد الأقصى 700 عضو"),
-});
+}).omit({ leaderId: true });
 
 type CreateGroupForm = z.infer<typeof createGroupSchema>;
 
@@ -26,6 +26,14 @@ export default function CreateGroup() {
   const { toast } = useToast();
   const [imagePreview, setImagePreview] = useState<string>("");
   const [isUploading, setIsUploading] = useState(false);
+  const [user, setUser] = useState<any>(null);
+
+  useEffect(() => {
+    const userData = localStorage.getItem("user");
+    if (userData) {
+      setUser(JSON.parse(userData));
+    }
+  }, []);
 
   const form = useForm<CreateGroupForm>({
     resolver: zodResolver(createGroupSchema),
@@ -109,7 +117,14 @@ export default function CreateGroup() {
 
   const createGroupMutation = useMutation({
     mutationFn: async (data: CreateGroupForm) => {
-      return await apiRequest("/api/groups", "POST", data);
+      if (!user || !user.userId) {
+        throw new Error("يجب تسجيل الدخول أولاً");
+      }
+      const groupData = {
+        ...data,
+        leaderId: user.userId,
+      };
+      return await apiRequest("/api/groups", "POST", groupData);
     },
     onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ["/api/groups"] });
