@@ -308,10 +308,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ============================================
 
   // Upload profile image or ID verification (public - used during signup)
+  // Security: File type and size validation enforced
   app.post("/api/upload", upload.single("file"), async (req, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ error: "لم يتم رفع أي ملف" });
+      }
+
+      // Validate file size (max 5MB)
+      const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB in bytes
+      if (req.file.size > MAX_FILE_SIZE) {
+        return res.status(400).json({ error: "حجم الملف كبير جداً. الحد الأقصى 5 ميجابايت" });
+      }
+
+      // Validate file type (only images and PDFs)
+      const allowedMimeTypes = [
+        'image/jpeg',
+        'image/jpg',
+        'image/png',
+        'image/gif',
+        'image/webp',
+        'application/pdf'
+      ];
+      
+      if (!allowedMimeTypes.includes(req.file.mimetype)) {
+        return res.status(400).json({ error: "نوع الملف غير مدعوم. يسمح فقط بالصور (JPEG, PNG, GIF, WebP) و PDF" });
       }
 
       const { type } = req.body; // 'profile' or 'verification'

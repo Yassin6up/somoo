@@ -159,6 +159,9 @@ export default function FreelancerSignup() {
     }
   };
 
+  // Watch payment method value outside of JSX to avoid hook call issues
+  const selectedPaymentMethod = form.watch("paymentMethod");
+
   return (
     <div className="min-h-screen flex flex-col bg-muted/20">
       <Navbar />
@@ -523,13 +526,12 @@ export default function FreelancerSignup() {
                             )}
                           />
 
-                          {form.watch("paymentMethod") && form.watch("paymentMethod") !== "محفظة سُمُوّ" && (
+                          {selectedPaymentMethod && selectedPaymentMethod !== "محفظة سُمُوّ" && (
                             <FormField
                               control={form.control}
                               name="accountNumber"
                               render={({ field }) => {
-                                const selectedMethod = form.watch("paymentMethod");
-                                const methodDetails = paymentMethodDetails[selectedMethod];
+                                const methodDetails = paymentMethodDetails[selectedPaymentMethod];
                                 
                                 return (
                                   <FormItem>
@@ -544,8 +546,8 @@ export default function FreelancerSignup() {
                                       />
                                     </FormControl>
                                     <FormDescription className="text-xs">
-                                      {selectedMethod === "التحويل البنكي" && "أدخل رقم الحساب البنكي الدولي (IBAN)"}
-                                      {selectedMethod.includes("كاش") && "أدخل رقم هاتف المحفظة"}
+                                      {selectedPaymentMethod === "التحويل البنكي" && "أدخل رقم الحساب البنكي الدولي (IBAN)"}
+                                      {selectedPaymentMethod.includes("كاش") && "أدخل رقم هاتف المحفظة"}
                                     </FormDescription>
                                     <FormMessage />
                                   </FormItem>
@@ -554,7 +556,7 @@ export default function FreelancerSignup() {
                             />
                           )}
                           
-                          {form.watch("paymentMethod") === "محفظة سُمُوّ" && (
+                          {selectedPaymentMethod === "محفظة سُمُوّ" && (
                             <div className="p-4 bg-primary/10 rounded-xl border border-primary/20">
                               <p className="text-sm text-muted-foreground">
                                 ℹ️ سيتم إنشاء محفظة سُمُوّ تلقائيًا لك عند إنشاء الحساب. يمكنك استخدامها لاستلام المدفوعات مباشرة في المنصة.
