@@ -24,14 +24,35 @@ import {
   MessageSquare,
   MapPin,
   Apple,
-  Smartphone
+  Smartphone,
+  Share2,
+  Palette,
+  type LucideIcon
 } from "lucide-react";
 
-// Import service images
-import googleReviewsImg from "@assets/1664194331913_1761831994718.png";
-import androidImg from "@assets/صورة واتساب بتاريخ 1447-05-08 في 16.44.35_1edbe9d3_1761831899109.jpg";
-import appStoreImg from "@assets/455ccc1099702144b7da4269541ae1b4_1761831607863.png";
-import starsImg from "@assets/صورة واتساب بتاريخ 1447-05-08 في 16.44.34_9d1270d9_1761831906751.jpg";
+// ServiceIcon component with circular background and glow effect
+function ServiceIcon({ 
+  icon: Icon, 
+  bgColor, 
+  iconColor, 
+  glowColor 
+}: { 
+  icon: LucideIcon; 
+  bgColor: string; 
+  iconColor: string; 
+  glowColor: string;
+}) {
+  return (
+    <div 
+      className={`inline-flex p-4 rounded-2xl ${bgColor} shadow-lg relative`}
+      style={{
+        boxShadow: `0 8px 24px ${glowColor}`
+      }}
+    >
+      <Icon className={`h-7 w-7 ${iconColor}`} strokeWidth={2} />
+    </div>
+  );
+}
 
 // Component for advanced fade-in animations on scroll with 3D effects
 function FadeInSection({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) {
@@ -114,33 +135,47 @@ function FloatingIcon({ icon: Icon, color, delay = 0 }: { icon: any; color: stri
 export default function Home() {
   const reviewServices = [
     { 
-      image: googleReviewsImg, 
-      title: "تقييمات خرائط جوجل",
-      subtitle: "Google Maps Reviews", 
+      icon: Share2, 
+      title: "زيادة التفاعل على منشورات وصفحات السوشيال ميديا",
+      subtitle: "توسيع ووصول منشوراتك", 
+      value: "2,500+", 
+      label: "تفاعل تم", 
+      iconColor: "text-violet-600",
+      bgColor: "bg-violet-100/80",
+      glowColor: "rgba(139, 92, 246, 0.15)",
+      gradient: "from-violet-500 to-violet-600"
+    },
+    { 
+      icon: Star, 
+      title: "تحسين تقييمات تطبيقات Google Play و App Store",
+      subtitle: "رفع تقييمات تطبيقاتك", 
+      value: "1,800+", 
+      label: "تقييم تم", 
+      iconColor: "text-orange-600",
+      bgColor: "bg-orange-100/80",
+      glowColor: "rgba(249, 115, 22, 0.15)",
+      gradient: "from-orange-500 to-orange-600"
+    },
+    { 
+      icon: MapPin, 
+      title: "تقييمات حقيقية على خرائط Google Maps",
+      subtitle: "تحسين ظهور نشاطك التجاري", 
       value: "1,200+", 
       label: "تقييم تم", 
-      color: "text-red-500",
-      bgColor: "bg-red-500/10",
-      gradient: "from-red-500 to-red-600"
+      iconColor: "text-teal-600",
+      bgColor: "bg-teal-100/80",
+      glowColor: "rgba(20, 184, 166, 0.15)",
+      gradient: "from-teal-500 to-teal-600"
     },
     { 
-      image: androidImg, 
-      title: "تقييمات تطبيقات Android",
-      subtitle: "Android App Reviews", 
-      value: "850+", 
-      label: "تقييم تم", 
-      color: "text-green-500",
-      bgColor: "bg-green-500/10",
-      gradient: "from-green-500 to-green-600"
-    },
-    { 
-      image: appStoreImg, 
-      title: "تقييمات تطبيقات iOS",
-      subtitle: "iOS App Reviews", 
-      value: "620+", 
-      label: "تقييم تم", 
-      color: "text-blue-500",
-      bgColor: "bg-blue-500/10",
+      icon: Palette, 
+      title: "اختبار شامل لتجربة المستخدم UX/UI",
+      subtitle: "تقييمات دقيقة لتجربة المستخدم", 
+      value: "950+", 
+      label: "اختبار تم", 
+      iconColor: "text-blue-600",
+      bgColor: "bg-blue-100/80",
+      glowColor: "rgba(59, 130, 246, 0.15)",
       gradient: "from-blue-500 to-blue-600"
     },
   ];
@@ -265,8 +300,8 @@ export default function Home() {
                       </Badge>
                     </div>
 
-                    {/* Horizontal Grid Layout */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6">
+                    {/* Horizontal Grid Layout - Updated to 2x2 */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
                       {reviewServices.map((service, index) => (
                         <motion.div
                           key={index}
@@ -274,22 +309,27 @@ export default function Home() {
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ duration: 0.5, delay: index * 0.1 }}
                           whileHover={{ y: -5, scale: 1.02 }}
-                          className="bg-gradient-to-br from-background to-muted/30 rounded-2xl p-4 hover-elevate active-elevate-2 transition-all group border border-border/50 shadow-sm text-center"
+                          className="bg-gradient-to-br from-background to-muted/30 rounded-2xl p-5 hover-elevate active-elevate-2 transition-all group border border-border/50 shadow-sm text-center"
                           data-testid={`service-${index}`}
                         >
                           <motion.div
                             animate={{ 
                               rotate: [0, 5, -5, 0],
-                              scale: [1, 1.1, 1]
+                              scale: [1, 1.05, 1]
                             }}
                             transition={{ 
-                              duration: 2,
+                              duration: 2.5,
                               repeat: Infinity,
                               repeatDelay: 3
                             }}
-                            className={`inline-flex p-4 rounded-xl ${service.bgColor} shadow-lg mb-3`}
+                            className="mb-4"
                           >
-                            <img src={service.image} alt={service.title} className="h-8 w-8 object-contain" />
+                            <ServiceIcon 
+                              icon={service.icon} 
+                              bgColor={service.bgColor}
+                              iconColor={service.iconColor}
+                              glowColor={service.glowColor}
+                            />
                           </motion.div>
                           
                           <h4 className="text-sm font-bold text-foreground mb-1">{service.title}</h4>
@@ -303,7 +343,7 @@ export default function Home() {
                               whileHover={{ scale: 1.2, rotate: 15 }}
                               className={`p-1.5 rounded-full ${service.bgColor}`}
                             >
-                              <Star className={`h-3 w-3 ${service.color} fill-current`} />
+                              <Star className={`h-3 w-3 ${service.iconColor} fill-current`} />
                             </motion.div>
                           </div>
                           <span className="text-xs text-muted-foreground block mt-1">{service.label}</span>
@@ -373,7 +413,7 @@ export default function Home() {
             <div className="space-y-4 text-foreground">
               <FadeInSection delay={0.1}>
                 <motion.div 
-                  className="relative flex items-start gap-4 p-6 rounded-2xl bg-gradient-to-l from-blue-500/10 to-transparent overflow-hidden group"
+                  className="relative flex items-start gap-4 p-6 rounded-2xl bg-gradient-to-l from-orange-500/10 to-transparent overflow-hidden group"
                   whileHover={{ scale: 1.02, x: 5 }}
                   transition={{ duration: 0.3 }}
                 >
@@ -384,41 +424,33 @@ export default function Home() {
                   
                   {/* Floating decorative icons */}
                   <motion.div className="absolute top-4 left-4 opacity-20">
-                    <FloatingIcon icon={Apple} color="text-blue-400" delay={0} />
+                    <FloatingIcon icon={Sparkles} color="text-orange-400" delay={0} />
                   </motion.div>
                   
                   <motion.div 
-                    className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg relative z-10"
-                    whileHover={{ rotate: [0, -10, 10, 0], scale: 1.1 }}
+                    whileHover={{ scale: 1.1 }}
                     transition={{ duration: 0.5 }}
+                    className="flex-shrink-0 relative z-10"
                   >
-                    <motion.div
-                      animate={{
-                        y: [0, -5, 0],
-                        rotate: [0, 5, -5, 0]
-                      }}
-                      transition={{
-                        duration: 3,
-                        repeat: Infinity,
-                        ease: "easeInOut"
-                      }}
-                    >
-                      <Smartphone className="h-8 w-8 text-white" />
-                    </motion.div>
+                    <ServiceIcon 
+                      icon={Star}
+                      bgColor="bg-orange-100/80"
+                      iconColor="text-orange-600"
+                      glowColor="rgba(249, 115, 22, 0.15)"
+                    />
                   </motion.div>
                   <div className="flex-1 relative z-10">
-                    <h4 className="text-xl font-bold text-blue-600 mb-2 flex items-center gap-2">
-                      اختبار التطبيقات (iOS & Android)
-                      <motion.span
-                        animate={{ rotate: 360 }}
-                        transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                        className="inline-block"
+                    <h4 className="text-xl font-bold text-orange-600 mb-2 flex items-center gap-2">
+                      تحسين تقييمات تطبيقات Google Play و App Store
+                      <motion.div
+                        animate={{ scale: [1, 1.2, 1] }}
+                        transition={{ duration: 1.5, repeat: Infinity }}
                       >
-                        ⚡
-                      </motion.span>
+                        <Zap className="h-5 w-5 text-orange-600" />
+                      </motion.div>
                     </h4>
                     <p className="leading-relaxed text-foreground">
-                      نوفر <strong>اختبارات شاملة للتطبيقات</strong> على نظامي iOS وAndroid من قبل مختبرين محترفين. نقدم تقارير مفصلة تشمل اكتشاف الأخطاء، تحسين الأداء، وتجربة المستخدم، مما يساعدك على إطلاق تطبيق خالٍ من المشاكل وجاهز للمنافسة في متاجر التطبيقات.
+                      نوفر <strong>تقييمات حقيقية واحترافية</strong> لتطبيقاتك على متجري Google Play و App Store من قبل مستخدمين فعليين. نساعدك على تحسين تصنيف تطبيقك وزيادة ثقة المستخدمين الجدد، مما يؤدي إلى زيادة التحميلات وتحسين ظهور تطبيقك في نتائج البحث.
                     </p>
                   </div>
                 </motion.div>
@@ -426,7 +458,7 @@ export default function Home() {
 
               <FadeInSection delay={0.15}>
                 <motion.div 
-                  className="relative flex items-start gap-4 p-6 rounded-2xl bg-gradient-to-l from-red-500/10 to-transparent overflow-hidden group"
+                  className="relative flex items-start gap-4 p-6 rounded-2xl bg-gradient-to-l from-teal-500/10 to-transparent overflow-hidden group"
                   whileHover={{ scale: 1.02, x: 5 }}
                   transition={{ duration: 0.3 }}
                 >
@@ -437,38 +469,30 @@ export default function Home() {
                   
                   {/* Floating star ratings */}
                   <motion.div className="absolute top-6 left-6 opacity-20">
-                    <FloatingIcon icon={Star} color="text-red-400" delay={0.3} />
+                    <FloatingIcon icon={MapPin} color="text-teal-400" delay={0.3} />
                   </motion.div>
                   
                   <motion.div 
-                    className="w-16 h-16 bg-gradient-to-br from-red-500 to-red-600 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg relative z-10"
-                    whileHover={{ rotate: [0, -10, 10, 0], scale: 1.1 }}
+                    whileHover={{ scale: 1.1 }}
                     transition={{ duration: 0.5 }}
+                    className="flex-shrink-0 relative z-10"
                   >
-                    <motion.div
-                      animate={{
-                        y: [0, -5, 0],
-                        scale: [1, 1.1, 1]
-                      }}
-                      transition={{
-                        duration: 2.5,
-                        repeat: Infinity,
-                        ease: "easeInOut"
-                      }}
-                    >
-                      <MapPin className="h-8 w-8 text-white" />
-                    </motion.div>
+                    <ServiceIcon 
+                      icon={MapPin}
+                      bgColor="bg-teal-100/80"
+                      iconColor="text-teal-600"
+                      glowColor="rgba(20, 184, 166, 0.15)"
+                    />
                   </motion.div>
                   <div className="flex-1 relative z-10">
-                    <h4 className="text-xl font-bold text-red-600 mb-2 flex items-center gap-2">
-                      تقييمات خرائط جوجل (Google Maps Reviews)
-                      <motion.span
+                    <h4 className="text-xl font-bold text-teal-600 mb-2 flex items-center gap-2">
+                      تقييمات حقيقية على خرائط Google Maps
+                      <motion.div
                         animate={{ scale: [1, 1.2, 1] }}
                         transition={{ duration: 1.5, repeat: Infinity }}
-                        className="inline-block"
                       >
-                        📍
-                      </motion.span>
+                        <MapPin className="h-5 w-5 text-teal-600" />
+                      </motion.div>
                     </h4>
                     <p className="leading-relaxed text-foreground">
                       احصل على <strong>تقييمات حقيقية وموثوقة</strong> على Google Maps من مستخدمين فعليين قاموا بتجربة خدماتك. نساعدك على <strong>تحسين ترتيبك</strong> في نتائج البحث المحلية وزيادة ثقة العملاء الجدد، مما يؤدي إلى زيادة المبيعات والانتشار.
@@ -519,44 +543,31 @@ export default function Home() {
                   </motion.div>
                   
                   <motion.div 
-                    className="w-16 h-16 bg-gradient-to-br from-pink-500 via-pink-600 to-pink-700 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-xl relative z-10"
-                    whileHover={{ rotate: [0, -15, 15, 0], scale: 1.15 }}
+                    whileHover={{ scale: 1.15 }}
                     transition={{ duration: 0.5 }}
+                    className="flex-shrink-0 relative z-10"
                     animate={{
-                      boxShadow: [
-                        "0 0 20px rgba(236, 72, 153, 0.3)",
-                        "0 0 30px rgba(236, 72, 153, 0.5)",
-                        "0 0 20px rgba(236, 72, 153, 0.3)"
-                      ]
+                      y: [0, -8, 0]
                     }}
                   >
-                    <motion.div
-                      animate={{
-                        y: [0, -8, 0],
-                        rotate: [0, 10, -10, 0]
-                      }}
-                      transition={{
-                        duration: 3,
-                        repeat: Infinity,
-                        ease: "easeInOut"
-                      }}
-                    >
-                      <TrendingUp className="h-8 w-8 text-white" />
-                    </motion.div>
+                    <ServiceIcon 
+                      icon={Share2}
+                      bgColor="bg-violet-100/80"
+                      iconColor="text-violet-600"
+                      glowColor="rgba(139, 92, 246, 0.25)"
+                    />
                   </motion.div>
                   <div className="flex-1 relative z-10 pt-8">
                     <h4 className="text-xl font-bold text-pink-600 mb-2 flex items-center gap-2">
-                      التفاعل مع منشورات السوشيال ميديا
-                      <motion.span
+                      زيادة التفاعل على منشورات وصفحات السوشيال ميديا
+                      <motion.div
                         animate={{ 
-                          scale: [1, 1.3, 1],
-                          rotate: [0, 10, -10, 0]
+                          scale: [1, 1.2, 1]
                         }}
                         transition={{ duration: 2, repeat: Infinity }}
-                        className="inline-block"
                       >
-                        💫
-                      </motion.span>
+                        <Sparkles className="h-5 w-5 text-pink-600" />
+                      </motion.div>
                     </h4>
                     <p className="leading-relaxed text-foreground">
                       <strong>خدمة حصرية</strong> تساعدك على <strong>زيادة التفاعل والانتشار</strong> لمحتواك على منصات التواصل الاجتماعي مثل Facebook، Instagram، Twitter، وLinkedIn. يقوم مستقلون حقيقيون بالتفاعل مع منشوراتك من خلال الإعجابات، التعليقات الحقيقية، والمشاركات، مما يعزز من <strong>ظهور المحتوى</strong> في خوارزميات السوشيال ميديا ويزيد من الوصول إلى جمهور أوسع. هذه الخدمة مثالية لـ:
@@ -586,34 +597,26 @@ export default function Home() {
                   </motion.div>
                   
                   <motion.div 
-                    className="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg relative z-10"
-                    whileHover={{ rotate: [0, -10, 10, 0], scale: 1.1 }}
+                    whileHover={{ scale: 1.1 }}
                     transition={{ duration: 0.5 }}
+                    className="flex-shrink-0 relative z-10"
                   >
-                    <motion.div
-                      animate={{
-                        scale: [1, 1.1, 1],
-                        rotate: [0, -5, 5, 0]
-                      }}
-                      transition={{
-                        duration: 3.5,
-                        repeat: Infinity,
-                        ease: "easeInOut"
-                      }}
-                    >
-                      <BarChart3 className="h-8 w-8 text-white" />
-                    </motion.div>
+                    <ServiceIcon 
+                      icon={Palette}
+                      bgColor="bg-blue-100/80"
+                      iconColor="text-blue-600"
+                      glowColor="rgba(59, 130, 246, 0.15)"
+                    />
                   </motion.div>
                   <div className="flex-1 relative z-10">
-                    <h4 className="text-xl font-bold text-purple-600 mb-2 flex items-center gap-2">
-                      تحليل تجربة المستخدم (UX/UI)
-                      <motion.span
+                    <h4 className="text-xl font-bold text-blue-600 mb-2 flex items-center gap-2">
+                      اختبار شامل لتجربة المستخدم UX/UI
+                      <motion.div
                         animate={{ y: [0, -3, 0] }}
                         transition={{ duration: 1.8, repeat: Infinity }}
-                        className="inline-block"
                       >
-                        🎨
-                      </motion.span>
+                        <Palette className="h-5 w-5 text-blue-600" />
+                      </motion.div>
                     </h4>
                     <p className="leading-relaxed text-foreground">
                       احصل على <strong>تحليل احترافي</strong> لتجربة المستخدم وواجهة التطبيق أو الموقع الخاص بك. نقدم توصيات عملية لتحسين التصميم، سهولة الاستخدام، وزيادة معدلات التحويل، مما يساعدك على <strong>تقليل معدل الارتداد</strong> وزيادة رضا المستخدمين.
@@ -637,33 +640,26 @@ export default function Home() {
                   </motion.div>
                   
                   <motion.div 
-                    className="w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg relative z-10"
-                    whileHover={{ rotate: [0, -10, 10, 0], scale: 1.1 }}
+                    whileHover={{ scale: 1.1 }}
                     transition={{ duration: 0.5 }}
+                    className="flex-shrink-0 relative z-10"
                   >
-                    <motion.div
-                      animate={{
-                        rotate: [0, 360],
-                      }}
-                      transition={{
-                        duration: 8,
-                        repeat: Infinity,
-                        ease: "linear"
-                      }}
-                    >
-                      <Globe className="h-8 w-8 text-white" />
-                    </motion.div>
+                    <ServiceIcon 
+                      icon={Globe}
+                      bgColor="bg-green-100/80"
+                      iconColor="text-green-600"
+                      glowColor="rgba(34, 197, 94, 0.15)"
+                    />
                   </motion.div>
                   <div className="flex-1 relative z-10">
                     <h4 className="text-xl font-bold text-green-600 mb-2 flex items-center gap-2">
                       اختبار المواقع الإلكترونية
-                      <motion.span
-                        animate={{ rotate: [0, 10, -10, 0] }}
-                        transition={{ duration: 2.2, repeat: Infinity }}
-                        className="inline-block"
+                      <motion.div
+                        animate={{ rotate: [0, 360] }}
+                        transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
                       >
-                        🌐
-                      </motion.span>
+                        <Globe className="h-5 w-5 text-green-600" />
+                      </motion.div>
                     </h4>
                     <p className="leading-relaxed text-foreground">
                       فحص شامل لموقعك الإلكتروني يشمل اختبار الأداء، التوافق مع المتصفحات، الاستجابة على الأجهزة المختلفة، وأمان الموقع. نضمن لك موقع <strong>سريع، آمن، ومتوافق</strong> مع جميع الأجهزة.
@@ -687,34 +683,26 @@ export default function Home() {
                   </motion.div>
                   
                   <motion.div 
-                    className="w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg relative z-10"
-                    whileHover={{ rotate: [0, -10, 10, 0], scale: 1.1 }}
+                    whileHover={{ scale: 1.1 }}
                     transition={{ duration: 0.5 }}
+                    className="flex-shrink-0 relative z-10"
                   >
-                    <motion.div
-                      animate={{
-                        y: [0, -7, 0],
-                        scale: [1, 1.15, 1]
-                      }}
-                      transition={{
-                        duration: 2.8,
-                        repeat: Infinity,
-                        ease: "easeInOut"
-                      }}
-                    >
-                      <MessageSquare className="h-8 w-8 text-white" />
-                    </motion.div>
+                    <ServiceIcon 
+                      icon={Star}
+                      bgColor="bg-orange-100/80"
+                      iconColor="text-orange-600"
+                      glowColor="rgba(249, 115, 22, 0.15)"
+                    />
                   </motion.div>
                   <div className="flex-1 relative z-10">
                     <h4 className="text-xl font-bold text-orange-600 mb-2 flex items-center gap-2">
                       تقييمات المستخدمين الحقيقية
-                      <motion.span
-                        animate={{ scale: [1, 1.4, 1] }}
+                      <motion.div
+                        animate={{ scale: [1, 1.3, 1] }}
                         transition={{ duration: 2.5, repeat: Infinity }}
-                        className="inline-block"
                       >
-                        ⭐
-                      </motion.span>
+                        <Star className="h-5 w-5 text-orange-600 fill-current" />
+                      </motion.div>
                     </h4>
                     <p className="leading-relaxed text-foreground">
                       احصل على <strong>آراء وتقييمات صادقة</strong> من مستخدمين فعليين على متاجر التطبيقات (App Store & Google Play). نساعدك على بناء <strong>سمعة قوية</strong> وزيادة التحميلات من خلال تقييمات إيجابية موثوقة.
