@@ -71,15 +71,20 @@ export default function ProductOwnerSignup() {
           email: data.email,
           password: data.password,
           services: [data.serviceType],
-          // Store service details for future use
-          productName: `طلب ${selectedService?.name}`,
-          productType: "تطبيق جوال",
         }),
       });
       
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "فشل إنشاء الحساب");
+        const errorData = await response.json();
+        let errorMessage = "فشل إنشاء الحساب";
+        
+        if (typeof errorData.error === 'string') {
+          errorMessage = errorData.error;
+        } else if (Array.isArray(errorData.error)) {
+          errorMessage = errorData.error.map((e: any) => e.message || e.code).join(', ');
+        }
+        
+        throw new Error(errorMessage);
       }
       
       return await response.json();
@@ -93,9 +98,9 @@ export default function ProductOwnerSignup() {
       
       toast({
         title: "تم إنشاء الحساب بنجاح!",
-        description: "مرحبًا بك في منصة سُمُوّ",
+        description: "اختر الجروب المناسب لتنفيذ خدمتك",
       });
-      navigate("/campaigns");
+      navigate("/groups");
     },
     onError: (error: any) => {
       toast({
