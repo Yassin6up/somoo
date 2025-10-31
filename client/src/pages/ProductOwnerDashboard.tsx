@@ -189,10 +189,10 @@ export default function ProductOwnerDashboard() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-muted-foreground">مهام قيد المراجعة</p>
-                    <p className="text-3xl font-bold mt-1 text-orange-600">{stats.submittedTasks}</p>
+                    <p className="text-3xl font-bold mt-1 text-primary">{stats.submittedTasks}</p>
                   </div>
-                  <div className="w-12 h-12 bg-orange-500/10 rounded-xl flex items-center justify-center">
-                    <Clock className="h-6 w-6 text-orange-600" />
+                  <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
+                    <Clock className="h-6 w-6 text-primary" />
                   </div>
                 </div>
               </CardContent>

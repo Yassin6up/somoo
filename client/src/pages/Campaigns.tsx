@@ -63,11 +63,11 @@ const campaignFormSchema = z.object({
 type CampaignFormData = z.infer<typeof campaignFormSchema>;
 
 const statusColors: Record<string, { bg: string; text: string; label: string }> = {
-  draft: { bg: "bg-gray-100 dark:bg-gray-800", text: "text-gray-800 dark:text-gray-200", label: "مسودة" },
-  active: { bg: "bg-green-100 dark:bg-green-900", text: "text-green-800 dark:text-green-200", label: "نشط" },
-  paused: { bg: "bg-yellow-100 dark:bg-yellow-900", text: "text-yellow-800 dark:text-yellow-200", label: "متوقف" },
-  completed: { bg: "bg-blue-100 dark:bg-blue-900", text: "text-blue-800 dark:text-blue-200", label: "مكتمل" },
-  cancelled: { bg: "bg-red-100 dark:bg-red-900", text: "text-red-800 dark:text-red-200", label: "ملغي" },
+  draft: { bg: "bg-muted dark:bg-muted", text: "text-muted-foreground dark:text-muted-foreground", label: "مسودة" },
+  active: { bg: "bg-primary/10 dark:bg-primary/20", text: "text-primary dark:text-primary", label: "نشط" },
+  paused: { bg: "bg-secondary dark:bg-secondary", text: "text-secondary-foreground dark:text-secondary-foreground", label: "متوقف" },
+  completed: { bg: "bg-accent dark:bg-accent", text: "text-accent-foreground dark:text-accent-foreground", label: "مكتمل" },
+  cancelled: { bg: "bg-muted dark:bg-muted", text: "text-muted-foreground dark:text-muted-foreground", label: "ملغي" },
 };
 
 const packageTypes = [

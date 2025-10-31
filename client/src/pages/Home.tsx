@@ -140,10 +140,10 @@ export default function Home() {
       subtitle: "توسيع ووصول منشوراتك", 
       value: "2,500+", 
       label: "تفاعل تم", 
-      iconColor: "text-violet-600",
-      bgColor: "bg-violet-100/80",
-      glowColor: "rgba(139, 92, 246, 0.15)",
-      gradient: "from-violet-500 to-violet-600"
+      iconColor: "text-primary",
+      bgColor: "bg-primary/10",
+      glowColor: "rgba(76, 175, 80, 0.15)",
+      gradient: "from-primary to-primary"
     },
     { 
       icon: Star, 
@@ -151,10 +151,10 @@ export default function Home() {
       subtitle: "رفع تقييمات تطبيقاتك", 
       value: "1,800+", 
       label: "تقييم تم", 
-      iconColor: "text-orange-600",
-      bgColor: "bg-orange-100/80",
-      glowColor: "rgba(249, 115, 22, 0.15)",
-      gradient: "from-orange-500 to-orange-600"
+      iconColor: "text-primary",
+      bgColor: "bg-primary/10",
+      glowColor: "rgba(76, 175, 80, 0.15)",
+      gradient: "from-primary to-primary"
     },
     { 
       icon: MapPin, 
@@ -162,10 +162,10 @@ export default function Home() {
       subtitle: "تحسين ظهور نشاطك التجاري", 
       value: "1,200+", 
       label: "تقييم تم", 
-      iconColor: "text-teal-600",
-      bgColor: "bg-teal-100/80",
-      glowColor: "rgba(20, 184, 166, 0.15)",
-      gradient: "from-teal-500 to-teal-600"
+      iconColor: "text-primary",
+      bgColor: "bg-primary/10",
+      glowColor: "rgba(76, 175, 80, 0.15)",
+      gradient: "from-primary to-primary"
     },
     { 
       icon: Palette, 
@@ -173,10 +173,10 @@ export default function Home() {
       subtitle: "تقييمات دقيقة لتجربة المستخدم", 
       value: "950+", 
       label: "اختبار تم", 
-      iconColor: "text-blue-600",
-      bgColor: "bg-blue-100/80",
-      glowColor: "rgba(59, 130, 246, 0.15)",
-      gradient: "from-blue-500 to-blue-600"
+      iconColor: "text-primary",
+      bgColor: "bg-primary/10",
+      glowColor: "rgba(76, 175, 80, 0.15)",
+      gradient: "from-primary to-primary"
     },
   ];
 
@@ -241,15 +241,15 @@ export default function Home() {
               {/* Feature Badges */}
               <div className="flex flex-wrap gap-3 justify-center lg:justify-start pt-4">
                 <div className="flex items-center gap-2 text-sm">
-                  <CheckCircle2 className="h-4 w-4 text-green-500" />
+                  <CheckCircle2 className="h-4 w-4 text-primary" />
                   <span className="text-muted-foreground">تقييمات حقيقية من مستخدمين متخصصين</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm">
-                  <CheckCircle2 className="h-4 w-4 text-green-500" />
+                  <CheckCircle2 className="h-4 w-4 text-primary" />
                   <span className="text-muted-foreground">دعم فوري، متواصل على مدار الساعة</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm">
-                  <CheckCircle2 className="h-4 w-4 text-green-500" />
+                  <CheckCircle2 className="h-4 w-4 text-primary" />
                   <span className="text-muted-foreground">سرعة في إنجاز المهام</span>
                 </div>
               </div>
@@ -257,7 +257,7 @@ export default function Home() {
 
             {/* Right Side - Review Services Card - Horizontal 3D Layout */}
             <div className="relative w-full" style={{ perspective: '1200px' }}>
-              <div className="absolute -top-6 -right-6 w-24 h-24 bg-amber-500/20 rounded-full blur-3xl"></div>
+              <div className="absolute -top-6 -right-6 w-24 h-24 bg-primary/20 rounded-full blur-3xl"></div>
               <div className="absolute -bottom-6 -left-6 w-32 h-32 bg-primary/20 rounded-full blur-3xl"></div>
               
               <motion.div
@@ -413,7 +413,7 @@ export default function Home() {
             <div className="space-y-4 text-foreground">
               <FadeInSection delay={0.1}>
                 <motion.div 
-                  className="relative flex items-start gap-4 p-6 rounded-2xl bg-gradient-to-l from-orange-500/10 to-transparent overflow-hidden group"
+                  className="relative flex items-start gap-4 p-6 rounded-2xl bg-gradient-to-l from-primary/10 to-transparent overflow-hidden group"
                   whileHover={{ scale: 1.02, x: 5 }}
                   transition={{ duration: 0.3 }}
                 >
@@ -424,7 +424,7 @@ export default function Home() {
                   
                   {/* Floating decorative icons */}
                   <motion.div className="absolute top-4 left-4 opacity-20">
-                    <FloatingIcon icon={Sparkles} color="text-orange-400" delay={0} />
+                    <FloatingIcon icon={Sparkles} color="text-primary" delay={0} />
                   </motion.div>
                   
                   <motion.div 
@@ -434,19 +434,19 @@ export default function Home() {
                   >
                     <ServiceIcon 
                       icon={Star}
-                      bgColor="bg-orange-100/80"
-                      iconColor="text-orange-600"
-                      glowColor="rgba(249, 115, 22, 0.15)"
+                      bgColor="bg-primary/80"
+                      iconColor="text-primary"
+                      glowColor="rgba(76, 175, 80, 0.15)"
                     />
                   </motion.div>
                   <div className="flex-1 relative z-10">
-                    <h4 className="text-xl font-bold text-orange-600 mb-2 flex items-center gap-2">
+                    <h4 className="text-xl font-bold text-primary mb-2 flex items-center gap-2">
                       تحسين تقييمات تطبيقات Google Play و App Store
                       <motion.div
                         animate={{ scale: [1, 1.2, 1] }}
                         transition={{ duration: 1.5, repeat: Infinity }}
                       >
-                        <Zap className="h-5 w-5 text-orange-600" />
+                        <Zap className="h-5 w-5 text-primary" />
                       </motion.div>
                     </h4>
                     <p className="leading-relaxed text-foreground">
@@ -458,7 +458,7 @@ export default function Home() {
 
               <FadeInSection delay={0.15}>
                 <motion.div 
-                  className="relative flex items-start gap-4 p-6 rounded-2xl bg-gradient-to-l from-teal-500/10 to-transparent overflow-hidden group"
+                  className="relative flex items-start gap-4 p-6 rounded-2xl bg-gradient-to-l from-primary/10 to-transparent overflow-hidden group"
                   whileHover={{ scale: 1.02, x: 5 }}
                   transition={{ duration: 0.3 }}
                 >
@@ -469,7 +469,7 @@ export default function Home() {
                   
                   {/* Floating star ratings */}
                   <motion.div className="absolute top-6 left-6 opacity-20">
-                    <FloatingIcon icon={MapPin} color="text-teal-400" delay={0.3} />
+                    <FloatingIcon icon={MapPin} color="text-primary" delay={0.3} />
                   </motion.div>
                   
                   <motion.div 
@@ -479,19 +479,19 @@ export default function Home() {
                   >
                     <ServiceIcon 
                       icon={MapPin}
-                      bgColor="bg-teal-100/80"
-                      iconColor="text-teal-600"
-                      glowColor="rgba(20, 184, 166, 0.15)"
+                      bgColor="bg-primary/80"
+                      iconColor="text-primary"
+                      glowColor="rgba(76, 175, 80, 0.15)"
                     />
                   </motion.div>
                   <div className="flex-1 relative z-10">
-                    <h4 className="text-xl font-bold text-teal-600 mb-2 flex items-center gap-2">
+                    <h4 className="text-xl font-bold text-primary mb-2 flex items-center gap-2">
                       تقييمات حقيقية على خرائط Google Maps
                       <motion.div
                         animate={{ scale: [1, 1.2, 1] }}
                         transition={{ duration: 1.5, repeat: Infinity }}
                       >
-                        <MapPin className="h-5 w-5 text-teal-600" />
+                        <MapPin className="h-5 w-5 text-primary" />
                       </motion.div>
                     </h4>
                     <p className="leading-relaxed text-foreground">
@@ -503,7 +503,7 @@ export default function Home() {
 
               <FadeInSection delay={0.2}>
                 <motion.div 
-                  className="relative flex items-start gap-4 p-6 rounded-2xl bg-gradient-to-l from-pink-500/15 to-transparent border-2 border-pink-500/30 overflow-hidden group"
+                  className="relative flex items-start gap-4 p-6 rounded-2xl bg-gradient-to-l from-primary/15 to-transparent border-2 border-primary/30 overflow-hidden group"
                   whileHover={{ scale: 1.02, x: 5, borderColor: "rgba(236, 72, 153, 0.5)" }}
                   transition={{ duration: 0.3 }}
                 >
@@ -519,7 +519,7 @@ export default function Home() {
                       ease: "easeInOut"
                     }}
                   >
-                    <Badge className="bg-gradient-to-r from-pink-500 to-pink-600 text-white rounded-lg px-3 py-1 shadow-lg border-0">
+                    <Badge className="bg-gradient-to-r from-primary to-primary text-white rounded-lg px-3 py-1 shadow-lg border-0">
                       <motion.span
                         animate={{ rotate: [0, 20, -20, 0] }}
                         transition={{ duration: 2, repeat: Infinity }}
@@ -539,7 +539,7 @@ export default function Home() {
                   
                   {/* Floating social icons */}
                   <motion.div className="absolute top-8 right-8 opacity-15">
-                    <FloatingIcon icon={Users} color="text-pink-400" delay={0.5} />
+                    <FloatingIcon icon={Users} color="text-primary" delay={0.5} />
                   </motion.div>
                   
                   <motion.div 
@@ -552,13 +552,13 @@ export default function Home() {
                   >
                     <ServiceIcon 
                       icon={Share2}
-                      bgColor="bg-violet-100/80"
-                      iconColor="text-violet-600"
+                      bgColor="bg-primary/80"
+                      iconColor="text-primary"
                       glowColor="rgba(139, 92, 246, 0.25)"
                     />
                   </motion.div>
                   <div className="flex-1 relative z-10 pt-8">
-                    <h4 className="text-xl font-bold text-pink-600 mb-2 flex items-center gap-2">
+                    <h4 className="text-xl font-bold text-primary mb-2 flex items-center gap-2">
                       زيادة التفاعل على منشورات وصفحات السوشيال ميديا
                       <motion.div
                         animate={{ 
@@ -566,7 +566,7 @@ export default function Home() {
                         }}
                         transition={{ duration: 2, repeat: Infinity }}
                       >
-                        <Sparkles className="h-5 w-5 text-pink-600" />
+                        <Sparkles className="h-5 w-5 text-primary" />
                       </motion.div>
                     </h4>
                     <p className="leading-relaxed text-foreground">
@@ -584,7 +584,7 @@ export default function Home() {
 
               <FadeInSection delay={0.25}>
                 <motion.div 
-                  className="relative flex items-start gap-4 p-6 rounded-2xl bg-gradient-to-l from-purple-500/10 to-transparent overflow-hidden group"
+                  className="relative flex items-start gap-4 p-6 rounded-2xl bg-gradient-to-l from-primary/10 to-transparent overflow-hidden group"
                   whileHover={{ scale: 1.02, x: 5 }}
                   transition={{ duration: 0.3 }}
                 >
@@ -593,7 +593,7 @@ export default function Home() {
                   <AnimatedParticle delay={1.4} x="55%" y="75%" />
                   
                   <motion.div className="absolute top-6 right-6 opacity-15">
-                    <FloatingIcon icon={Target} color="text-purple-400" delay={0.6} />
+                    <FloatingIcon icon={Target} color="text-primary" delay={0.6} />
                   </motion.div>
                   
                   <motion.div 
@@ -603,19 +603,19 @@ export default function Home() {
                   >
                     <ServiceIcon 
                       icon={Palette}
-                      bgColor="bg-blue-100/80"
-                      iconColor="text-blue-600"
-                      glowColor="rgba(59, 130, 246, 0.15)"
+                      bgColor="bg-primary/80"
+                      iconColor="text-primary"
+                      glowColor="rgba(76, 175, 80, 0.15)"
                     />
                   </motion.div>
                   <div className="flex-1 relative z-10">
-                    <h4 className="text-xl font-bold text-blue-600 mb-2 flex items-center gap-2">
+                    <h4 className="text-xl font-bold text-primary mb-2 flex items-center gap-2">
                       اختبار شامل لتجربة المستخدم UX/UI
                       <motion.div
                         animate={{ y: [0, -3, 0] }}
                         transition={{ duration: 1.8, repeat: Infinity }}
                       >
-                        <Palette className="h-5 w-5 text-blue-600" />
+                        <Palette className="h-5 w-5 text-primary" />
                       </motion.div>
                     </h4>
                     <p className="leading-relaxed text-foreground">
@@ -636,7 +636,7 @@ export default function Home() {
                   <AnimatedParticle delay={1.6} x="50%" y="80%" />
                   
                   <motion.div className="absolute bottom-8 left-8 opacity-15">
-                    <FloatingIcon icon={Zap} color="text-green-400" delay={0.8} />
+                    <FloatingIcon icon={Zap} color="text-primary" delay={0.8} />
                   </motion.div>
                   
                   <motion.div 
@@ -647,18 +647,18 @@ export default function Home() {
                     <ServiceIcon 
                       icon={Globe}
                       bgColor="bg-green-100/80"
-                      iconColor="text-green-600"
+                      iconColor="text-primary"
                       glowColor="rgba(34, 197, 94, 0.15)"
                     />
                   </motion.div>
                   <div className="flex-1 relative z-10">
-                    <h4 className="text-xl font-bold text-green-600 mb-2 flex items-center gap-2">
+                    <h4 className="text-xl font-bold text-primary mb-2 flex items-center gap-2">
                       اختبار المواقع الإلكترونية
                       <motion.div
                         animate={{ rotate: [0, 360] }}
                         transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
                       >
-                        <Globe className="h-5 w-5 text-green-600" />
+                        <Globe className="h-5 w-5 text-primary" />
                       </motion.div>
                     </h4>
                     <p className="leading-relaxed text-foreground">
@@ -670,7 +670,7 @@ export default function Home() {
 
               <FadeInSection delay={0.35}>
                 <motion.div 
-                  className="relative flex items-start gap-4 p-6 rounded-2xl bg-gradient-to-l from-orange-500/10 to-transparent overflow-hidden group"
+                  className="relative flex items-start gap-4 p-6 rounded-2xl bg-gradient-to-l from-primary/10 to-transparent overflow-hidden group"
                   whileHover={{ scale: 1.02, x: 5 }}
                   transition={{ duration: 0.3 }}
                 >
@@ -679,7 +679,7 @@ export default function Home() {
                   <AnimatedParticle delay={1.8} x="45%" y="85%" />
                   
                   <motion.div className="absolute top-8 left-8 opacity-15">
-                    <FloatingIcon icon={Award} color="text-orange-400" delay={1} />
+                    <FloatingIcon icon={Award} color="text-primary" delay={1} />
                   </motion.div>
                   
                   <motion.div 
@@ -689,19 +689,19 @@ export default function Home() {
                   >
                     <ServiceIcon 
                       icon={Star}
-                      bgColor="bg-orange-100/80"
-                      iconColor="text-orange-600"
-                      glowColor="rgba(249, 115, 22, 0.15)"
+                      bgColor="bg-primary/80"
+                      iconColor="text-primary"
+                      glowColor="rgba(76, 175, 80, 0.15)"
                     />
                   </motion.div>
                   <div className="flex-1 relative z-10">
-                    <h4 className="text-xl font-bold text-orange-600 mb-2 flex items-center gap-2">
+                    <h4 className="text-xl font-bold text-primary mb-2 flex items-center gap-2">
                       تقييمات المستخدمين الحقيقية
                       <motion.div
                         animate={{ scale: [1, 1.3, 1] }}
                         transition={{ duration: 2.5, repeat: Infinity }}
                       >
-                        <Star className="h-5 w-5 text-orange-600 fill-current" />
+                        <Star className="h-5 w-5 text-primary fill-current" />
                       </motion.div>
                     </h4>
                     <p className="leading-relaxed text-foreground">

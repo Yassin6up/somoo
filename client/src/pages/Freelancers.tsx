@@ -145,8 +145,8 @@ export default function Freelancers() {
 
               <div className="bg-card/50 backdrop-blur-sm rounded-2xl p-4 border hover-elevate">
                 <div className="flex items-center justify-center gap-2 mb-2">
-                  <Briefcase className="h-5 w-5 text-blue-500" />
-                  <span className="text-2xl font-bold text-blue-500" data-testid="text-services-count">
+                  <Briefcase className="h-5 w-5 text-primary" />
+                  <span className="text-2xl font-bold text-primary" data-testid="text-services-count">
                     {allServices.length}
                   </span>
                 </div>
