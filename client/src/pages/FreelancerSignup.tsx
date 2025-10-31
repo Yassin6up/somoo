@@ -244,10 +244,28 @@ export default function FreelancerSignup() {
                                   </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
-                                  <SelectItem value="+966">🇸🇦 +966</SelectItem>
-                                  <SelectItem value="+971">🇦🇪 +971</SelectItem>
-                                  <SelectItem value="+965">🇰🇼 +965</SelectItem>
-                                  <SelectItem value="+20">🇪🇬 +20</SelectItem>
+                                  <SelectItem value="+966">🇸🇦 السعودية +966</SelectItem>
+                                  <SelectItem value="+971">🇦🇪 الإمارات +971</SelectItem>
+                                  <SelectItem value="+965">🇰🇼 الكويت +965</SelectItem>
+                                  <SelectItem value="+973">🇧🇭 البحرين +973</SelectItem>
+                                  <SelectItem value="+974">🇶🇦 قطر +974</SelectItem>
+                                  <SelectItem value="+968">🇴🇲 عمان +968</SelectItem>
+                                  <SelectItem value="+20">🇪🇬 مصر +20</SelectItem>
+                                  <SelectItem value="+962">🇯🇴 الأردن +962</SelectItem>
+                                  <SelectItem value="+961">🇱🇧 لبنان +961</SelectItem>
+                                  <SelectItem value="+963">🇸🇾 سوريا +963</SelectItem>
+                                  <SelectItem value="+964">🇮🇶 العراق +964</SelectItem>
+                                  <SelectItem value="+970">🇵🇸 فلسطين +970</SelectItem>
+                                  <SelectItem value="+212">🇲🇦 المغرب +212</SelectItem>
+                                  <SelectItem value="+213">🇩🇿 الجزائر +213</SelectItem>
+                                  <SelectItem value="+216">🇹🇳 تونس +216</SelectItem>
+                                  <SelectItem value="+218">🇱🇾 ليبيا +218</SelectItem>
+                                  <SelectItem value="+249">🇸🇩 السودان +249</SelectItem>
+                                  <SelectItem value="+967">🇾🇪 اليمن +967</SelectItem>
+                                  <SelectItem value="+222">🇲🇷 موريتانيا +222</SelectItem>
+                                  <SelectItem value="+253">🇩🇯 جيبوتي +253</SelectItem>
+                                  <SelectItem value="+252">🇸🇴 الصومال +252</SelectItem>
+                                  <SelectItem value="+269">🇰🇲 جزر القمر +269</SelectItem>
                                 </SelectContent>
                               </Select>
                               <FormMessage />
@@ -351,7 +369,7 @@ export default function FreelancerSignup() {
                           <FormField
                             control={form.control}
                             name="services"
-                            render={() => (
+                            render={({ field }) => (
                               <FormItem>
                                 <FormLabel className="flex items-center gap-2">
                                   <Puzzle className="h-4 w-4" />
@@ -366,7 +384,7 @@ export default function FreelancerSignup() {
                                       data-testid={`checkbox-service-${service}`}
                                     >
                                       <Checkbox
-                                        checked={(form.watch("services") || []).includes(service)}
+                                        checked={(field.value || []).includes(service)}
                                         className="mt-0.5"
                                       />
                                       <span className="text-sm">{service}</span>
