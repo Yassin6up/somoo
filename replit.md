@@ -124,6 +124,13 @@ The platform is built with a modern web stack, featuring a modular project struc
   - All API endpoints (POST/GET/PATCH /api/orders) tested and working with proper authorization
   - Service pricing calculations verified: $1 per review (Google Play, iOS, Website, UX, Software, Social Media), $2 per Google Maps review
 
+- **Orders Display & Notifications (November 2024):**
+  - **ProductOwnerDashboard:** Added "طلباتي" tab displaying all purchases with service type, quantity, payment method, status, and total amount
+  - **FreelancerDashboard:** Added "الطلبات" tab as default view showing incoming orders for groups the freelancer leads
+  - **NotificationsDropdown Component:** New Navbar component with unread notification badge, dropdown menu with mark-as-read functionality, auto-refresh every 30s
+  - **Shared /api/orders endpoint:** Returns role-appropriate data (product owners see their purchases, freelancers see orders for their groups)
+  - **Consistent UI patterns:** Both dashboards use matching order card layouts with status badges and responsive design
+
 ## External Dependencies
 - **OpenAI (via Replit AI Integrations):** For AI-powered suggestions (e.g., bio, product descriptions).
 - **Object Storage:** Planned for file uploads (e.g., profile pictures, ID verifications).
