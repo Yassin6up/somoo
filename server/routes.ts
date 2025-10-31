@@ -892,6 +892,1062 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // ============================================
+  // GROUP ROUTES - إدارة الجروبات
+  // ============================================
+
+  // Create a new group (freelancer only)
+  app.post("/api/groups", authMiddleware, requireRole(["freelancer"]), async (req: AuthRequest, res) => {
+    try {
+      if (!req.user?.userId) {
+        return res.status(401).json({ error: "غير مصرح" });
+      }
+
+      const { name, description, maxMembers = 700 } = req.body;
+
+      if (!name || !name.trim()) {
+        return res.status(400).json({ error: "اسم الجروب مطلوب" });
+      }
+
+      if (maxMembers < 1 || maxMembers > 700) {
+        return res.status(400).json({ error: "الحد الأقصى للأعضاء يجب أن يكون بين 1 و 700" });
+      }
+
+      const group = await storage.createGroup({
+        name: name.trim(),
+        description: description?.trim() || "",
+        leaderId: req.user.userId,
+        maxMembers,
+        currentMembers: 1, // Leader is the first member
+        status: "active",
+      });
+
+      // Add leader as member
+      await storage.addGroupMember({
+        groupId: group.id,
+        freelancerId: req.user.userId,
+        role: "leader",
+      });
+
+      res.status(201).json(group);
+    } catch (error) {
+      console.error("Error creating group:", error);
+      res.status(500).json({ error: "حدث خطأ أثناء إنشاء الجروب" });
+    }
+  });
+
+  // Get all groups (for joining)
+  app.get("/api/groups", async (req, res) => {
+    try {
+      const groups = await storage.getAllGroups();
+      res.json(groups);
+    } catch (error) {
+      console.error("Error fetching groups:", error);
+      res.status(500).json({ error: "حدث خطأ أثناء جلب الجروبات" });
+    }
+  });
+
+  // Get group by ID with details
+  app.get("/api/groups/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const group = await storage.getGroup(id);
+
+      if (!group) {
+        return res.status(404).json({ error: "الجروب غير موجود" });
+      }
+
+      res.json(group);
+    } catch (error) {
+      console.error("Error fetching group:", error);
+      res.status(500).json({ error: "حدث خطأ أثناء جلب بيانات الجروب" });
+    }
+  });
+
+  // Get groups where user is leader
+  app.get("/api/groups/my/leader", authMiddleware, requireRole(["freelancer"]), async (req: AuthRequest, res) => {
+    try {
+      if (!req.user?.userId) {
+        return res.status(401).json({ error: "غير مصرح" });
+      }
+
+      const groups = await storage.getGroupsByLeader(req.user.userId);
+      res.json(groups);
+    } catch (error) {
+      console.error("Error fetching leader groups:", error);
+      res.status(500).json({ error: "حدث خطأ أثناء جلب الجروبات" });
+    }
+  });
+
+  // Join a group (freelancer only)
+  app.post("/api/groups/:id/join", authMiddleware, requireRole(["freelancer"]), async (req: AuthRequest, res) => {
+    try {
+      const { id } = req.params;
+      
+      if (!req.user?.userId) {
+        return res.status(401).json({ error: "غير مصرح" });
+      }
+
+      const group = await storage.getGroup(id);
+      if (!group) {
+        return res.status(404).json({ error: "الجروب غير موجود" });
+      }
+
+      if (group.status !== "active") {
+        return res.status(400).json({ error: "هذا الجروب غير نشط" });
+      }
+
+      // Check if already a member
+      const isMember = await storage.isGroupMember(id, req.user.userId);
+      if (isMember) {
+        return res.status(400).json({ error: "أنت عضو بالفعل في هذا الجروب" });
+      }
+
+      // Check if group is full
+      if (group.currentMembers >= group.maxMembers) {
+        return res.status(400).json({ error: "الجروب ممتلئ (الحد الأقصى 700 عضو)" });
+      }
+
+      // Add member
+      const member = await storage.addGroupMember({
+        groupId: id,
+        freelancerId: req.user.userId,
+        role: "member",
+      });
+
+      // Update group member count
+      await storage.updateGroup(id, {
+        currentMembers: group.currentMembers + 1,
+      });
+
+      // Create notification for leader
+      await storage.createNotification({
+        userId: group.leaderId,
+        userType: "freelancer",
+        title: "عضو جديد انضم للجروب",
+        message: `انضم عضو جديد إلى جروب "${group.name}"`,
+        type: "group_member_joined",
+      });
+
+      res.status(201).json({ message: "تم الانضمام للجروب بنجاح", member });
+    } catch (error: any) {
+      // Handle unique constraint violation
+      if (error?.code === "23505" || error?.message?.includes("unique")) {
+        return res.status(400).json({ error: "أنت عضو بالفعل في هذا الجروب" });
+      }
+      console.error("Error joining group:", error);
+      res.status(500).json({ error: "حدث خطأ أثناء الانضمام للجروب" });
+    }
+  });
+
+  // Leave a group (freelancer only, not leader)
+  app.post("/api/groups/:id/leave", authMiddleware, requireRole(["freelancer"]), async (req: AuthRequest, res) => {
+    try {
+      const { id } = req.params;
+      
+      if (!req.user?.userId) {
+        return res.status(401).json({ error: "غير مصرح" });
+      }
+
+      const group = await storage.getGroup(id);
+      if (!group) {
+        return res.status(404).json({ error: "الجروب غير موجود" });
+      }
+
+      if (group.leaderId === req.user.userId) {
+        return res.status(400).json({ error: "لا يمكن لقائد الجروب المغادرة. يمكنك حذف الجروب بدلاً من ذلك" });
+      }
+
+      const isMember = await storage.isGroupMember(id, req.user.userId);
+      if (!isMember) {
+        return res.status(400).json({ error: "أنت لست عضواً في هذا الجروب" });
+      }
+
+      await storage.removeGroupMember(id, req.user.userId);
+
+      // Update member count
+      await storage.updateGroup(id, {
+        currentMembers: Math.max(1, group.currentMembers - 1),
+      });
+
+      res.json({ message: "تم المغادرة من الجروب بنجاح" });
+    } catch (error) {
+      console.error("Error leaving group:", error);
+      res.status(500).json({ error: "حدث خطأ أثناء المغادرة من الجروب" });
+    }
+  });
+
+  // Get group members (with details)
+  app.get("/api/groups/:id/members", async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      const group = await storage.getGroup(id);
+      if (!group) {
+        return res.status(404).json({ error: "الجروب غير موجود" });
+      }
+
+      const members = await storage.getGroupMembers(id);
+      res.json(members);
+    } catch (error) {
+      console.error("Error fetching group members:", error);
+      res.status(500).json({ error: "حدث خطأ أثناء جلب أعضاء الجروب" });
+    }
+  });
+
+  // Remove member from group (leader only)
+  app.delete("/api/groups/:groupId/members/:freelancerId", authMiddleware, requireRole(["freelancer"]), async (req: AuthRequest, res) => {
+    try {
+      const { groupId, freelancerId } = req.params;
+      
+      if (!req.user?.userId) {
+        return res.status(401).json({ error: "غير مصرح" });
+      }
+
+      const group = await storage.getGroup(groupId);
+      if (!group) {
+        return res.status(404).json({ error: "الجروب غير موجود" });
+      }
+
+      // Only leader can remove members
+      if (group.leaderId !== req.user.userId) {
+        return res.status(403).json({ error: "فقط قائد الجروب يمكنه إزالة الأعضاء" });
+      }
+
+      // Can't remove the leader
+      if (freelancerId === group.leaderId) {
+        return res.status(400).json({ error: "لا يمكن إزالة قائد الجروب" });
+      }
+
+      const isMember = await storage.isGroupMember(groupId, freelancerId);
+      if (!isMember) {
+        return res.status(404).json({ error: "العضو غير موجود في الجروب" });
+      }
+
+      await storage.removeGroupMember(groupId, freelancerId);
+
+      // Update member count
+      await storage.updateGroup(groupId, {
+        currentMembers: Math.max(1, group.currentMembers - 1),
+      });
+
+      // Notify removed member
+      await storage.createNotification({
+        userId: freelancerId,
+        userType: "freelancer",
+        title: "تمت إزالتك من الجروب",
+        message: `تمت إزالتك من جروب "${group.name}"`,
+        type: "group_member_removed",
+      });
+
+      res.json({ message: "تم إزالة العضو من الجروب بنجاح" });
+    } catch (error) {
+      console.error("Error removing group member:", error);
+      res.status(500).json({ error: "حدث خطأ أثناء إزالة العضو" });
+    }
+  });
+
+  // Update group details (leader only)
+  app.patch("/api/groups/:id", authMiddleware, requireRole(["freelancer"]), async (req: AuthRequest, res) => {
+    try {
+      const { id } = req.params;
+      const updates = req.body;
+
+      if (!req.user?.userId) {
+        return res.status(401).json({ error: "غير مصرح" });
+      }
+
+      const group = await storage.getGroup(id);
+      if (!group) {
+        return res.status(404).json({ error: "الجروب غير موجود" });
+      }
+
+      // Only leader can update
+      if (group.leaderId !== req.user.userId) {
+        return res.status(403).json({ error: "فقط قائد الجروب يمكنه تحديث البيانات" });
+      }
+
+      // Don't allow certain fields to be updated
+      delete updates.id;
+      delete updates.leaderId;
+      delete updates.currentMembers;
+      delete updates.createdAt;
+
+      // Validate maxMembers if provided
+      if (updates.maxMembers !== undefined) {
+        if (updates.maxMembers < group.currentMembers) {
+          return res.status(400).json({ 
+            error: `لا يمكن تقليل الحد الأقصى إلى أقل من العدد الحالي (${group.currentMembers} عضو)` 
+          });
+        }
+        if (updates.maxMembers > 700) {
+          return res.status(400).json({ error: "الحد الأقصى للأعضاء هو 700" });
+        }
+      }
+
+      const updatedGroup = await storage.updateGroup(id, updates);
+      res.json(updatedGroup);
+    } catch (error) {
+      console.error("Error updating group:", error);
+      res.status(500).json({ error: "حدث خطأ أثناء تحديث الجروب" });
+    }
+  });
+
+  // ============================================
+  // PROJECT ROUTES - إدارة المشاريع
+  // ============================================
+
+  // Create a new project (product owner only)
+  app.post("/api/projects", authMiddleware, requireRole(["product_owner"]), async (req: AuthRequest, res) => {
+    try {
+      if (!req.user?.userId) {
+        return res.status(401).json({ error: "غير مصرح" });
+      }
+
+      const { title, description, targetCountry, tasksCount, budget, deadline } = req.body;
+
+      if (!title || !title.trim()) {
+        return res.status(400).json({ error: "عنوان المشروع مطلوب" });
+      }
+
+      if (!tasksCount || tasksCount < 1) {
+        return res.status(400).json({ error: "عدد المهام يجب أن يكون 1 على الأقل" });
+      }
+
+      if (!budget || budget < 0) {
+        return res.status(400).json({ error: "الميزانية غير صحيحة" });
+      }
+
+      const project = await storage.createProject({
+        productOwnerId: req.user.userId,
+        title: title.trim(),
+        description: description?.trim() || "",
+        targetCountry: targetCountry || "",
+        tasksCount,
+        budget,
+        deadline: deadline ? new Date(deadline) : null,
+        status: "pending",
+      });
+
+      res.status(201).json(project);
+    } catch (error) {
+      console.error("Error creating project:", error);
+      res.status(500).json({ error: "حدث خطأ أثناء إنشاء المشروع" });
+    }
+  });
+
+  // Get all pending projects (for group leaders to browse)
+  app.get("/api/projects/pending", authMiddleware, requireRole(["freelancer"]), async (req: AuthRequest, res) => {
+    try {
+      const projects = await storage.getPendingProjects();
+      res.json(projects);
+    } catch (error) {
+      console.error("Error fetching pending projects:", error);
+      res.status(500).json({ error: "حدث خطأ أثناء جلب المشاريع" });
+    }
+  });
+
+  // Get projects by product owner
+  app.get("/api/projects/my", authMiddleware, requireRole(["product_owner"]), async (req: AuthRequest, res) => {
+    try {
+      if (!req.user?.userId) {
+        return res.status(401).json({ error: "غير مصرح" });
+      }
+
+      const projects = await storage.getProjectsByOwner(req.user.userId);
+      res.json(projects);
+    } catch (error) {
+      console.error("Error fetching owner projects:", error);
+      res.status(500).json({ error: "حدث خطأ أثناء جلب المشاريع" });
+    }
+  });
+
+  // Get projects accepted by a group
+  app.get("/api/projects/group/:groupId", authMiddleware, requireRole(["freelancer"]), async (req: AuthRequest, res) => {
+    try {
+      const { groupId } = req.params;
+
+      if (!req.user?.userId) {
+        return res.status(401).json({ error: "غير مصرح" });
+      }
+
+      // Verify user is member of the group
+      const isMember = await storage.isGroupMember(groupId, req.user.userId);
+      if (!isMember) {
+        return res.status(403).json({ error: "ليس لديك صلاحية لعرض مشاريع هذا الجروب" });
+      }
+
+      const projects = await storage.getProjectsByGroup(groupId);
+      res.json(projects);
+    } catch (error) {
+      console.error("Error fetching group projects:", error);
+      res.status(500).json({ error: "حدث خطأ أثناء جلب المشاريع" });
+    }
+  });
+
+  // Get single project details
+  app.get("/api/projects/:id", authMiddleware, async (req: AuthRequest, res) => {
+    try {
+      const { id } = req.params;
+
+      const project = await storage.getProject(id);
+      if (!project) {
+        return res.status(404).json({ error: "المشروع غير موجود" });
+      }
+
+      res.json(project);
+    } catch (error) {
+      console.error("Error fetching project:", error);
+      res.status(500).json({ error: "حدث خطأ أثناء جلب بيانات المشروع" });
+    }
+  });
+
+  // Accept a project (group leader only)
+  app.post("/api/projects/:id/accept", authMiddleware, requireRole(["freelancer"]), async (req: AuthRequest, res) => {
+    try {
+      const { id } = req.params;
+      const { groupId } = req.body;
+
+      if (!req.user?.userId) {
+        return res.status(401).json({ error: "غير مصرح" });
+      }
+
+      if (!groupId) {
+        return res.status(400).json({ error: "معرف الجروب مطلوب" });
+      }
+
+      // Verify user is the group leader
+      const group = await storage.getGroup(groupId);
+      if (!group) {
+        return res.status(404).json({ error: "الجروب غير موجود" });
+      }
+
+      if (group.leaderId !== req.user.userId) {
+        return res.status(403).json({ error: "فقط قائد الجروب يمكنه قبول المشاريع" });
+      }
+
+      if (group.status !== "active") {
+        return res.status(400).json({ error: "الجروب غير نشط" });
+      }
+
+      // Verify project exists and is pending
+      const project = await storage.getProject(id);
+      if (!project) {
+        return res.status(404).json({ error: "المشروع غير موجود" });
+      }
+
+      if (project.status !== "pending") {
+        return res.status(400).json({ error: "هذا المشروع تم قبوله بالفعل أو مكتمل" });
+      }
+
+      // Accept the project
+      const updatedProject = await storage.acceptProject(id, groupId);
+
+      // Notify product owner
+      await storage.createNotification({
+        userId: project.productOwnerId,
+        userType: "product_owner",
+        title: "تم قبول المشروع",
+        message: `تم قبول مشروع "${project.title}" من قبل جروب "${group.name}"`,
+        type: "project_accepted",
+      });
+
+      res.json(updatedProject);
+    } catch (error) {
+      console.error("Error accepting project:", error);
+      res.status(500).json({ error: "حدث خطأ أثناء قبول المشروع" });
+    }
+  });
+
+  // Update project status
+  app.patch("/api/projects/:id", authMiddleware, requireRole(["product_owner"]), async (req: AuthRequest, res) => {
+    try {
+      const { id } = req.params;
+      const updates = req.body;
+
+      if (!req.user?.userId) {
+        return res.status(401).json({ error: "غير مصرح" });
+      }
+
+      const project = await storage.getProject(id);
+      if (!project) {
+        return res.status(404).json({ error: "المشروع غير موجود" });
+      }
+
+      // Verify ownership
+      if (project.productOwnerId !== req.user.userId) {
+        return res.status(403).json({ error: "ليس لديك صلاحية لتحديث هذا المشروع" });
+      }
+
+      // Don't allow certain fields to be updated
+      delete updates.id;
+      delete updates.productOwnerId;
+      delete updates.acceptedByGroupId;
+      delete updates.createdAt;
+
+      const updatedProject = await storage.updateProject(id, updates);
+      res.json(updatedProject);
+    } catch (error) {
+      console.error("Error updating project:", error);
+      res.status(500).json({ error: "حدث خطأ أثناء تحديث المشروع" });
+    }
+  });
+
+  // Delete a project (product owner only, only if pending)
+  app.delete("/api/projects/:id", authMiddleware, requireRole(["product_owner"]), async (req: AuthRequest, res) => {
+    try {
+      const { id } = req.params;
+
+      if (!req.user?.userId) {
+        return res.status(401).json({ error: "غير مصرح" });
+      }
+
+      const project = await storage.getProject(id);
+      if (!project) {
+        return res.status(404).json({ error: "المشروع غير موجود" });
+      }
+
+      // Verify ownership
+      if (project.productOwnerId !== req.user.userId) {
+        return res.status(403).json({ error: "ليس لديك صلاحية لحذف هذا المشروع" });
+      }
+
+      // Only allow deletion if pending
+      if (project.status !== "pending") {
+        return res.status(400).json({ error: "لا يمكن حذف مشروع تم قبوله أو جاري العمل عليه" });
+      }
+
+      await storage.deleteProject(id);
+      res.json({ message: "تم حذف المشروع بنجاح" });
+    } catch (error) {
+      console.error("Error deleting project:", error);
+      res.status(500).json({ error: "حدث خطأ أثناء حذف المشروع" });
+    }
+  });
+
+  // ============================================
+  // TASK ROUTES (NEW - للمهام المرتبطة بالمشاريع والجروبات)
+  // ============================================
+
+  // Create tasks for a project (group leader only, after accepting project)
+  app.post("/api/projects/:projectId/tasks", authMiddleware, requireRole(["freelancer"]), async (req: AuthRequest, res) => {
+    try {
+      const { projectId } = req.params;
+      const { tasks } = req.body; // Array of task objects
+
+      if (!req.user?.userId) {
+        return res.status(401).json({ error: "غير مصرح" });
+      }
+
+      if (!tasks || !Array.isArray(tasks) || tasks.length === 0) {
+        return res.status(400).json({ error: "يجب تحديد مهمة واحدة على الأقل" });
+      }
+
+      // Verify project
+      const project = await storage.getProject(projectId);
+      if (!project) {
+        return res.status(404).json({ error: "المشروع غير موجود" });
+      }
+
+      if (!project.acceptedByGroupId) {
+        return res.status(400).json({ error: "يجب قبول المشروع أولاً" });
+      }
+
+      // Verify user is the group leader
+      const group = await storage.getGroup(project.acceptedByGroupId);
+      if (!group || group.leaderId !== req.user.userId) {
+        return res.status(403).json({ error: "فقط قائد الجروب يمكنه إنشاء المهام" });
+      }
+
+      // Create tasks
+      const createdTasks = [];
+      for (const taskData of tasks) {
+        const task = await storage.createTask({
+          projectId,
+          groupId: project.acceptedByGroupId,
+          freelancerId: taskData.freelancerId || null,
+          title: taskData.title,
+          description: taskData.description || "",
+          taskUrl: taskData.taskUrl || "",
+          reward: taskData.reward || "0",
+          status: taskData.freelancerId ? "assigned" : "available",
+          campaignId: "", // Not used in new system
+        });
+        createdTasks.push(task);
+
+        // Notify assigned freelancer if any
+        if (taskData.freelancerId) {
+          await storage.createNotification({
+            userId: taskData.freelancerId,
+            userType: "freelancer",
+            title: "تم تعيين مهمة جديدة لك",
+            message: `تم تعيين مهمة "${task.title}" لك في مشروع "${project.title}"`,
+            type: "task_assigned",
+          });
+        }
+      }
+
+      res.status(201).json(createdTasks);
+    } catch (error) {
+      console.error("Error creating tasks:", error);
+      res.status(500).json({ error: "حدث خطأ أثناء إنشاء المهام" });
+    }
+  });
+
+  // Get tasks for a project
+  app.get("/api/projects/:projectId/tasks", authMiddleware, async (req: AuthRequest, res) => {
+    try {
+      const { projectId } = req.params;
+
+      const tasks = await storage.getTasksByProject(projectId);
+      res.json(tasks);
+    } catch (error) {
+      console.error("Error fetching project tasks:", error);
+      res.status(500).json({ error: "حدث خطأ أثناء جلب المهام" });
+    }
+  });
+
+  // Get tasks assigned to current user
+  app.get("/api/tasks/my/assigned", authMiddleware, requireRole(["freelancer"]), async (req: AuthRequest, res) => {
+    try {
+      if (!req.user?.userId) {
+        return res.status(401).json({ error: "غير مصرح" });
+      }
+
+      const tasks = await storage.getTasksByFreelancer(req.user.userId);
+      res.json(tasks);
+    } catch (error) {
+      console.error("Error fetching assigned tasks:", error);
+      res.status(500).json({ error: "حدث خطأ أثناء جلب المهام" });
+    }
+  });
+
+  // Assign task to group member (leader only)
+  app.patch("/api/tasks/:id/assign", authMiddleware, requireRole(["freelancer"]), async (req: AuthRequest, res) => {
+    try {
+      const { id } = req.params;
+      const { freelancerId } = req.body;
+
+      if (!req.user?.userId) {
+        return res.status(401).json({ error: "غير مصرح" });
+      }
+
+      if (!freelancerId) {
+        return res.status(400).json({ error: "معرف العضو مطلوب" });
+      }
+
+      const task = await storage.getTask(id);
+      if (!task) {
+        return res.status(404).json({ error: "المهمة غير موجودة" });
+      }
+
+      if (!task.groupId) {
+        return res.status(400).json({ error: "هذه المهمة غير مرتبطة بجروب" });
+      }
+
+      // Verify user is group leader
+      const group = await storage.getGroup(task.groupId);
+      if (!group || group.leaderId !== req.user.userId) {
+        return res.status(403).json({ error: "فقط قائد الجروب يمكنه تعيين المهام" });
+      }
+
+      // Verify freelancer is group member
+      const isMember = await storage.isGroupMember(task.groupId, freelancerId);
+      if (!isMember) {
+        return res.status(400).json({ error: "العضو المحدد ليس في الجروب" });
+      }
+
+      if (task.status !== "available") {
+        return res.status(400).json({ error: "هذه المهمة تم تعيينها بالفعل أو مكتملة" });
+      }
+
+      // Assign task
+      const updatedTask = await storage.updateTask(id, {
+        freelancerId,
+        status: "assigned",
+      });
+
+      // Notify freelancer
+      await storage.createNotification({
+        userId: freelancerId,
+        userType: "freelancer",
+        title: "تم تعيين مهمة جديدة لك",
+        message: `تم تعيين مهمة "${task.title}" لك`,
+        type: "task_assigned",
+      });
+
+      res.json(updatedTask);
+    } catch (error) {
+      console.error("Error assigning task:", error);
+      res.status(500).json({ error: "حدث خطأ أثناء تعيين المهمة" });
+    }
+  });
+
+  // Start working on task
+  app.patch("/api/tasks/:id/start-work", authMiddleware, requireRole(["freelancer"]), async (req: AuthRequest, res) => {
+    try {
+      const { id } = req.params;
+
+      if (!req.user?.userId) {
+        return res.status(401).json({ error: "غير مصرح" });
+      }
+
+      const task = await storage.getTask(id);
+      if (!task) {
+        return res.status(404).json({ error: "المهمة غير موجودة" });
+      }
+
+      if (task.freelancerId !== req.user.userId) {
+        return res.status(403).json({ error: "هذه المهمة غير معينة لك" });
+      }
+
+      if (task.status !== "assigned") {
+        return res.status(400).json({ error: "لا يمكن البدء بهذه المهمة في حالتها الحالية" });
+      }
+
+      const updatedTask = await storage.updateTask(id, {
+        status: "in_progress",
+      });
+
+      res.json(updatedTask);
+    } catch (error) {
+      console.error("Error starting task:", error);
+      res.status(500).json({ error: "حدث خطأ أثناء بدء المهمة" });
+    }
+  });
+
+  // Submit task with proof image
+  app.patch("/api/tasks/:id/submit-proof", authMiddleware, requireRole(["freelancer"]), upload.single("proofImage"), async (req: AuthRequest, res) => {
+    try {
+      const { id } = req.params;
+      const { report } = req.body;
+
+      if (!req.user?.userId) {
+        return res.status(401).json({ error: "غير مصرح" });
+      }
+
+      const task = await storage.getTask(id);
+      if (!task) {
+        return res.status(404).json({ error: "المهمة غير موجودة" });
+      }
+
+      if (task.freelancerId !== req.user.userId) {
+        return res.status(403).json({ error: "هذه المهمة غير معينة لك" });
+      }
+
+      if (task.status !== "in_progress") {
+        return res.status(400).json({ error: "يجب أن تكون المهمة قيد التنفيذ للتسليم" });
+      }
+
+      let proofImagePath: string | null = null;
+      
+      // Handle proof image upload if provided
+      if (req.file) {
+        const uploadDir = join(process.cwd(), "uploads", "task-proofs");
+        if (!existsSync(uploadDir)) {
+          await mkdir(uploadDir, { recursive: true });
+        }
+
+        const filename = `proof-${id}-${Date.now()}.${req.file.originalname.split('.').pop()}`;
+        const filepath = join(uploadDir, filename);
+        await writeFile(filepath, req.file.buffer);
+        proofImagePath = `/uploads/task-proofs/${filename}`;
+      }
+
+      const updatedTask = await storage.updateTask(id, {
+        status: "submitted",
+        proofImage: proofImagePath,
+        report: report || "",
+      });
+
+      // Notify group leader
+      if (task.groupId) {
+        const group = await storage.getGroup(task.groupId);
+        if (group) {
+          await storage.createNotification({
+            userId: group.leaderId,
+            userType: "freelancer",
+            title: "تم تسليم مهمة للمراجعة",
+            message: `تم تسليم مهمة "${task.title}" من قبل أحد الأعضاء`,
+            type: "task_submitted",
+          });
+        }
+      }
+
+      res.json(updatedTask);
+    } catch (error) {
+      console.error("Error submitting task:", error);
+      res.status(500).json({ error: "حدث خطأ أثناء تسليم المهمة" });
+    }
+  });
+
+  // Review and approve task (group leader only)
+  app.patch("/api/tasks/:id/approve-by-leader", authMiddleware, requireRole(["freelancer"]), async (req: AuthRequest, res) => {
+    try {
+      const { id } = req.params;
+      const { feedback } = req.body;
+
+      if (!req.user?.userId) {
+        return res.status(401).json({ error: "غير مصرح" });
+      }
+
+      const task = await storage.getTask(id);
+      if (!task) {
+        return res.status(404).json({ error: "المهمة غير موجودة" });
+      }
+
+      if (!task.groupId) {
+        return res.status(400).json({ error: "هذه المهمة غير مرتبطة بجروب" });
+      }
+
+      // Verify user is group leader
+      const group = await storage.getGroup(task.groupId);
+      if (!group || group.leaderId !== req.user.userId) {
+        return res.status(403).json({ error: "فقط قائد الجروب يمكنه الموافقة على المهام" });
+      }
+
+      if (task.status !== "submitted") {
+        return res.status(400).json({ error: "لا يمكن الموافقة على هذه المهمة في حالتها الحالية" });
+      }
+
+      const updatedTask = await storage.updateTask(id, {
+        status: "approved",
+        feedback: feedback || "تمت الموافقة",
+      });
+
+      // Notify freelancer
+      if (task.freelancerId) {
+        await storage.createNotification({
+          userId: task.freelancerId,
+          userType: "freelancer",
+          title: "تمت الموافقة على مهمتك",
+          message: `تمت الموافقة على مهمة "${task.title}" من قبل قائد الجروب`,
+          type: "task_approved_by_leader",
+        });
+      }
+
+      res.json(updatedTask);
+    } catch (error) {
+      console.error("Error approving task:", error);
+      res.status(500).json({ error: "حدث خطأ أثناء الموافقة على المهمة" });
+    }
+  });
+
+  // Reject task and request rework (group leader only)
+  app.patch("/api/tasks/:id/reject-by-leader", authMiddleware, requireRole(["freelancer"]), async (req: AuthRequest, res) => {
+    try {
+      const { id } = req.params;
+      const { feedback } = req.body;
+
+      if (!req.user?.userId) {
+        return res.status(401).json({ error: "غير مصرح" });
+      }
+
+      if (!feedback || !feedback.trim()) {
+        return res.status(400).json({ error: "يجب تقديم سبب الرفض" });
+      }
+
+      const task = await storage.getTask(id);
+      if (!task) {
+        return res.status(404).json({ error: "المهمة غير موجودة" });
+      }
+
+      if (!task.groupId) {
+        return res.status(400).json({ error: "هذه المهمة غير مرتبطة بجروب" });
+      }
+
+      // Verify user is group leader
+      const group = await storage.getGroup(task.groupId);
+      if (!group || group.leaderId !== req.user.userId) {
+        return res.status(403).json({ error: "فقط قائد الجروب يمكنه رفض المهام" });
+      }
+
+      if (task.status !== "submitted") {
+        return res.status(400).json({ error: "لا يمكن رفض هذه المهمة في حالتها الحالية" });
+      }
+
+      const updatedTask = await storage.updateTask(id, {
+        status: "in_progress", // Return to in_progress for rework
+        feedback: feedback.trim(),
+      });
+
+      // Notify freelancer
+      if (task.freelancerId) {
+        await storage.createNotification({
+          userId: task.freelancerId,
+          userType: "freelancer",
+          title: "تم رفض المهمة",
+          message: `تم رفض مهمة "${task.title}". يرجى مراجعة الملاحظات وإعادة التسليم`,
+          type: "task_rejected_by_leader",
+        });
+      }
+
+      res.json(updatedTask);
+    } catch (error) {
+      console.error("Error rejecting task:", error);
+      res.status(500).json({ error: "حدث خطأ أثناء رفض المهمة" });
+    }
+  });
+
+  // Get tasks for group (leader and members)
+  app.get("/api/groups/:groupId/tasks", authMiddleware, requireRole(["freelancer"]), async (req: AuthRequest, res) => {
+    try {
+      const { groupId } = req.params;
+
+      if (!req.user?.userId) {
+        return res.status(401).json({ error: "غير مصرح" });
+      }
+
+      // Verify user is member of the group
+      const isMember = await storage.isGroupMember(groupId, req.user.userId);
+      if (!isMember) {
+        return res.status(403).json({ error: "ليس لديك صلاحية لعرض مهام هذا الجروب" });
+      }
+
+      const tasks = await storage.getTasksByGroup(groupId);
+      res.json(tasks);
+    } catch (error) {
+      console.error("Error fetching group tasks:", error);
+      res.status(500).json({ error: "حدث خطأ أثناء جلب المهام" });
+    }
+  });
+
+  // ============================================
+  // MESSAGES ROUTES - الرسائل الداخلية
+  // ============================================
+
+  // Send a message to group
+  app.post("/api/groups/:groupId/messages", authMiddleware, requireRole(["freelancer"]), async (req: AuthRequest, res) => {
+    try {
+      const { groupId } = req.params;
+      const { content, type, relatedProjectId } = req.body;
+
+      if (!req.user?.userId) {
+        return res.status(401).json({ error: "غير مصرح" });
+      }
+
+      if (!content || !content.trim()) {
+        return res.status(400).json({ error: "محتوى الرسالة مطلوب" });
+      }
+
+      // Verify user is member of the group
+      const isMember = await storage.isGroupMember(groupId, req.user.userId);
+      if (!isMember) {
+        return res.status(403).json({ error: "يجب أن تكون عضواً في الجروب لإرسال رسالة" });
+      }
+
+      const message = await storage.sendMessage({
+        groupId,
+        senderId: req.user.userId,
+        content: content.trim(),
+        type: type || "text",
+        relatedProjectId: relatedProjectId || null,
+      });
+
+      res.status(201).json(message);
+    } catch (error) {
+      console.error("Error sending message:", error);
+      res.status(500).json({ error: "حدث خطأ أثناء إرسال الرسالة" });
+    }
+  });
+
+  // Get messages for a group
+  app.get("/api/groups/:groupId/messages", authMiddleware, requireRole(["freelancer"]), async (req: AuthRequest, res) => {
+    try {
+      const { groupId } = req.params;
+
+      if (!req.user?.userId) {
+        return res.status(401).json({ error: "غير مصرح" });
+      }
+
+      // Verify user is member of the group
+      const isMember = await storage.isGroupMember(groupId, req.user.userId);
+      if (!isMember) {
+        return res.status(403).json({ error: "ليس لديك صلاحية لعرض رسائل هذا الجروب" });
+      }
+
+      const messages = await storage.getGroupMessages(groupId);
+      res.json(messages);
+    } catch (error) {
+      console.error("Error fetching messages:", error);
+      res.status(500).json({ error: "حدث خطأ أثناء جلب الرسائل" });
+    }
+  });
+
+  // Mark messages as read
+  app.patch("/api/messages/:id/read", authMiddleware, async (req: AuthRequest, res) => {
+    try {
+      const { id } = req.params;
+
+      const message = await storage.markMessageAsRead(id);
+      res.json(message);
+    } catch (error) {
+      console.error("Error marking message as read:", error);
+      res.status(500).json({ error: "حدث خطأ أثناء تحديث الرسالة" });
+    }
+  });
+
+  // ============================================
+  // WITHDRAWALS ROUTES - طلبات السحب
+  // ============================================
+
+  // Create withdrawal request
+  app.post("/api/withdrawals", authMiddleware, requireRole(["freelancer"]), async (req: AuthRequest, res) => {
+    try {
+      if (!req.user?.userId) {
+        return res.status(401).json({ error: "غير مصرح" });
+      }
+
+      const { amount, paymentMethod, accountNumber } = req.body;
+
+      if (!amount || amount <= 0) {
+        return res.status(400).json({ error: "المبلغ غير صحيح" });
+      }
+
+      if (!paymentMethod || !accountNumber) {
+        return res.status(400).json({ error: "طريقة الدفع ورقم الحساب مطلوبان" });
+      }
+
+      // Get freelancer wallet balance
+      const freelancer = await storage.getFreelancer(req.user.userId);
+      if (!freelancer) {
+        return res.status(404).json({ error: "المستقل غير موجود" });
+      }
+
+      if (parseFloat(freelancer.walletBalance) < amount) {
+        return res.status(400).json({ error: "الرصيد غير كافٍ" });
+      }
+
+      const withdrawal = await storage.createWithdrawal({
+        freelancerId: req.user.userId,
+        amount: amount.toString(),
+        paymentMethod,
+        accountNumber,
+        status: "pending",
+      });
+
+      res.status(201).json(withdrawal);
+    } catch (error) {
+      console.error("Error creating withdrawal:", error);
+      res.status(500).json({ error: "حدث خطأ أثناء إنشاء طلب السحب" });
+    }
+  });
+
+  // Get withdrawal requests for current freelancer
+  app.get("/api/withdrawals/my", authMiddleware, requireRole(["freelancer"]), async (req: AuthRequest, res) => {
+    try {
+      if (!req.user?.userId) {
+        return res.status(401).json({ error: "غير مصرح" });
+      }
+
+      const withdrawals = await storage.getWithdrawalsByFreelancer(req.user.userId);
+      res.json(withdrawals);
+    } catch (error) {
+      console.error("Error fetching withdrawals:", error);
+      res.status(500).json({ error: "حدث خطأ أثناء جلب طلبات السحب" });
+    }
+  });
+
+  // ============================================
   // HEALTH CHECK
   // ============================================
 
