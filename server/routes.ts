@@ -2184,6 +2184,143 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // ============================================
+  // CONVERSATION ROUTES
+  // ============================================
+
+  // Get or create conversation
+  app.post("/api/conversations", authMiddleware, async (req: AuthRequest, res) => {
+    try {
+      const { groupId } = req.body;
+
+      if (!groupId) {
+        return res.status(400).json({ error: "معرف الجروب مطلوب" });
+      }
+
+      // Get group to find leader
+      const group = await storage.getGroup(groupId);
+      if (!group) {
+        return res.status(404).json({ error: "الجروب غير موجود" });
+      }
+
+      const productOwnerId = req.user!.id;
+      const conversation = await storage.getOrCreateConversation(productOwnerId, groupId, group.leaderId);
+
+      res.json(conversation);
+    } catch (error) {
+      console.error("Error creating conversation:", error);
+      res.status(500).json({ error: "حدث خطأ أثناء إنشاء المحادثة" });
+    }
+  });
+
+  // Get all conversations for current user
+  app.get("/api/conversations", authMiddleware, async (req: AuthRequest, res) => {
+    try {
+      const userType = req.user!.userType;
+      const userId = req.user!.id;
+
+      let conversations;
+      if (userType === "product_owner") {
+        conversations = await storage.getProductOwnerConversations(userId);
+      } else if (userType === "freelancer") {
+        conversations = await storage.getFreelancerConversations(userId);
+      } else {
+        return res.status(400).json({ error: "نوع المستخدم غير صحيح" });
+      }
+
+      // Fetch group details for each conversation
+      const conversationsWithDetails = await Promise.all(
+        conversations.map(async (conv) => {
+          const group = await storage.getGroup(conv.groupId);
+          const leader = await storage.getFreelancer(conv.leaderId);
+          const productOwner = await storage.getProductOwner(conv.productOwnerId);
+          
+          return {
+            ...conv,
+            group,
+            leader,
+            productOwner,
+          };
+        })
+      );
+
+      res.json(conversationsWithDetails);
+    } catch (error) {
+      console.error("Error fetching conversations:", error);
+      res.status(500).json({ error: "حدث خطأ أثناء جلب المحادثات" });
+    }
+  });
+
+  // Get conversation messages
+  app.get("/api/conversations/:id/messages", authMiddleware, async (req: AuthRequest, res) => {
+    try {
+      const conversationId = req.params.id;
+
+      // Verify user has access to this conversation
+      const conversation = await storage.getConversation(conversationId);
+      if (!conversation) {
+        return res.status(404).json({ error: "المحادثة غير موجودة" });
+      }
+
+      const userId = req.user!.id;
+      const userType = req.user!.userType;
+
+      // Check if user is part of conversation
+      if (userType === "product_owner" && conversation.productOwnerId !== userId) {
+        return res.status(403).json({ error: "غير مصرح بالوصول لهذه المحادثة" });
+      }
+      if (userType === "freelancer" && conversation.leaderId !== userId) {
+        return res.status(403).json({ error: "غير مصرح بالوصول لهذه المحادثة" });
+      }
+
+      const messages = await storage.getConversationMessages(conversationId);
+
+      // Mark messages as read
+      await storage.markMessagesAsRead(conversationId, userId);
+
+      res.json(messages);
+    } catch (error) {
+      console.error("Error fetching messages:", error);
+      res.status(500).json({ error: "حدث خطأ أثناء جلب الرسائل" });
+    }
+  });
+
+  // Send message
+  app.post("/api/conversations/:id/messages", authMiddleware, async (req: AuthRequest, res) => {
+    try {
+      const conversationId = req.params.id;
+      const { content } = req.body;
+
+      if (!content || content.trim() === "") {
+        return res.status(400).json({ error: "محتوى الرسالة مطلوب" });
+      }
+
+      // Verify user has access to this conversation
+      const conversation = await storage.getConversation(conversationId);
+      if (!conversation) {
+        return res.status(404).json({ error: "المحادثة غير موجودة" });
+      }
+
+      const userId = req.user!.id;
+      const userType = req.user!.userType;
+
+      // Check if user is part of conversation
+      if (userType === "product_owner" && conversation.productOwnerId !== userId) {
+        return res.status(403).json({ error: "غير مصرح بالوصول لهذه المحادثة" });
+      }
+      if (userType === "freelancer" && conversation.leaderId !== userId) {
+        return res.status(403).json({ error: "غير مصرح بالوصول لهذه المحادثة" });
+      }
+
+      const message = await storage.sendMessage(conversationId, userId, userType, content);
+
+      res.json(message);
+    } catch (error) {
+      console.error("Error sending message:", error);
+      res.status(500).json({ error: "حدث خطأ أثناء إرسال الرسالة" });
+    }
+  });
+
+  // ============================================
   // HEALTH CHECK
   // ============================================
 

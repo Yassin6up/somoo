@@ -10,14 +10,11 @@ import { Navbar } from "@/components/Navbar";
 import { Users, Search, UserPlus, Crown, TrendingUp, MessageCircle, ShoppingCart } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { Group } from "@shared/schema";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 export default function Groups() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
-  const [showPurchaseDialog, setShowPurchaseDialog] = useState(false);
 
   // Get current user from localStorage
   const currentUser = JSON.parse(localStorage.getItem("user") || "null");
@@ -70,18 +67,20 @@ export default function Groups() {
                 الجروبات
               </h1>
               <p className="text-muted-foreground">
-                انضم لجروب واعمل مع فريق محترف على المشاريع
+                {isFreelancer ? "انضم لجروب واعمل مع فريق محترف على المشاريع" : "اختر جروب محترف لتنفيذ مشروعك"}
               </p>
             </div>
 
-            <Button
-              onClick={() => navigate("/groups/create")}
-              size="lg"
-              data-testid="button-create-group"
-            >
-              <UserPlus className="ml-2 h-5 w-5" />
-              إنشاء جروب جديد
-            </Button>
+            {isFreelancer && (
+              <Button
+                onClick={() => navigate("/groups/create")}
+                size="lg"
+                data-testid="button-create-group"
+              >
+                <UserPlus className="ml-2 h-5 w-5" />
+                إنشاء جروب جديد
+              </Button>
+            )}
           </div>
 
           {/* Search Bar */}
@@ -245,8 +244,7 @@ export default function Groups() {
                           variant="default"
                           onClick={(e) => {
                             e.stopPropagation();
-                            setSelectedGroup(group);
-                            setShowPurchaseDialog(true);
+                            navigate(`/purchase/${group.id}`);
                           }}
                           data-testid={`button-purchase-service-${group.id}`}
                         >
@@ -318,46 +316,6 @@ export default function Groups() {
           </div>
         )}
       </div>
-
-      {/* Purchase Service Dialog */}
-      <Dialog open={showPurchaseDialog} onOpenChange={setShowPurchaseDialog}>
-        <DialogContent className="sm:max-w-[500px]" dir="rtl">
-          <DialogHeader>
-            <DialogTitle style={{ fontFamily: "Tajawal, sans-serif" }}>
-              شراء خدمة من {selectedGroup?.name}
-            </DialogTitle>
-            <DialogDescription>
-              اختر نوع الخدمة وقم بإكمال عملية الدفع
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="text-center py-8">
-            <ShoppingCart className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
-            <p className="text-muted-foreground">
-              سيتم فتح صفحة الشراء قريباً...
-            </p>
-          </div>
-
-          <div className="flex gap-2 justify-end">
-            <Button 
-              variant="outline" 
-              onClick={() => setShowPurchaseDialog(false)}
-              data-testid="button-cancel-purchase"
-            >
-              إلغاء
-            </Button>
-            <Button 
-              onClick={() => {
-                setShowPurchaseDialog(false);
-                navigate(`/purchase/${selectedGroup?.id}`);
-              }}
-              data-testid="button-proceed-purchase"
-            >
-              متابعة
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

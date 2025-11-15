@@ -29,6 +29,10 @@ import {
   type InsertWithdrawal,
   type Order,
   type InsertOrder,
+  type Conversation,
+  type InsertConversation,
+  type ConversationMessage,
+  type InsertConversationMessage,
   users,
   freelancers,
   productOwners,
@@ -44,6 +48,8 @@ import {
   messages,
   withdrawals,
   orders,
+  conversations,
+  conversationMessages,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, or, desc } from "drizzle-orm";
@@ -152,6 +158,15 @@ export interface IStorage {
   getGroupById(id: string): Promise<Group | undefined>;
   markAllNotificationsAsRead(userId: string, userType: string): Promise<void>;
   getUnreadNotificationCount(userId: string, userType: string): Promise<number>;
+
+  // Conversation methods
+  getOrCreateConversation(productOwnerId: string, groupId: string, leaderId: string): Promise<Conversation>;
+  getConversation(conversationId: string): Promise<Conversation | undefined>;
+  getConversationMessages(conversationId: string): Promise<ConversationMessage[]>;
+  sendMessage(conversationId: string, senderId: string, senderType: string, content: string): Promise<ConversationMessage>;
+  getProductOwnerConversations(productOwnerId: string): Promise<Conversation[]>;
+  getFreelancerConversations(freelancerId: string): Promise<Conversation[]>;
+  markMessagesAsRead(conversationId: string, userId: string): Promise<void>;
 }
 
 export class MemStorage implements IStorage {
@@ -741,6 +756,79 @@ export class DatabaseStorage implements IStorage {
       eq(notifications.isRead, false)
     ));
     return result.length;
+  }
+
+  // Conversation methods
+  async getOrCreateConversation(productOwnerId: string, groupId: string, leaderId: string): Promise<Conversation> {
+    // Check if conversation already exists
+    const [existing] = await db.select().from(conversations).where(and(
+      eq(conversations.productOwnerId, productOwnerId),
+      eq(conversations.groupId, groupId)
+    ));
+
+    if (existing) {
+      return existing;
+    }
+
+    // Create new conversation
+    const [conversation] = await db.insert(conversations).values({
+      productOwnerId,
+      groupId,
+      leaderId,
+      lastMessageAt: new Date(),
+    }).returning();
+
+    return conversation;
+  }
+
+  async getConversation(conversationId: string): Promise<Conversation | undefined> {
+    const [conversation] = await db.select().from(conversations).where(eq(conversations.id, conversationId));
+    return conversation || undefined;
+  }
+
+  async getConversationMessages(conversationId: string): Promise<ConversationMessage[]> {
+    return await db.select().from(conversationMessages)
+      .where(eq(conversationMessages.conversationId, conversationId))
+      .orderBy(conversationMessages.createdAt);
+  }
+
+  async sendMessage(conversationId: string, senderId: string, senderType: string, content: string): Promise<ConversationMessage> {
+    // Insert message
+    const [message] = await db.insert(conversationMessages).values({
+      conversationId,
+      senderId,
+      senderType,
+      content,
+      isRead: false,
+    }).returning();
+
+    // Update conversation lastMessageAt
+    await db.update(conversations)
+      .set({ lastMessageAt: new Date() })
+      .where(eq(conversations.id, conversationId));
+
+    return message;
+  }
+
+  async getProductOwnerConversations(productOwnerId: string): Promise<Conversation[]> {
+    return await db.select().from(conversations)
+      .where(eq(conversations.productOwnerId, productOwnerId))
+      .orderBy(desc(conversations.lastMessageAt));
+  }
+
+  async getFreelancerConversations(freelancerId: string): Promise<Conversation[]> {
+    return await db.select().from(conversations)
+      .where(eq(conversations.leaderId, freelancerId))
+      .orderBy(desc(conversations.lastMessageAt));
+  }
+
+  async markMessagesAsRead(conversationId: string, userId: string): Promise<void> {
+    await db.update(conversationMessages)
+      .set({ isRead: true })
+      .where(and(
+        eq(conversationMessages.conversationId, conversationId),
+        eq(conversationMessages.isRead, false)
+      ));
   }
 }
 
