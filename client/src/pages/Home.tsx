@@ -29,6 +29,7 @@ import {
   Palette,
   type LucideIcon
 } from "lucide-react";
+import { SiGoogle, SiTrustpilot } from "react-icons/si";
 
 // ServiceIcon component with circular background and glow effect
 function ServiceIcon({ 
@@ -374,6 +375,90 @@ export default function Home() {
               </motion.div>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* Trust & Reviews Section */}
+      <section className="py-16 bg-muted/30">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <FadeInSection>
+            <div className="text-center mb-12">
+              <h2 className="text-2xl sm:text-3xl font-bold mb-8 text-foreground">
+                محبوب من أفضل الشركات حول العالم
+              </h2>
+              
+              {/* Reviews Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+                {/* Google Review */}
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  className="flex flex-col items-center gap-3"
+                >
+                  <SiGoogle className="h-10 w-10 text-[#4285f4]" />
+                  <div className="flex items-center gap-2">
+                    <span className="text-3xl font-bold">4.9</span>
+                    <div className="flex gap-1">
+                      {[...Array(5)].map((_, i) => (
+                        <Star key={i} className="h-5 w-5 text-yellow-500 fill-yellow-500" />
+                      ))}
+                    </div>
+                  </div>
+                </motion.div>
+
+                {/* Trustpilot Review */}
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  className="flex flex-col items-center gap-3"
+                >
+                  <SiTrustpilot className="h-10 w-10 text-[#00b67a]" />
+                  <div className="flex flex-col items-center gap-1">
+                    <div className="flex items-center gap-2">
+                      <div className="flex gap-1">
+                        {[...Array(5)].map((_, i) => (
+                          <Star key={i} className="h-5 w-5 text-[#00b67a] fill-[#00b67a]" />
+                        ))}
+                      </div>
+                    </div>
+                    <span className="text-sm font-semibold text-muted-foreground">TrustScore 4.6</span>
+                    <span className="text-xs text-muted-foreground">825 reviews</span>
+                  </div>
+                </motion.div>
+
+                {/* G2 Review */}
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  className="flex flex-col items-center gap-3"
+                >
+                  <div className="w-10 h-10 rounded-full bg-[#ff492c] flex items-center justify-center">
+                    <span className="text-white font-bold text-xl">G2</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-3xl font-bold">4.9</span>
+                    <div className="flex gap-1">
+                      {[...Array(5)].map((_, i) => (
+                        <Star key={i} className="h-5 w-5 text-yellow-500 fill-yellow-500" />
+                      ))}
+                    </div>
+                  </div>
+                </motion.div>
+              </div>
+
+              {/* Trusted Companies Logos */}
+              <div className="flex flex-wrap items-center justify-center gap-8 md:gap-12 opacity-40">
+                <span className="text-lg font-semibold text-muted-foreground">iHeartMEDIA</span>
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 bg-[#ff6719] rounded flex items-center justify-center">
+                    <span className="text-white font-bold text-xs">Y</span>
+                  </div>
+                  <span className="text-lg font-semibold text-muted-foreground">Combinator</span>
+                </div>
+                <span className="text-lg font-semibold text-muted-foreground">PSG</span>
+                <span className="text-lg font-semibold text-muted-foreground tracking-wider">AIRBUS</span>
+                <span className="text-lg font-semibold text-muted-foreground">supabase</span>
+                <span className="text-lg font-semibold text-muted-foreground">zapier</span>
+              </div>
+            </div>
+          </FadeInSection>
         </div>
       </section>
 
