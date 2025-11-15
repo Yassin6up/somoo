@@ -379,27 +379,27 @@ export default function Home() {
       </section>
 
       {/* Trust & Reviews Section */}
-      <section className="py-16 bg-muted/30">
+      <section className="py-16 bg-background">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <FadeInSection>
             <div className="text-center mb-12">
-              <h2 className="text-2xl sm:text-3xl font-bold mb-8 text-foreground">
-                محبوب من أفضل الشركات حول العالم
-              </h2>
+              <p className="text-sm text-muted-foreground mb-8">
+                Loved by the best companies across the world
+              </p>
               
               {/* Reviews Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mb-12">
                 {/* Google Review */}
                 <motion.div
                   whileHover={{ scale: 1.05 }}
-                  className="flex flex-col items-center gap-3"
+                  className="flex flex-col items-center gap-2"
                 >
-                  <SiGoogle className="h-10 w-10 text-[#4285f4]" />
-                  <div className="flex items-center gap-2">
-                    <span className="text-3xl font-bold">4.9</span>
-                    <div className="flex gap-1">
+                  <SiGoogle className="h-12 w-12 text-[#4285f4]" />
+                  <div className="flex items-center gap-2 mt-2">
+                    <span className="text-3xl font-bold text-foreground">4.9</span>
+                    <div className="flex gap-0.5">
                       {[...Array(5)].map((_, i) => (
-                        <Star key={i} className="h-5 w-5 text-yellow-500 fill-yellow-500" />
+                        <Star key={i} className="h-4 w-4 text-[#fbbc04] fill-[#fbbc04]" />
                       ))}
                     </div>
                   </div>
@@ -408,18 +408,16 @@ export default function Home() {
                 {/* Trustpilot Review */}
                 <motion.div
                   whileHover={{ scale: 1.05 }}
-                  className="flex flex-col items-center gap-3"
+                  className="flex flex-col items-center gap-2"
                 >
-                  <SiTrustpilot className="h-10 w-10 text-[#00b67a]" />
-                  <div className="flex flex-col items-center gap-1">
-                    <div className="flex items-center gap-2">
-                      <div className="flex gap-1">
-                        {[...Array(5)].map((_, i) => (
-                          <Star key={i} className="h-5 w-5 text-[#00b67a] fill-[#00b67a]" />
-                        ))}
-                      </div>
+                  <SiTrustpilot className="h-12 w-12 text-[#00b67a]" />
+                  <div className="flex flex-col items-center gap-1 mt-2">
+                    <div className="flex gap-0.5">
+                      {[...Array(5)].map((_, i) => (
+                        <Star key={i} className="h-4 w-4 text-[#00b67a] fill-[#00b67a]" />
+                      ))}
                     </div>
-                    <span className="text-sm font-semibold text-muted-foreground">TrustScore 4.6</span>
+                    <span className="text-sm font-medium text-foreground mt-1">TrustScore 4.6</span>
                     <span className="text-xs text-muted-foreground">825 reviews</span>
                   </div>
                 </motion.div>
@@ -427,35 +425,52 @@ export default function Home() {
                 {/* G2 Review */}
                 <motion.div
                   whileHover={{ scale: 1.05 }}
-                  className="flex flex-col items-center gap-3"
+                  className="flex flex-col items-center gap-2"
                 >
-                  <div className="w-10 h-10 rounded-full bg-[#ff492c] flex items-center justify-center">
-                    <span className="text-white font-bold text-xl">G2</span>
+                  <div className="w-12 h-12 rounded-full bg-[#ff492c] flex items-center justify-center">
+                    <span className="text-white font-bold text-2xl">G2</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-3xl font-bold">4.9</span>
-                    <div className="flex gap-1">
+                  <div className="flex items-center gap-2 mt-2">
+                    <span className="text-3xl font-bold text-foreground">4.9</span>
+                    <div className="flex gap-0.5">
                       {[...Array(5)].map((_, i) => (
-                        <Star key={i} className="h-5 w-5 text-yellow-500 fill-yellow-500" />
+                        <Star key={i} className="h-4 w-4 text-[#fbbc04] fill-[#fbbc04]" />
                       ))}
                     </div>
                   </div>
                 </motion.div>
               </div>
 
-              {/* Trusted Companies Logos */}
-              <div className="flex flex-wrap items-center justify-center gap-8 md:gap-12 opacity-40">
-                <span className="text-lg font-semibold text-muted-foreground">iHeartMEDIA</span>
-                <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 bg-[#ff6719] rounded flex items-center justify-center">
-                    <span className="text-white font-bold text-xs">Y</span>
+              {/* Trusted Companies Logos - Animated Marquee */}
+              <div className="relative overflow-hidden mt-12">
+                <div className="flex animate-marquee whitespace-nowrap">
+                  <div className="flex items-center gap-12 mx-6">
+                    <span className="text-base font-medium text-muted-foreground/50">iHeartMEDIA</span>
+                    <div className="flex items-center gap-2">
+                      <div className="w-5 h-5 bg-[#ff6719] rounded flex items-center justify-center">
+                        <span className="text-white font-bold text-xs">Y</span>
+                      </div>
+                      <span className="text-base font-medium text-muted-foreground/50">Combinator</span>
+                    </div>
+                    <span className="text-base font-medium text-muted-foreground/50">PSG</span>
+                    <span className="text-base font-medium text-muted-foreground/50 tracking-wider">AIRBUS</span>
+                    <span className="text-base font-medium text-muted-foreground/50">supabase</span>
+                    <span className="text-base font-medium text-muted-foreground/50">zapier</span>
                   </div>
-                  <span className="text-lg font-semibold text-muted-foreground">Combinator</span>
+                  <div className="flex items-center gap-12 mx-6">
+                    <span className="text-base font-medium text-muted-foreground/50">iHeartMEDIA</span>
+                    <div className="flex items-center gap-2">
+                      <div className="w-5 h-5 bg-[#ff6719] rounded flex items-center justify-center">
+                        <span className="text-white font-bold text-xs">Y</span>
+                      </div>
+                      <span className="text-base font-medium text-muted-foreground/50">Combinator</span>
+                    </div>
+                    <span className="text-base font-medium text-muted-foreground/50">PSG</span>
+                    <span className="text-base font-medium text-muted-foreground/50 tracking-wider">AIRBUS</span>
+                    <span className="text-base font-medium text-muted-foreground/50">supabase</span>
+                    <span className="text-base font-medium text-muted-foreground/50">zapier</span>
+                  </div>
                 </div>
-                <span className="text-lg font-semibold text-muted-foreground">PSG</span>
-                <span className="text-lg font-semibold text-muted-foreground tracking-wider">AIRBUS</span>
-                <span className="text-lg font-semibold text-muted-foreground">supabase</span>
-                <span className="text-lg font-semibold text-muted-foreground">zapier</span>
               </div>
             </div>
           </FadeInSection>
