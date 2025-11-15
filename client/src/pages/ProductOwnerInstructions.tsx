@@ -212,9 +212,9 @@ export default function ProductOwnerInstructions() {
         </Card>
 
         {/* Section 8: آلية العمل وضمان التقييمات */}
-        <Card className="border-green-500 border-2">
+        <Card className="border-blue-500 border-2">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-xl text-green-600 dark:text-green-400">
+            <CardTitle className="flex items-center gap-2 text-xl text-blue-600 dark:text-blue-400">
               <ShieldAlert className="h-6 w-6" />
               8. آلية العمل لضمان تقييمات حقيقية
             </CardTitle>

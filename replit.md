@@ -16,6 +16,7 @@ The platform is built with a modern web stack, featuring a modular project struc
 - **Responsiveness & RTL:** Fully responsive design with comprehensive Right-to-Left (RTL) support.
 - **Interactive Elements:** Hover effects, 3D elevations, and Framer Motion animations.
 - **Component Library:** Shadcn UI for consistent and rapid development.
+- **Icon System:** All UI elements use lucide-react icons exclusively (NO emojis permitted). Icon usage follows semantic color coding: CheckCircle2 (positive/approval), XCircle (prohibitions), AlertTriangle (warnings), Lightbulb (recommendations), Wallet (financial), Pin (objectives), ShieldAlert (security/policy).
 
 **Technical Implementations & Feature Specifications:**
 - **Frontend:** React with TypeScript, Wouter for routing, Tailwind CSS, Shadcn UI, React Hook Form with Zod for validation, and TanStack Query for data management.
@@ -23,10 +24,11 @@ The platform is built with a modern web stack, featuring a modular project struc
 - **Forms:** Multi-step forms with robust validation for registration. All auth forms include autocomplete attributes.
 - **User Authentication:** JWT-based sessions and role-based authorization. Navbar synchronizes immediately after signup/login. Profile page shows graceful error states. User data read from localStorage at form submission.
 - **Mandatory Instructions for Both User Types:** 
-    - **Freelancers:** Must accept comprehensive guidelines covering ethical review practices (minimum 3.4-star ratings), platform liability, professional conduct, and **money holding policy** (7-day hold period to ensure legitimacy) before accessing the dashboard.
-    - **Product Owners:** Must accept 8-section guidelines covering transparency requirements, truthful information provision, constructive feedback acceptance, company verification allowance, freelancer coordination policies, platform usage ethics, violation consequences, and **quality assurance mechanism** (7-day guarantee for review deletion refunds, location-based freelancer selection recommendations).
+    - **Freelancers:** Must accept comprehensive 5-section guidelines (FreelancerInstructions.tsx) covering ethical review practices (minimum 3.4-star ratings), platform liability, professional conduct, and **money holding policy** (Section 5: 7-day hold period with Wallet/Pin/CheckCircle2/ShieldAlert icons) before accessing the dashboard.
+    - **Product Owners:** Must accept 8-section guidelines (ProductOwnerInstructions.tsx) covering transparency requirements, truthful information provision, constructive feedback acceptance, company verification allowance, freelancer coordination policies, platform usage ethics, violation consequences, and **quality assurance mechanism** (Section 8: 7-day guarantee with CheckCircle2/Lightbulb/AlertTriangle icons for review deletion refunds and location-based freelancer selection recommendations).
     - Both tracked by `acceptedInstructions` database field in respective tables.
     - Signup flow: registration → mandatory instructions acceptance → dashboard access.
+    - All instruction pages use RTL layout with color-coded sections (blue for policies, green for benefits, amber for warnings, red for prohibitions) and lucide-react icons only (zero emojis).
     - **Quality Assurance Features:**
         - Product owners get 7-day guarantee: full refund if reviews are deleted
         - Freelancers have 7-day earnings hold to ensure review legitimacy
