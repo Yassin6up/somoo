@@ -37,11 +37,13 @@ import ProductOwnerOrders from "@/pages/product-owner-dashboard/Orders";
 import ProductOwnerSettings from "@/pages/product-owner-dashboard/Settings";
 import FreelancerInstructions from "@/pages/FreelancerInstructions";
 import ProductOwnerInstructions from "@/pages/ProductOwnerInstructions";
+import Services from "@/pages/Services";
 
 function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
+      <Route path="/services" component={Services} />
       <Route path="/login" component={Login} />
       <Route path="/role-selection" component={RoleSelection} />
       <Route path="/freelancer-signup" component={FreelancerSignup} />
