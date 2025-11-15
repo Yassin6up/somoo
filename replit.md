@@ -111,6 +111,33 @@ The platform is built with a modern web stack, featuring a modular project struc
 **System Design Choices:**
 - **Data Schemas:** Shared TypeScript data models for consistency across the stack.
 
+**Recent Technical Updates (November 2025):**
+
+### Dashboard Reorganization with Sidebar Navigation (Latest)
+- **Freelancer Dashboard Improvements:**
+  - Replaced monolithic dashboard with modular Shadcn sidebar navigation
+  - Created 7 separate pages: Overview, Available Tasks, My Tasks, Wallet, Withdrawals, Orders, Settings
+  - Sidebar menu includes collapsible groups for Tasks (المهام) and Finance (المالية)
+  - Full layout with SidebarProvider and SidebarTrigger for toggle functionality
+  - Routes: `/freelancer-dashboard/*` with proper sub-navigation
+  - Removed duplicate Navbar from layout component
+
+- **Product Owner Dashboard (Partial):**
+  - Implemented professional Shadcn sidebar structure
+  - Created Overview page with stats and metrics
+  - Sidebar menu with Projects (المشاريع) collapsible section
+  - Additional pages planned: Projects (All/Active/Completed), Payments, Orders, Settings
+
+- **User Type Badge UI Enhancement:**
+  - Added visual indicator on user avatar: Briefcase icon for freelancers, Building2 for product owners
+  - Badge displayed in Navbar dropdown menu showing account type
+  - Fully responsive design for desktop and mobile
+
+- **Layout Architecture:**
+  - Fixed duplicate Navbar issue in dashboard layouts
+  - Proper h-screen and overflow-auto for scrollable content areas
+  - Consistent sidebar width: 18rem (configurable via CSS variables)
+
 **Recent Technical Updates (October 2025):**
 - **Authentication Architecture:**
   - User authentication now stores three separate items in localStorage: `user` (JSON object without role field), `userType` (string: "freelancer" or "product_owner"), and `token` (JWT string)
