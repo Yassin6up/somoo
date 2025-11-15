@@ -19,6 +19,7 @@ import Groups from "@/pages/Groups";
 import CreateGroup from "@/pages/CreateGroup";
 import GroupDetails from "@/pages/GroupDetails";
 import Projects from "@/pages/Projects";
+import ProjectDetails from "@/pages/ProjectDetails";
 import CreateProject from "@/pages/CreateProject";
 import MyTasks from "@/pages/MyTasks";
 import PurchaseService from "@/pages/PurchaseService";
@@ -30,6 +31,7 @@ import WalletPage from "@/pages/freelancer-dashboard/Wallet";
 import WithdrawalsPage from "@/pages/freelancer-dashboard/Withdrawals";
 import OrdersPage from "@/pages/freelancer-dashboard/Orders";
 import SettingsPage from "@/pages/freelancer-dashboard/Settings";
+import FreelancerConversations from "@/pages/freelancer-dashboard/Conversations";
 import { ProductOwnerDashboardLayout } from "@/components/ProductOwnerDashboardLayout";
 import ProductOwnerOverview from "@/pages/product-owner-dashboard/Overview";
 import ProductOwnerProjects from "@/pages/product-owner-dashboard/Projects";
@@ -102,6 +104,13 @@ function Router() {
         {() => (
           <FreelancerDashboardLayout>
             <OrdersPage />
+          </FreelancerDashboardLayout>
+        )}
+      </Route>
+      <Route path="/freelancer-dashboard/conversations">
+        {() => (
+          <FreelancerDashboardLayout>
+            <FreelancerConversations />
           </FreelancerDashboardLayout>
         )}
       </Route>
@@ -179,6 +188,7 @@ function Router() {
       <Route path="/purchase/:groupId" component={PurchaseService} />
       <Route path="/projects" component={Projects} />
       <Route path="/projects/create" component={CreateProject} />
+      <Route path="/projects/:id" component={ProjectDetails} />
       <Route path="/my-tasks" component={MyTasks} />
       <Route component={NotFound} />
     </Switch>

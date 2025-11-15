@@ -42,14 +42,17 @@ The platform is built with a modern web stack, featuring a modular project struc
 - **Direct Purchase System:** Product owners can purchase services directly from group leaders (e.g., Google Play reviews, UX testing, Google Maps reviews) with defined pricing ($1-$2 per service). Payment methods include Vodafone Cash, Etisalat Cash, Orange Cash, Bank Card. Order management tracks status: pending → payment_confirmed → in_progress → completed.
 - **Conversations System:** Real-time messaging between product owners and group leaders for direct communication:
     - **Database Schema:** Two tables: `conversations` (tracks conversation threads) and `conversationMessages` (stores individual messages)
-    - **Product Owner Access:** Dedicated "المحادثات" (Conversations) page in product owner dashboard sidebar (/product-owner-dashboard/conversations)
+    - **Access Points:** 
+        - Product owners: "المحادثات" page in dashboard sidebar (/product-owner-dashboard/conversations)
+        - Freelancers: "المحادثات" page in dashboard sidebar (/freelancer-dashboard/conversations)
     - **Conversation Initiation:** Product owners can start conversations from GroupDetails page via "ابدأ محادثة" (Start Conversation) button
     - **Message Features:** Real-time message display, sender identification (product_owner vs freelancer), read/unread status tracking, timestamp display
-    - **UI Components:** Split-view interface with conversation list (left) and active chat area (right), RTL-optimized message bubbles
+    - **UI Components:** Split-view interface with conversation list and active chat area, RTL-optimized message bubbles
     - **API Endpoints:** POST /api/conversations (create/get conversation), GET /api/conversations (list all), GET /api/conversations/:id/messages (fetch messages), POST /api/conversations/:id/messages (send message)
     - **Security:** Authorization checks ensure users can only access their own conversations
 - **Product Owner Signup:** Simplified 3-step form (Basic Info → Service Selection & Calculation → Confirmation) with 7 service types and automatic cost calculation based on quantity (1-1000 reviews).
-- **Dashboards:** Freelancer and Product Owner dashboards with real-time stats and modular Shadcn sidebar navigation. Freelancer dashboard has 7 pages: Overview, Available Tasks, My Tasks, Wallet, Withdrawals, Orders, Settings. Product Owner dashboard includes Overview and Projects sections.
+- **Dashboards:** Freelancer and Product Owner dashboards with real-time stats and modular Shadcn sidebar navigation. Freelancer dashboard has 8 pages: Overview, Available Tasks, My Tasks, Wallet, Withdrawals, Orders, Conversations, Settings. Product Owner dashboard has 8 pages: Overview, Projects, Active Projects, Completed Projects, Payments, Orders, Conversations, Settings.
+- **Project Details Page:** Comprehensive project view (/projects/:id) displaying project information, task list, stats, and task creation interface (for group leaders).
 - **User Type Badge:** Visual indicator (briefcase for freelancers, building for product owners) displayed in the Navbar dropdown menu.
 - **Authentication Architecture:** `user`, `userType`, and `token` stored in localStorage. Role-based checks read `userType` from localStorage.
 - **API Request Layer:** `apiRequest()` function automatically includes JWT token in Authorization header for all authenticated mutations.
