@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import type { Task, Wallet, Order } from "@shared/schema";
+import type { Task, Wallet, Order, Withdrawal } from "@shared/schema";
 import { 
   Wallet as WalletIcon, 
   FileCheck, 
@@ -24,8 +24,13 @@ import {
   Play,
   ShoppingCart,
   Calendar,
-  Package
+  Package,
+  CreditCard,
+  Download,
+  Plus
 } from "lucide-react";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function FreelancerDashboard() {
   const { toast } = useToast();
@@ -33,6 +38,12 @@ export default function FreelancerDashboard() {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [submissionText, setSubmissionText] = useState("");
   const [showSubmitDialog, setShowSubmitDialog] = useState(false);
+  
+  // Withdrawal form state
+  const [showWithdrawalDialog, setShowWithdrawalDialog] = useState(false);
+  const [withdrawalAmount, setWithdrawalAmount] = useState("");
+  const [withdrawalMethod, setWithdrawalMethod] = useState("");
+  const [withdrawalAccount, setWithdrawalAccount] = useState("");
 
   // Fetch available tasks
   const { data: availableTasks = [], isLoading: loadingAvailable } = useQuery<Task[]>({
@@ -52,6 +63,11 @@ export default function FreelancerDashboard() {
   // Fetch orders for groups led by this freelancer
   const { data: orders = [] } = useQuery<Order[]>({
     queryKey: ["/api/orders"],
+  });
+
+  // Fetch withdrawals
+  const { data: withdrawals = [], isLoading: loadingWithdrawals } = useQuery<Withdrawal[]>({
+    queryKey: ["/api/withdrawals/my"],
   });
 
   // Accept task mutation
@@ -141,6 +157,79 @@ export default function FreelancerDashboard() {
     setSelectedTask(task);
     setSubmissionText(task.submission || "");
     setShowSubmitDialog(true);
+  };
+
+  // Withdrawal mutation
+  const createWithdrawalMutation = useMutation({
+    mutationFn: async (data: { amount: number; paymentMethod: string; accountNumber: string }) => {
+      return apiRequest("POST", "/api/withdrawals", data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/withdrawals/my"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/wallet"] });
+      setShowWithdrawalDialog(false);
+      setWithdrawalAmount("");
+      setWithdrawalMethod("");
+      setWithdrawalAccount("");
+      toast({
+        title: "تم إرسال طلب السحب",
+        description: "سيتم مراجعة طلبك ومعالجته في أقرب وقت",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "خطأ",
+        description: error?.message || "حدث خطأ أثناء إنشاء طلب السحب",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleWithdrawalSubmit = () => {
+    const amount = parseFloat(withdrawalAmount);
+    
+    if (!withdrawalAmount || amount <= 0) {
+      toast({
+        title: "خطأ",
+        description: "يرجى إدخال مبلغ صحيح",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!withdrawalMethod) {
+      toast({
+        title: "خطأ",
+        description: "يرجى اختيار طريقة الدفع",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!withdrawalAccount.trim()) {
+      toast({
+        title: "خطأ",
+        description: "يرجى إدخال رقم الحساب",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const walletBalance = parseFloat(wallet?.balance || "0");
+    if (amount > walletBalance) {
+      toast({
+        title: "خطأ",
+        description: `الرصيد المتاح غير كافٍ. الرصيد الحالي: ${walletBalance} ر.س`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    createWithdrawalMutation.mutate({
+      amount: Number(withdrawalAmount),
+      paymentMethod: withdrawalMethod,
+      accountNumber: withdrawalAccount,
+    });
   };
 
   // Filter available tasks
@@ -264,12 +353,16 @@ export default function FreelancerDashboard() {
             </Card>
           </div>
 
-          {/* Tabs for Available Tasks, My Tasks, and Orders */}
+          {/* Tabs for Available Tasks, My Tasks, Orders, and Withdrawals */}
           <Tabs defaultValue="orders" className="space-y-6">
-            <TabsList className="grid w-full max-w-2xl grid-cols-3" data-testid="tabs-tasks">
+            <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 gap-2" data-testid="tabs-tasks">
               <TabsTrigger value="orders" data-testid="tab-orders">
                 <ShoppingCart className="h-4 w-4 ml-2" />
                 الطلبات ({totalOrders})
+              </TabsTrigger>
+              <TabsTrigger value="withdrawals" data-testid="tab-withdrawals">
+                <Download className="h-4 w-4 ml-2" />
+                السحوبات ({withdrawals.length})
               </TabsTrigger>
               <TabsTrigger value="available" data-testid="tab-available-tasks">
                 المهام المتاحة ({filteredAvailableTasks.length})
@@ -330,6 +423,113 @@ export default function FreelancerDashboard() {
                               <p className="text-muted-foreground mb-1">بيانات الدفع:</p>
                               <p className="font-semibold">{order.paymentDetails}</p>
                             </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+
+            {/* Withdrawals Tab */}
+            <TabsContent value="withdrawals" className="space-y-4">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h2 className="text-xl font-bold">السحوبات والأرباح</h2>
+                  <p className="text-muted-foreground">إدارة طلبات السحب وتتبع حالتها</p>
+                </div>
+                <Button 
+                  onClick={() => setShowWithdrawalDialog(true)}
+                  className="rounded-xl"
+                  data-testid="button-new-withdrawal"
+                >
+                  <Plus className="h-4 w-4 ml-2" />
+                  طلب سحب جديد
+                </Button>
+              </div>
+
+              {/* Wallet Balance Card */}
+              <Card className="rounded-2xl shadow-md bg-gradient-to-br from-primary/10 to-primary/5">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-1">الرصيد المتاح</p>
+                      <p className="text-3xl font-bold text-primary" data-testid="text-wallet-balance">
+                        {wallet?.balance || "0"} ر.س
+                      </p>
+                      <p className="text-sm text-muted-foreground mt-2">
+                        إجمالي الأرباح: {wallet?.totalEarned || "0"} ر.س
+                      </p>
+                    </div>
+                    <div className="w-16 h-16 bg-primary/20 rounded-2xl flex items-center justify-center">
+                      <WalletIcon className="h-8 w-8 text-primary" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Withdrawals List */}
+              {loadingWithdrawals ? (
+                <div className="grid grid-cols-1 gap-4">
+                  {[1, 2].map((i) => (
+                    <Card key={i} className="rounded-2xl shadow-md animate-pulse">
+                      <CardContent className="p-6">
+                        <div className="h-6 bg-muted rounded mb-2 w-1/3"></div>
+                        <div className="h-4 bg-muted rounded w-1/2"></div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              ) : withdrawals.length === 0 ? (
+                <Card className="rounded-2xl shadow-md">
+                  <CardContent className="p-12 text-center">
+                    <Download className="h-16 w-16 mx-auto mb-4 text-muted-foreground/50" />
+                    <h3 className="text-xl font-bold mb-2">لا توجد طلبات سحب</h3>
+                    <p className="text-muted-foreground">يمكنك إنشاء طلب سحب جديد للحصول على أرباحك</p>
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="grid grid-cols-1 gap-4">
+                  {withdrawals.map((withdrawal) => (
+                    <Card key={withdrawal.id} className="rounded-2xl shadow-md hover-elevate" data-testid={`card-withdrawal-${withdrawal.id}`}>
+                      <CardContent className="p-6">
+                        <div className="flex items-start justify-between mb-4">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3 mb-2">
+                              <h3 className="text-lg font-bold">{withdrawal.amount} ر.س</h3>
+                              <Badge 
+                                variant={
+                                  withdrawal.status === "completed" ? "default" : 
+                                  withdrawal.status === "pending" ? "outline" : 
+                                  withdrawal.status === "processing" ? "secondary" : "destructive"
+                                }
+                                data-testid={`badge-withdrawal-status-${withdrawal.id}`}
+                              >
+                                {withdrawal.status === "completed" ? "مكتمل" : 
+                                 withdrawal.status === "pending" ? "قيد الانتظار" : 
+                                 withdrawal.status === "processing" ? "قيد المعالجة" : "مرفوض"}
+                              </Badge>
+                            </div>
+                            <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                              <span className="flex items-center gap-1">
+                                <CreditCard className="h-4 w-4" />
+                                {withdrawal.paymentMethod === 'vodafone_cash' ? 'فودافون كاش' : 
+                                 withdrawal.paymentMethod === 'etisalat_cash' ? 'اتصالات كاش' :
+                                 withdrawal.paymentMethod === 'orange_cash' ? 'أورانج كاش' : 
+                                 withdrawal.paymentMethod === 'bank_card' ? 'البطاقة البنكية' : withdrawal.paymentMethod}
+                              </span>
+                              <span>{withdrawal.accountNumber}</span>
+                              <span className="flex items-center gap-1">
+                                <Calendar className="h-4 w-4" />
+                                {new Date(withdrawal.createdAt).toLocaleDateString('ar-SA')}
+                              </span>
+                            </div>
+                            {withdrawal.notes && (
+                              <p className="text-sm text-muted-foreground mt-2 bg-muted/50 rounded-lg p-3">
+                                <span className="font-semibold">ملاحظات:</span> {withdrawal.notes}
+                              </p>
+                            )}
                           </div>
                         </div>
                       </CardContent>
@@ -575,6 +775,87 @@ export default function FreelancerDashboard() {
             >
               <Send className="h-4 w-4 ml-1" />
               تسليم
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* New Withdrawal Dialog */}
+      <Dialog open={showWithdrawalDialog} onOpenChange={setShowWithdrawalDialog}>
+        <DialogContent className="rounded-2xl" data-testid="dialog-new-withdrawal">
+          <DialogHeader>
+            <DialogTitle data-testid="text-withdrawal-dialog-title">طلب سحب جديد</DialogTitle>
+            <DialogDescription data-testid="text-withdrawal-dialog-description">
+              املأ البيانات المطلوبة لطلب سحب أرباحك
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="amount">المبلغ (ر.س)</Label>
+              <Input
+                id="amount"
+                type="number"
+                value={withdrawalAmount}
+                onChange={(e) => setWithdrawalAmount(e.target.value)}
+                placeholder="أدخل المبلغ"
+                className="rounded-xl mt-1"
+                data-testid="input-withdrawal-amount"
+                min="0"
+                step="0.01"
+              />
+              <p className="text-sm text-muted-foreground mt-1">
+                الرصيد المتاح: {wallet?.balance || "0"} ر.س
+              </p>
+            </div>
+
+            <div>
+              <Label htmlFor="payment-method">طريقة الدفع</Label>
+              <Select value={withdrawalMethod} onValueChange={setWithdrawalMethod}>
+                <SelectTrigger className="rounded-xl mt-1" data-testid="select-withdrawal-method">
+                  <SelectValue placeholder="اختر طريقة الدفع" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="vodafone_cash">فودافون كاش</SelectItem>
+                  <SelectItem value="etisalat_cash">اتصالات كاش</SelectItem>
+                  <SelectItem value="orange_cash">أورانج كاش</SelectItem>
+                  <SelectItem value="bank_card">البطاقة البنكية</SelectItem>
+                  <SelectItem value="bank_transfer">تحويل بنكي</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="account-number">رقم الحساب / المحفظة</Label>
+              <Input
+                id="account-number"
+                value={withdrawalAccount}
+                onChange={(e) => setWithdrawalAccount(e.target.value)}
+                placeholder="أدخل رقم الحساب"
+                className="rounded-xl mt-1"
+                data-testid="input-withdrawal-account"
+              />
+              <p className="text-sm text-muted-foreground mt-1">
+                تأكد من صحة رقم الحساب لتجنب التأخير في التحويل
+              </p>
+            </div>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setShowWithdrawalDialog(false)}
+              className="rounded-xl"
+              data-testid="button-cancel-withdrawal"
+            >
+              إلغاء
+            </Button>
+            <Button
+              onClick={handleWithdrawalSubmit}
+              disabled={createWithdrawalMutation.isPending}
+              className="rounded-xl"
+              data-testid="button-confirm-withdrawal"
+            >
+              <Download className="h-4 w-4 ml-1" />
+              إرسال الطلب
             </Button>
           </DialogFooter>
         </DialogContent>
