@@ -47,6 +47,10 @@ export default function GroupDetails() {
   // Check if current user is the leader
   const isLeader = user && group && user.userId === group.leaderId;
 
+  // Check if current user is product owner
+  const userType = localStorage.getItem("userType");
+  const isProductOwner = userType === "product_owner";
+
   // Leave group mutation
   const leaveGroupMutation = useMutation({
     mutationFn: async () => {
@@ -89,6 +93,28 @@ export default function GroupDetails() {
         variant: "destructive",
       });
       setMemberToRemove(null);
+    },
+  });
+
+  // Start conversation mutation (for product owners)
+  const startConversationMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", `/api/conversations`, { groupId });
+      return await res.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "تم فتح المحادثة",
+        description: "جاري الانتقال إلى صفحة المحادثات...",
+      });
+      navigate("/product-owner-dashboard/conversations");
+    },
+    onError: (error: any) => {
+      toast({
+        title: "خطأ",
+        description: error.message || "حدث خطأ أثناء فتح المحادثة",
+        variant: "destructive",
+      });
     },
   });
 
@@ -186,16 +212,28 @@ export default function GroupDetails() {
                 </CardDescription>
               </div>
 
-              {!isLeader && (
-                <Button
-                  variant="destructive"
-                  onClick={() => leaveGroupMutation.mutate()}
-                  disabled={leaveGroupMutation.isPending}
-                  data-testid="button-leave-group"
-                >
-                  مغادرة الجروب
-                </Button>
-              )}
+              <div className="flex gap-2">
+                {isProductOwner && (
+                  <Button
+                    onClick={() => startConversationMutation.mutate()}
+                    disabled={startConversationMutation.isPending}
+                    data-testid="button-start-conversation"
+                  >
+                    <MessageCircle className="ml-2 h-4 w-4" />
+                    ابدأ محادثة
+                  </Button>
+                )}
+                {!isLeader && !isProductOwner && (
+                  <Button
+                    variant="destructive"
+                    onClick={() => leaveGroupMutation.mutate()}
+                    disabled={leaveGroupMutation.isPending}
+                    data-testid="button-leave-group"
+                  >
+                    مغادرة الجروب
+                  </Button>
+                )}
+              </div>
             </div>
           </CardHeader>
 
