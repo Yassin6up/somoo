@@ -84,7 +84,7 @@ export default function GroupCommunity() {
 
   // Get current user
   const currentUserId = localStorage.getItem("user") 
-    ? JSON.parse(localStorage.getItem("user")!).userId 
+    ? JSON.parse(localStorage.getItem("user")!).id 
     : null;
 
   // Fetch group data
