@@ -1,5 +1,6 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useLocation } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,8 +30,18 @@ type ConversationWithDetails = Conversation & {
 
 export default function Conversations() {
   const { toast } = useToast();
+  const [location] = useLocation();
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
   const [messageText, setMessageText] = useState("");
+
+  // Extract conversationId from query params
+  useEffect(() => {
+    const params = new URLSearchParams(location.split('?')[1] || '');
+    const conversationId = params.get('conversationId');
+    if (conversationId) {
+      setSelectedConversation(conversationId);
+    }
+  }, [location]);
 
   // Fetch all conversations
   const { data: conversations = [], isLoading: loadingConversations } = useQuery<ConversationWithDetails[]>({
@@ -46,13 +57,10 @@ export default function Conversations() {
   // Send message mutation
   const sendMessageMutation = useMutation({
     mutationFn: async (content: string) => {
-      return await apiRequest<ConversationMessage>(
+      return await apiRequest(
+        "POST",
         `/api/conversations/${selectedConversation}/messages`,
-        {
-          method: "POST",
-          body: JSON.stringify({ content }),
-          headers: { "Content-Type": "application/json" },
-        }
+        { content }
       );
     },
     onSuccess: () => {

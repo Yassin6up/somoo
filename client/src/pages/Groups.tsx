@@ -48,6 +48,24 @@ export default function Groups() {
     },
   });
 
+  // Start conversation mutation
+  const startConversationMutation = useMutation({
+    mutationFn: async (groupId: string) => {
+      const response = await apiRequest("/api/conversations", "POST", { groupId });
+      return response;
+    },
+    onSuccess: (data: any) => {
+      navigate(`/product-owner-dashboard/conversations?conversationId=${data.id}`);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "خطأ",
+        description: error.message || "حدث خطأ أثناء بدء المحادثة",
+        variant: "destructive",
+      });
+    },
+  });
+
   // Filter groups based on search
   const filteredGroups = groups.filter((group) =>
     group.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -255,8 +273,9 @@ export default function Groups() {
                           variant="outline"
                           onClick={(e) => {
                             e.stopPropagation();
-                            navigate(`/conversations/${group.id}`);
+                            startConversationMutation.mutate(group.id);
                           }}
+                          disabled={startConversationMutation.isPending}
                           data-testid={`button-contact-leader-${group.id}`}
                         >
                           <MessageCircle className="h-4 w-4" />

@@ -2202,7 +2202,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "الجروب غير موجود" });
       }
 
-      const productOwnerId = req.user!.id;
+      const productOwnerId = req.user!.userId;
       const conversation = await storage.getOrCreateConversation(productOwnerId, groupId, group.leaderId);
 
       res.json(conversation);
@@ -2216,7 +2216,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/conversations", authMiddleware, async (req: AuthRequest, res) => {
     try {
       const userType = req.user!.userType;
-      const userId = req.user!.id;
+      const userId = req.user!.userId;
 
       let conversations;
       if (userType === "product_owner") {
@@ -2261,7 +2261,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "المحادثة غير موجودة" });
       }
 
-      const userId = req.user!.id;
+      const userId = req.user!.userId;
       const userType = req.user!.userType;
 
       // Check if user is part of conversation
@@ -2300,7 +2300,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "المحادثة غير موجودة" });
       }
 
-      const userId = req.user!.id;
+      const userId = req.user!.userId;
       const userType = req.user!.userType;
 
       // Check if user is part of conversation
