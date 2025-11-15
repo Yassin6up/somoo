@@ -8,6 +8,7 @@ import {
   Settings,
   ChevronDown,
   MessageCircle,
+  Bell,
 } from "lucide-react";
 import { useLocation, Link } from "wouter";
 import {
@@ -54,6 +55,11 @@ const menuItems = [
     title: "المحادثات",
     url: "/product-owner-dashboard/conversations",
     icon: MessageCircle,
+  },
+  {
+    title: "الإشعارات",
+    url: "/product-owner-dashboard/notifications",
+    icon: Bell,
   },
   {
     title: "الإعدادات",

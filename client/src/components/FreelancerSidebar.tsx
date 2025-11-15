@@ -8,7 +8,8 @@ import {
   ShoppingBag, 
   Settings,
   ChevronDown,
-  MessageCircle
+  MessageCircle,
+  Bell
 } from "lucide-react";
 import { useLocation, Link } from "wouter";
 import {
@@ -62,6 +63,11 @@ const menuItems = [
     title: "المحادثات",
     url: "/freelancer-dashboard/conversations",
     icon: MessageCircle,
+  },
+  {
+    title: "الإشعارات",
+    url: "/freelancer-dashboard/notifications",
+    icon: Bell,
   },
   {
     title: "الإعدادات",

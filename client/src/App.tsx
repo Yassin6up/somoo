@@ -33,6 +33,7 @@ import WithdrawalsPage from "@/pages/freelancer-dashboard/Withdrawals";
 import OrdersPage from "@/pages/freelancer-dashboard/Orders";
 import SettingsPage from "@/pages/freelancer-dashboard/Settings";
 import FreelancerConversations from "@/pages/freelancer-dashboard/Conversations";
+import FreelancerNotifications from "@/pages/freelancer-dashboard/Notifications";
 import { ProductOwnerDashboardLayout } from "@/components/ProductOwnerDashboardLayout";
 import ProductOwnerOverview from "@/pages/product-owner-dashboard/Overview";
 import ProductOwnerProjects from "@/pages/product-owner-dashboard/Projects";
@@ -42,6 +43,7 @@ import ProductOwnerOrders from "@/pages/product-owner-dashboard/Orders";
 import PaymentsPage from "@/pages/product-owner-dashboard/Payments";
 import ProductOwnerSettings from "@/pages/product-owner-dashboard/Settings";
 import ProductOwnerConversations from "@/pages/product-owner-dashboard/Conversations";
+import ProductOwnerNotifications from "@/pages/product-owner-dashboard/Notifications";
 import FreelancerInstructions from "@/pages/FreelancerInstructions";
 import ProductOwnerInstructions from "@/pages/ProductOwnerInstructions";
 import Services from "@/pages/Services";
@@ -122,6 +124,13 @@ function Router() {
           </FreelancerDashboardLayout>
         )}
       </Route>
+      <Route path="/freelancer-dashboard/notifications">
+        {() => (
+          <FreelancerDashboardLayout>
+            <FreelancerNotifications />
+          </FreelancerDashboardLayout>
+        )}
+      </Route>
 
       {/* Product Owner Dashboard with Sidebar */}
       <Route path="/product-owner-dashboard">
@@ -170,6 +179,13 @@ function Router() {
         {() => (
           <ProductOwnerDashboardLayout>
             <ProductOwnerSettings />
+          </ProductOwnerDashboardLayout>
+        )}
+      </Route>
+      <Route path="/product-owner-dashboard/notifications">
+        {() => (
+          <ProductOwnerDashboardLayout>
+            <ProductOwnerNotifications />
           </ProductOwnerDashboardLayout>
         )}
       </Route>

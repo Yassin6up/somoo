@@ -2031,6 +2031,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         status: "pending",
       });
 
+      // Create notification for freelancer
+      await storage.createNotification({
+        userId: req.user.userId,
+        userType: "freelancer",
+        title: "طلب سحب جديد",
+        message: `تم إنشاء طلب سحب بقيمة ${amount} ر.س. سيتم مراجعة الطلب قريباً`,
+        type: "withdrawal_created",
+      });
+
       res.status(201).json(withdrawal);
     } catch (error) {
       console.error("Error creating withdrawal:", error);
@@ -2236,6 +2245,72 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (!order) {
         return res.status(404).json({ error: "الطلب غير موجود" });
+      }
+
+      // Create notifications based on status
+      if (status === "payment_confirmed") {
+        // Notify group leader
+        const group = await storage.getGroup(order.groupId);
+        if (group) {
+          await storage.createNotification({
+            userId: group.leaderId,
+            userType: "freelancer",
+            title: "تم تأكيد الدفع",
+            message: `تم تأكيد دفع الطلب بقيمة $${order.totalAmount}. يمكنك الآن البدء في التنفيذ`,
+            type: "payment_confirmed",
+          });
+        }
+
+        // Notify product owner
+        await storage.createNotification({
+          userId: order.productOwnerId,
+          userType: "product_owner",
+          title: "تم تأكيد الدفع",
+          message: `تم تأكيد دفع طلبك بقيمة $${order.totalAmount}`,
+          type: "payment_confirmed",
+        });
+      } else if (status === "in_progress") {
+        // Notify product owner
+        await storage.createNotification({
+          userId: order.productOwnerId,
+          userType: "product_owner",
+          title: "الطلب قيد التنفيذ",
+          message: `بدأ الفريق بتنفيذ طلبك`,
+          type: "order_in_progress",
+        });
+
+        // Notify group leader (freelancer)
+        const group = await storage.getGroup(order.groupId);
+        if (group) {
+          await storage.createNotification({
+            userId: group.leaderId,
+            userType: "freelancer",
+            title: "طلب قيد التنفيذ",
+            message: `تم تحويل الطلب بقيمة $${order.totalAmount} إلى حالة "قيد التنفيذ"`,
+            type: "order_in_progress",
+          });
+        }
+      } else if (status === "completed") {
+        // Notify product owner
+        await storage.createNotification({
+          userId: order.productOwnerId,
+          userType: "product_owner",
+          title: "تم إكمال الطلب",
+          message: `تم إكمال طلبك بنجاح`,
+          type: "order_completed",
+        });
+
+        // Notify group leader
+        const group = await storage.getGroup(order.groupId);
+        if (group) {
+          await storage.createNotification({
+            userId: group.leaderId,
+            userType: "freelancer",
+            title: "تم إكمال الطلب",
+            message: `تم إكمال الطلب بنجاح بقيمة $${order.totalAmount}`,
+            type: "order_completed",
+          });
+        }
       }
 
       res.json(order);
