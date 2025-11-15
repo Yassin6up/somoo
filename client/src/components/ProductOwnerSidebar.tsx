@@ -7,6 +7,7 @@ import {
   ShoppingCart,
   Settings,
   ChevronDown,
+  MessageCircle,
 } from "lucide-react";
 import { useLocation, Link } from "wouter";
 import {
@@ -48,6 +49,11 @@ const menuItems = [
     title: "طلباتي",
     url: "/product-owner-dashboard/orders",
     icon: ShoppingCart,
+  },
+  {
+    title: "المحادثات",
+    url: "/product-owner-dashboard/conversations",
+    icon: MessageCircle,
   },
   {
     title: "الإعدادات",

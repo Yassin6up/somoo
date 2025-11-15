@@ -35,6 +35,7 @@ import ProductOwnerOverview from "@/pages/product-owner-dashboard/Overview";
 import ProductOwnerProjects from "@/pages/product-owner-dashboard/Projects";
 import ProductOwnerOrders from "@/pages/product-owner-dashboard/Orders";
 import ProductOwnerSettings from "@/pages/product-owner-dashboard/Settings";
+import ProductOwnerConversations from "@/pages/product-owner-dashboard/Conversations";
 import FreelancerInstructions from "@/pages/FreelancerInstructions";
 import ProductOwnerInstructions from "@/pages/ProductOwnerInstructions";
 import Services from "@/pages/Services";
@@ -135,6 +136,13 @@ function Router() {
         {() => (
           <ProductOwnerDashboardLayout>
             <ProductOwnerSettings />
+          </ProductOwnerDashboardLayout>
+        )}
+      </Route>
+      <Route path="/product-owner-dashboard/conversations">
+        {() => (
+          <ProductOwnerDashboardLayout>
+            <ProductOwnerConversations />
           </ProductOwnerDashboardLayout>
         )}
       </Route>
