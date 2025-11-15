@@ -44,12 +44,20 @@ The platform is built with a modern web stack, featuring a modular project struc
     - **Database Schema:** Two tables: `conversations` (tracks conversation threads) and `conversationMessages` (stores individual messages)
     - **Access Points:** 
         - Product owners: "المحادثات" page in dashboard sidebar (/product-owner-dashboard/conversations)
+        - Product owners: Dedicated chat page with leader profile (/groups/:id/chat)
         - Freelancers: "المحادثات" page in dashboard sidebar (/freelancer-dashboard/conversations)
-    - **Conversation Initiation:** Product owners can start conversations from GroupDetails page via "ابدأ محادثة" (Start Conversation) button
+    - **Conversation Initiation:** Product owners can start conversations from GroupDetails page via "ابدأ محادثة" (Start Conversation) button which redirects to dedicated chat page
+    - **Chat with Leader Page Features:**
+        - Split-view layout: leader profile card (right, sticky with z-50) and chat area (left)
+        - Leader profile displays: avatar, name, online status, service, rating (4.8 stars), location, response time, safety guidelines
+        - Safety guidelines with color-coded icons (ShieldAlert, CheckCircle2, AlertTriangle, Lightbulb)
+        - Action buttons: "طلب محادثة شفهية" (coming soon) and "المحادثة النصية نشطة"
+        - Auto-creates conversation on page load for authenticated product owners
+        - Message refresh every 3 seconds, auto-scroll to bottom, Enter to send
     - **Message Features:** Real-time message display, sender identification (product_owner vs freelancer), read/unread status tracking, timestamp display
     - **UI Components:** Split-view interface with conversation list and active chat area, RTL-optimized message bubbles
     - **API Endpoints:** POST /api/conversations (create/get conversation), GET /api/conversations (list all), GET /api/conversations/:id/messages (fetch messages), POST /api/conversations/:id/messages (send message)
-    - **Security:** Authorization checks ensure users can only access their own conversations
+    - **Security:** Backend authentication verification via /api/auth/user, role-based access control, conversation creation only for authenticated product owners
 - **Product Owner Signup:** Simplified 3-step form (Basic Info → Service Selection & Calculation → Confirmation) with 7 service types and automatic cost calculation based on quantity (1-1000 reviews).
 - **Dashboards:** Freelancer and Product Owner dashboards with real-time stats and modular Shadcn sidebar navigation. Freelancer dashboard has 8 pages: Overview, Available Tasks, My Tasks, Wallet, Withdrawals, Orders, Conversations, Settings. Product Owner dashboard has 8 pages: Overview, Projects, Active Projects, Completed Projects, Payments, Orders, Conversations, Settings.
 - **Project Details Page:** Comprehensive project view (/projects/:id) displaying project information, task list, stats, and task creation interface (for group leaders).
