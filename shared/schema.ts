@@ -23,6 +23,7 @@ export const freelancers = pgTable("freelancers", {
   accountNumber: text("account_number"),
   isVerified: boolean("is_verified").default(false),
   acceptedInstructions: boolean("accepted_instructions").default(false),
+  lastSeen: timestamp("last_seen"), // آخر ظهور (للحالة أونلاين/أوفلاين)
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -257,6 +258,40 @@ export const conversationMessages = pgTable("conversation_messages", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// Group Posts schema - منشورات الجروب (Community Posts)
+export const groupPosts = pgTable("group_posts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  groupId: varchar("group_id").notNull().references(() => groups.id),
+  authorId: varchar("author_id").notNull().references(() => freelancers.id),
+  content: text("content").notNull(),
+  imageUrl: text("image_url"), // صورة المنشور (اختيارية)
+  likesCount: integer("likes_count").default(0).notNull(),
+  commentsCount: integer("comments_count").default(0).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Post Comments schema - تعليقات المنشورات
+export const postComments = pgTable("post_comments", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  postId: varchar("post_id").notNull().references(() => groupPosts.id),
+  authorId: varchar("author_id").notNull().references(() => freelancers.id),
+  content: text("content").notNull(),
+  imageUrl: text("image_url"), // صورة التعليق (اختيارية)
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Post Reactions schema - تفاعلات المنشورات (لايكات)
+export const postReactions = pgTable("post_reactions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  postId: varchar("post_id").notNull().references(() => groupPosts.id),
+  userId: varchar("user_id").notNull().references(() => freelancers.id),
+  type: text("type").notNull().default("like"), // like, love, etc.
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({
+  uniqueReaction: uniqueIndex("unique_reaction_idx").on(table.postId, table.userId),
+}));
+
 // Relations
 export const freelancersRelations = relations(freelancers, ({ one, many }) => ({
   wallet: one(wallets, { fields: [freelancers.id], references: [wallets.freelancerId] }),
@@ -310,6 +345,7 @@ export const groupsRelations = relations(groups, ({ one, many }) => ({
   members: many(groupMembers),
   tasks: many(tasks),
   messages: many(messages),
+  posts: many(groupPosts),
   acceptedProjects: many(projects),
   orders: many(orders),
   joinRequests: many(groupJoinRequests),
@@ -357,6 +393,23 @@ export const conversationsRelations = relations(conversations, ({ one, many }) =
 
 export const conversationMessagesRelations = relations(conversationMessages, ({ one }) => ({
   conversation: one(conversations, { fields: [conversationMessages.conversationId], references: [conversations.id] }),
+}));
+
+export const groupPostsRelations = relations(groupPosts, ({ one, many }) => ({
+  group: one(groups, { fields: [groupPosts.groupId], references: [groups.id] }),
+  author: one(freelancers, { fields: [groupPosts.authorId], references: [freelancers.id] }),
+  comments: many(postComments),
+  reactions: many(postReactions),
+}));
+
+export const postCommentsRelations = relations(postComments, ({ one }) => ({
+  post: one(groupPosts, { fields: [postComments.postId], references: [groupPosts.id] }),
+  author: one(freelancers, { fields: [postComments.authorId], references: [freelancers.id] }),
+}));
+
+export const postReactionsRelations = relations(postReactions, ({ one }) => ({
+  post: one(groupPosts, { fields: [postReactions.postId], references: [groupPosts.id] }),
+  user: one(freelancers, { fields: [postReactions.userId], references: [freelancers.id] }),
 }));
 
 // Insert schemas for validation
@@ -452,6 +505,24 @@ export const insertConversationMessageSchema = createInsertSchema(conversationMe
   createdAt: true,
 });
 
+export const insertGroupPostSchema = createInsertSchema(groupPosts).omit({
+  id: true,
+  likesCount: true,
+  commentsCount: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertPostCommentSchema = createInsertSchema(postComments).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertPostReactionSchema = createInsertSchema(postReactions).omit({
+  id: true,
+  createdAt: true,
+});
+
 // TypeScript types
 export type Freelancer = typeof freelancers.$inferSelect;
 export type InsertFreelancer = z.infer<typeof insertFreelancerSchema>;
@@ -487,6 +558,12 @@ export type Conversation = typeof conversations.$inferSelect;
 export type InsertConversation = z.infer<typeof insertConversationSchema>;
 export type ConversationMessage = typeof conversationMessages.$inferSelect;
 export type InsertConversationMessage = z.infer<typeof insertConversationMessageSchema>;
+export type GroupPost = typeof groupPosts.$inferSelect;
+export type InsertGroupPost = z.infer<typeof insertGroupPostSchema>;
+export type PostComment = typeof postComments.$inferSelect;
+export type InsertPostComment = z.infer<typeof insertPostCommentSchema>;
+export type PostReaction = typeof postReactions.$inferSelect;
+export type InsertPostReaction = z.infer<typeof insertPostReactionSchema>;
 
 // Service options
 export const serviceOptions = [
