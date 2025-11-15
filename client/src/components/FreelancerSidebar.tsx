@@ -9,7 +9,7 @@ import {
   Settings,
   ChevronDown
 } from "lucide-react";
-import { useLocation } from "wouter";
+import { useLocation, Link } from "wouter";
 import {
   Sidebar,
   SidebarContent,
@@ -103,7 +103,7 @@ export function FreelancerSidebar() {
                                   isActive={location === subItem.url}
                                   data-testid={`sidebar-sub-${subItem.title}`}
                                 >
-                                  <a href={subItem.url}>{subItem.title}</a>
+                                  <Link href={subItem.url}>{subItem.title}</Link>
                                 </SidebarMenuSubButton>
                               </SidebarMenuSubItem>
                             ))}
@@ -121,10 +121,10 @@ export function FreelancerSidebar() {
                       isActive={isActive}
                       data-testid={`sidebar-${item.title}`}
                     >
-                      <a href={item.url}>
+                      <Link href={item.url}>
                         <item.icon className="ml-2" />
                         <span>{item.title}</span>
-                      </a>
+                      </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 );
