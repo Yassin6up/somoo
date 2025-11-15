@@ -33,6 +33,12 @@ import {
   type InsertConversation,
   type ConversationMessage,
   type InsertConversationMessage,
+  type GroupPost,
+  type InsertGroupPost,
+  type PostComment,
+  type InsertPostComment,
+  type PostReaction,
+  type InsertPostReaction,
   users,
   freelancers,
   productOwners,
@@ -50,6 +56,9 @@ import {
   orders,
   conversations,
   conversationMessages,
+  groupPosts,
+  postComments,
+  postReactions,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, or, desc } from "drizzle-orm";
@@ -167,6 +176,24 @@ export interface IStorage {
   getProductOwnerConversations(productOwnerId: string): Promise<Conversation[]>;
   getFreelancerConversations(freelancerId: string): Promise<Conversation[]>;
   markMessagesAsRead(conversationId: string, userId: string): Promise<void>;
+
+  // Group Posts methods
+  getPostsByGroup(groupId: string): Promise<GroupPost[]>;
+  getPost(postId: string): Promise<GroupPost | undefined>;
+  createPost(post: InsertGroupPost): Promise<GroupPost>;
+  deletePost(postId: string): Promise<void>;
+  updatePostCounts(postId: string, likesCount?: number, commentsCount?: number): Promise<void>;
+
+  // Post Comments methods
+  getCommentsByPost(postId: string): Promise<PostComment[]>;
+  createComment(comment: InsertPostComment): Promise<PostComment>;
+  deleteComment(commentId: string): Promise<void>;
+
+  // Post Reactions methods
+  getReactionsByPost(postId: string): Promise<PostReaction[]>;
+  getUserReaction(postId: string, userId: string): Promise<PostReaction | undefined>;
+  createReaction(reaction: InsertPostReaction): Promise<PostReaction>;
+  deleteReaction(postId: string, userId: string): Promise<void>;
 }
 
 export class MemStorage implements IStorage {
@@ -829,6 +856,112 @@ export class DatabaseStorage implements IStorage {
         eq(conversationMessages.conversationId, conversationId),
         eq(conversationMessages.isRead, false)
       ));
+  }
+
+  // Group Posts methods
+  async getPostsByGroup(groupId: string): Promise<GroupPost[]> {
+    return await db.select().from(groupPosts)
+      .where(eq(groupPosts.groupId, groupId))
+      .orderBy(desc(groupPosts.createdAt));
+  }
+
+  async getPost(postId: string): Promise<GroupPost | undefined> {
+    const [post] = await db.select().from(groupPosts).where(eq(groupPosts.id, postId));
+    return post || undefined;
+  }
+
+  async createPost(post: InsertGroupPost): Promise<GroupPost> {
+    const [newPost] = await db.insert(groupPosts).values(post).returning();
+    return newPost;
+  }
+
+  async deletePost(postId: string): Promise<void> {
+    await db.delete(groupPosts).where(eq(groupPosts.id, postId));
+  }
+
+  async updatePostCounts(postId: string, likesCount?: number, commentsCount?: number): Promise<void> {
+    const updates: any = { updatedAt: new Date() };
+    if (likesCount !== undefined) updates.likesCount = likesCount;
+    if (commentsCount !== undefined) updates.commentsCount = commentsCount;
+    
+    await db.update(groupPosts)
+      .set(updates)
+      .where(eq(groupPosts.id, postId));
+  }
+
+  // Post Comments methods
+  async getCommentsByPost(postId: string): Promise<PostComment[]> {
+    return await db.select().from(postComments)
+      .where(eq(postComments.postId, postId))
+      .orderBy(postComments.createdAt);
+  }
+
+  async createComment(comment: InsertPostComment): Promise<PostComment> {
+    const [newComment] = await db.insert(postComments).values(comment).returning();
+    
+    // Increment comments count
+    const post = await this.getPost(comment.postId);
+    if (post) {
+      await this.updatePostCounts(comment.postId, undefined, post.commentsCount + 1);
+    }
+    
+    return newComment;
+  }
+
+  async deleteComment(commentId: string): Promise<void> {
+    // Get comment first to update count
+    const [comment] = await db.select().from(postComments).where(eq(postComments.id, commentId));
+    
+    await db.delete(postComments).where(eq(postComments.id, commentId));
+    
+    // Decrement comments count
+    if (comment) {
+      const post = await this.getPost(comment.postId);
+      if (post && post.commentsCount > 0) {
+        await this.updatePostCounts(comment.postId, undefined, post.commentsCount - 1);
+      }
+    }
+  }
+
+  // Post Reactions methods
+  async getReactionsByPost(postId: string): Promise<PostReaction[]> {
+    return await db.select().from(postReactions)
+      .where(eq(postReactions.postId, postId));
+  }
+
+  async getUserReaction(postId: string, userId: string): Promise<PostReaction | undefined> {
+    const [reaction] = await db.select().from(postReactions)
+      .where(and(
+        eq(postReactions.postId, postId),
+        eq(postReactions.userId, userId)
+      ));
+    return reaction || undefined;
+  }
+
+  async createReaction(reaction: InsertPostReaction): Promise<PostReaction> {
+    const [newReaction] = await db.insert(postReactions).values(reaction).returning();
+    
+    // Increment likes count
+    const post = await this.getPost(reaction.postId);
+    if (post) {
+      await this.updatePostCounts(reaction.postId, post.likesCount + 1, undefined);
+    }
+    
+    return newReaction;
+  }
+
+  async deleteReaction(postId: string, userId: string): Promise<void> {
+    await db.delete(postReactions)
+      .where(and(
+        eq(postReactions.postId, postId),
+        eq(postReactions.userId, userId)
+      ));
+    
+    // Decrement likes count
+    const post = await this.getPost(postId);
+    if (post && post.likesCount > 0) {
+      await this.updatePostCounts(postId, post.likesCount - 1, undefined);
+    }
   }
 }
 
