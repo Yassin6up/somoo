@@ -1948,6 +1948,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // ============================================
+  // WALLET ROUTES - المحفظة
+  // ============================================
+
+  // Get wallet for current freelancer
+  app.get("/api/wallet", authMiddleware, requireRole(["freelancer"]), async (req: AuthRequest, res) => {
+    try {
+      if (!req.user?.userId) {
+        return res.status(401).json({ error: "غير مصرح" });
+      }
+
+      const wallet = await storage.getWalletByFreelancer(req.user.userId);
+      if (!wallet) {
+        return res.status(404).json({ error: "المحفظة غير موجودة" });
+      }
+
+      res.json(wallet);
+    } catch (error) {
+      console.error("Error fetching wallet:", error);
+      res.status(500).json({ error: "حدث خطأ أثناء جلب المحفظة" });
+    }
+  });
+
+  // ============================================
   // NOTIFICATIONS ROUTES - الإشعارات
   // ============================================
 
