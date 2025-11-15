@@ -22,6 +22,14 @@ import Projects from "@/pages/Projects";
 import CreateProject from "@/pages/CreateProject";
 import MyTasks from "@/pages/MyTasks";
 import PurchaseService from "@/pages/PurchaseService";
+import { FreelancerDashboardLayout } from "@/components/FreelancerDashboardLayout";
+import FreelancerOverview from "@/pages/freelancer-dashboard/Overview";
+import AvailableTasks from "@/pages/freelancer-dashboard/AvailableTasks";
+import MyTasksPage from "@/pages/freelancer-dashboard/MyTasks";
+import WalletPage from "@/pages/freelancer-dashboard/Wallet";
+import WithdrawalsPage from "@/pages/freelancer-dashboard/Withdrawals";
+import OrdersPage from "@/pages/freelancer-dashboard/Orders";
+import SettingsPage from "@/pages/freelancer-dashboard/Settings";
 
 function Router() {
   return (
@@ -32,7 +40,58 @@ function Router() {
       <Route path="/freelancer-signup" component={FreelancerSignup} />
       <Route path="/product-owner-signup" component={ProductOwnerSignup} />
       <Route path="/dashboard" component={Dashboard} />
-      <Route path="/freelancer-dashboard" component={FreelancerDashboard} />
+      
+      {/* Freelancer Dashboard with Sidebar */}
+      <Route path="/freelancer-dashboard">
+        {() => (
+          <FreelancerDashboardLayout>
+            <FreelancerOverview />
+          </FreelancerDashboardLayout>
+        )}
+      </Route>
+      <Route path="/freelancer-dashboard/tasks/available">
+        {() => (
+          <FreelancerDashboardLayout>
+            <AvailableTasks />
+          </FreelancerDashboardLayout>
+        )}
+      </Route>
+      <Route path="/freelancer-dashboard/tasks/my-tasks">
+        {() => (
+          <FreelancerDashboardLayout>
+            <MyTasksPage />
+          </FreelancerDashboardLayout>
+        )}
+      </Route>
+      <Route path="/freelancer-dashboard/wallet">
+        {() => (
+          <FreelancerDashboardLayout>
+            <WalletPage />
+          </FreelancerDashboardLayout>
+        )}
+      </Route>
+      <Route path="/freelancer-dashboard/withdrawals">
+        {() => (
+          <FreelancerDashboardLayout>
+            <WithdrawalsPage />
+          </FreelancerDashboardLayout>
+        )}
+      </Route>
+      <Route path="/freelancer-dashboard/orders">
+        {() => (
+          <FreelancerDashboardLayout>
+            <OrdersPage />
+          </FreelancerDashboardLayout>
+        )}
+      </Route>
+      <Route path="/freelancer-dashboard/settings">
+        {() => (
+          <FreelancerDashboardLayout>
+            <SettingsPage />
+          </FreelancerDashboardLayout>
+        )}
+      </Route>
+
       <Route path="/product-owner-dashboard" component={ProductOwnerDashboard} />
       <Route path="/profile" component={Profile} />
       <Route path="/campaigns" component={Campaigns} />
