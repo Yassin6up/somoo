@@ -59,7 +59,24 @@ The platform is built with a modern web stack, featuring a modular project struc
     - **API Endpoints:** POST /api/conversations (create/get conversation), GET /api/conversations (list all), GET /api/conversations/:id/messages (fetch messages), POST /api/conversations/:id/messages (send message)
     - **Security:** Backend authentication verification via /api/auth/user, role-based access control, conversation creation only for authenticated product owners
 - **Product Owner Signup:** Simplified 3-step form (Basic Info → Service Selection & Calculation → Confirmation) with 7 service types and automatic cost calculation based on quantity (1-1000 reviews).
-- **Dashboards:** Freelancer and Product Owner dashboards with real-time stats and modular Shadcn sidebar navigation. Freelancer dashboard has 8 pages: Overview, Available Tasks, My Tasks, Wallet, Withdrawals, Orders, Conversations, Settings. Product Owner dashboard has 8 pages: Overview, Projects, Active Projects, Completed Projects, Payments, Orders, Conversations, Settings.
+- **Dashboards:** Freelancer and Product Owner dashboards with real-time stats and modular Shadcn sidebar navigation. Freelancer dashboard has 9 pages: Overview, Available Tasks, My Tasks, Wallet, Withdrawals, Orders, Conversations, Notifications, Settings. Product Owner dashboard has 9 pages: Overview, Projects, Active Projects, Completed Projects, Payments, Orders, Conversations, Notifications, Settings.
+- **Notifications System (Nov 15, 2025):** Comprehensive notification system for both user types:
+    - **Database Schema:** notifications table with userId, userType, title, message, type, isRead, createdAt
+    - **Notification Pages:** Dedicated pages for both dashboards (/freelancer-dashboard/notifications, /product-owner-dashboard/notifications) with:
+        - Full list of notifications with icon-based types
+        - Mark individual notification as read
+        - Mark all as read functionality
+        - Unread badge counter
+        - RTL layout with color-coded notification types
+    - **Sidebar Integration:** Bell icon with "الإشعارات" link in both FreelancerSidebar and ProductOwnerSidebar
+    - **Automatic Notifications:** Backend creates notifications for:
+        - **Withdrawals:** withdrawal_created (when freelancer creates withdrawal request)
+        - **Orders:** payment_confirmed (both users), order_in_progress (both users), order_completed (both users)
+        - **Tasks:** task_assigned, task_submitted, task_approved, task_rejected
+        - **Messages:** new_message
+        - **Groups:** group_member_joined, group_member_removed
+    - **API Endpoints:** GET /api/notifications (filtered by user), GET /api/notifications/unread/count, PATCH /api/notifications/:id/read, PATCH /api/notifications/read-all
+    - **Icon Mapping:** Bell (general), CheckCircle2 (approved/completed), XCircle (rejected), Wallet (withdrawals/payments), MessageSquare (messages), Users (group), ClipboardList (tasks)
 - **Project Details Page:** Comprehensive project view (/projects/:id) displaying project information, task list, stats, and task creation interface (for group leaders).
 - **User Type Badge:** Visual indicator (briefcase for freelancers, building for product owners) displayed in the Navbar dropdown menu.
 - **Authentication Architecture:** `user`, `userType`, and `token` stored in localStorage. Role-based checks read `userType` from localStorage.
