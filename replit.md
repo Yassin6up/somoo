@@ -58,9 +58,14 @@ The platform is built with a modern web stack, featuring a modular project struc
   
 - **Earnings & Withdrawals (الأرباح والسحوبات):**
   - Automatic earnings calculation with 5% leader commission
-  - Wallet balance tracking for freelancers
-  - Withdrawal requests with payment method support
-  - Status tracking: pending → approved → completed/rejected
+  - Wallet balance tracking for freelancers (رصيد المحفظة وإجمالي الأرباح)
+  - Withdrawal request system with full validation
+  - 5 payment methods: Vodafone Cash, Etisalat Cash, Orange Cash, Bank Card, Bank Transfer
+  - Balance verification before withdrawal requests
+  - Withdrawal history with status tracking: pending → processing → completed/rejected
+  - Admin rejection notes visible to freelancers
+  - Real-time wallet balance updates after approvals
+  - Type-safe withdrawal amount handling (numeric validation)
 
 - **Direct Purchase System (نظام الشراء المباشر):**
   - Product owners can purchase services directly from group leaders
