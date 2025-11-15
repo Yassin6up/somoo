@@ -42,6 +42,7 @@ export const productOwners = pgTable("product_owners", {
   package: text("package"),
   budget: text("budget"),
   duration: text("duration"),
+  acceptedInstructions: boolean("accepted_instructions").default(false),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

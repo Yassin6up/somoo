@@ -219,6 +219,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Accept instructions (protected) - MUST be before :id route
+  app.patch("/api/product-owners/accept-instructions", authMiddleware, requireRole(["product_owner"]), async (req: AuthRequest, res) => {
+    try {
+      const userId = req.user?.userId;
+      
+      if (!userId) {
+        return res.status(401).json({ error: "غير مصرح" });
+      }
+
+      const updatedOwner = await storage.updateProductOwner(userId, { acceptedInstructions: true });
+
+      if (!updatedOwner) {
+        return res.status(404).json({ error: "صاحب المنتج غير موجود" });
+      }
+
+      res.json({ message: "تم قبول الشروط والأحكام بنجاح", acceptedInstructions: true });
+    } catch (error) {
+      console.error("Error accepting instructions:", error);
+      res.status(500).json({ error: "حدث خطأ أثناء حفظ الموافقة" });
+    }
+  });
+
   // Get product owner by ID
   app.get("/api/product-owners/:id", async (req, res) => {
     try {

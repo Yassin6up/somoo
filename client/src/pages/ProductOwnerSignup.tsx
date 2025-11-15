@@ -98,9 +98,10 @@ export default function ProductOwnerSignup() {
       
       toast({
         title: "تم إنشاء الحساب بنجاح!",
-        description: "اختر الجروب المناسب لتنفيذ خدمتك",
+        description: "يرجى قراءة الشروط والأحكام الهامة قبل البدء",
       });
-      navigate("/groups");
+      // Redirect to instructions page first
+      navigate("/product-owner-instructions");
     },
     onError: (error: any) => {
       toast({
