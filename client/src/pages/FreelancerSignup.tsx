@@ -100,9 +100,10 @@ export default function FreelancerSignup() {
       
       toast({
         title: "تم إنشاء الحساب بنجاح!",
-        description: "مرحبًا بك في منصة سُمُوّ. يمكنك الآن إنشاء جروب أو الانضمام لجروب موجود",
+        description: "مرحبًا بك في منصة سُمُوّ. يرجى قراءة التعليمات الهامة قبل البدء",
       });
-      navigate("/groups");
+      // Redirect to instructions page first
+      navigate("/freelancer-instructions");
     },
     onError: (error: any) => {
       toast({

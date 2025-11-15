@@ -35,6 +35,7 @@ import ProductOwnerOverview from "@/pages/product-owner-dashboard/Overview";
 import ProductOwnerProjects from "@/pages/product-owner-dashboard/Projects";
 import ProductOwnerOrders from "@/pages/product-owner-dashboard/Orders";
 import ProductOwnerSettings from "@/pages/product-owner-dashboard/Settings";
+import FreelancerInstructions from "@/pages/FreelancerInstructions";
 
 function Router() {
   return (
@@ -43,6 +44,7 @@ function Router() {
       <Route path="/login" component={Login} />
       <Route path="/role-selection" component={RoleSelection} />
       <Route path="/freelancer-signup" component={FreelancerSignup} />
+      <Route path="/freelancer-instructions" component={FreelancerInstructions} />
       <Route path="/product-owner-signup" component={ProductOwnerSignup} />
       <Route path="/dashboard" component={Dashboard} />
       

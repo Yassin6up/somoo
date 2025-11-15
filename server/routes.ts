@@ -137,6 +137,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Accept instructions (protected)
+  app.patch("/api/freelancers/accept-instructions", authMiddleware, requireRole(["freelancer"]), async (req: AuthRequest, res) => {
+    try {
+      const userId = req.user?.userId;
+      
+      if (!userId) {
+        return res.status(401).json({ error: "غير مصرح" });
+      }
+
+      const updatedFreelancer = await storage.updateFreelancer(userId, { acceptedInstructions: true });
+
+      if (!updatedFreelancer) {
+        return res.status(404).json({ error: "المستقل غير موجود" });
+      }
+
+      res.json({ message: "تم قبول التعليمات بنجاح", acceptedInstructions: true });
+    } catch (error) {
+      console.error("Error accepting instructions:", error);
+      res.status(500).json({ error: "حدث خطأ أثناء حفظ الموافقة" });
+    }
+  });
+
   // ============================================
   // PRODUCT OWNER ROUTES
   // ============================================

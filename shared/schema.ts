@@ -22,6 +22,7 @@ export const freelancers = pgTable("freelancers", {
   paymentMethod: text("payment_method"),
   accountNumber: text("account_number"),
   isVerified: boolean("is_verified").default(false),
+  acceptedInstructions: boolean("accepted_instructions").default(false),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

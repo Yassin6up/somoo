@@ -1,13 +1,13 @@
 import { useState } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { User, Mail, Lock, Save } from "lucide-react";
+import { User, Mail, Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { apiRequest } from "@/lib/queryClient";
 
 interface ProductOwner {
   id: string;
@@ -19,9 +19,6 @@ export default function SettingsPage() {
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
   const [fullName, setFullName] = useState("");
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
 
   // Get user from localStorage
   const userStr = localStorage.getItem("user");
@@ -29,21 +26,32 @@ export default function SettingsPage() {
 
   const updateProfileMutation = useMutation({
     mutationFn: async (data: { fullName: string }) => {
-      return apiRequest("PATCH", "/api/profile", data);
+      if (!user?.id) throw new Error("User ID not found");
+      const response = await apiRequest("PATCH", `/api/product-owners/${user.id}`, data);
+      return { response, submittedData: data };
     },
-    onSuccess: () => {
+    onSuccess: ({ response, submittedData }) => {
       toast({
         title: "تم التحديث",
         description: "تم تحديث معلومات حسابك بنجاح",
       });
       setIsEditing(false);
-      // Update localStorage
-      if (user) {
-        const updatedUser = { ...user, fullName };
+      // Read current user from localStorage (to avoid stale closure)
+      const currentUserStr = localStorage.getItem("user");
+      const currentUser = currentUserStr ? JSON.parse(currentUserStr) : null;
+      
+      if (currentUser) {
+        // Update localStorage - use response data if available, otherwise use submitted data
+        const updatedData = response || submittedData;
+        const updatedUser = { ...currentUser, ...updatedData };
         localStorage.setItem("user", JSON.stringify(updatedUser));
+        console.log("Updated localStorage.user:", updatedUser);
+        // Trigger userLoggedIn event to update Navbar
+        window.dispatchEvent(new Event("userLoggedIn"));
       }
     },
-    onError: () => {
+    onError: (error) => {
+      console.error("Profile update error:", error);
       toast({
         title: "خطأ",
         description: "حدث خطأ أثناء تحديث معلوماتك",
@@ -52,30 +60,9 @@ export default function SettingsPage() {
     },
   });
 
-  const changePasswordMutation = useMutation({
-    mutationFn: async (data: { currentPassword: string; newPassword: string }) => {
-      return apiRequest("PATCH", "/api/change-password", data);
-    },
-    onSuccess: () => {
-      toast({
-        title: "تم التحديث",
-        description: "تم تغيير كلمة المرور بنجاح",
-      });
-      setCurrentPassword("");
-      setNewPassword("");
-      setConfirmPassword("");
-    },
-    onError: () => {
-      toast({
-        title: "خطأ",
-        description: "حدث خطأ أثناء تغيير كلمة المرور",
-        variant: "destructive",
-      });
-    },
-  });
-
   const handleUpdateProfile = () => {
-    if (!fullName.trim()) {
+    const newFullName = fullName.trim();
+    if (!newFullName) {
       toast({
         title: "خطأ",
         description: "الاسم الكامل مطلوب",
@@ -83,38 +70,7 @@ export default function SettingsPage() {
       });
       return;
     }
-    updateProfileMutation.mutate({ fullName });
-  };
-
-  const handleChangePassword = () => {
-    if (!currentPassword || !newPassword || !confirmPassword) {
-      toast({
-        title: "خطأ",
-        description: "جميع الحقول مطلوبة",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (newPassword !== confirmPassword) {
-      toast({
-        title: "خطأ",
-        description: "كلمتا المرور غير متطابقتين",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (newPassword.length < 6) {
-      toast({
-        title: "خطأ",
-        description: "كلمة المرور يجب أن تكون 6 أحرف على الأقل",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    changePasswordMutation.mutate({ currentPassword, newPassword });
+    updateProfileMutation.mutate({ fullName: newFullName });
   };
 
   if (!user) {
@@ -218,66 +174,6 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
-      {/* Change Password */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Lock className="h-5 w-5" />
-            تغيير كلمة المرور
-          </CardTitle>
-          <CardDescription>
-            قم بتحديث كلمة المرور الخاصة بك
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="currentPassword">كلمة المرور الحالية</Label>
-            <Input
-              id="currentPassword"
-              type="password"
-              value={currentPassword}
-              onChange={(e) => setCurrentPassword(e.target.value)}
-              autoComplete="current-password"
-              data-testid="input-current-password"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="newPassword">كلمة المرور الجديدة</Label>
-            <Input
-              id="newPassword"
-              type="password"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              autoComplete="new-password"
-              data-testid="input-new-password"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="confirmPassword">تأكيد كلمة المرور الجديدة</Label>
-            <Input
-              id="confirmPassword"
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              autoComplete="new-password"
-              data-testid="input-confirm-password"
-            />
-          </div>
-
-          <Button
-            onClick={handleChangePassword}
-            disabled={changePasswordMutation.isPending}
-            className="w-full"
-            data-testid="button-change-password"
-          >
-            <Lock className="ml-2 h-4 w-4" />
-            {changePasswordMutation.isPending ? "جاري التحديث..." : "تغيير كلمة المرور"}
-          </Button>
-        </CardContent>
-      </Card>
-
       {/* Account Type Badge */}
       <Card>
         <CardHeader>
@@ -288,7 +184,7 @@ export default function SettingsPage() {
         </CardHeader>
         <CardContent>
           <div className="flex items-center gap-2">
-            <div className="px-3 py-1 bg-primary/10 text-primary rounded-md font-semibold">
+            <div className="px-3 py-1 bg-primary/10 text-primary rounded-md font-semibold" data-testid="badge-account-type">
               صاحب مشروع
             </div>
           </div>
