@@ -33,7 +33,10 @@ import SettingsPage from "@/pages/freelancer-dashboard/Settings";
 import { ProductOwnerDashboardLayout } from "@/components/ProductOwnerDashboardLayout";
 import ProductOwnerOverview from "@/pages/product-owner-dashboard/Overview";
 import ProductOwnerProjects from "@/pages/product-owner-dashboard/Projects";
+import ActiveProjects from "@/pages/product-owner-dashboard/ActiveProjects";
+import CompletedProjects from "@/pages/product-owner-dashboard/CompletedProjects";
 import ProductOwnerOrders from "@/pages/product-owner-dashboard/Orders";
+import PaymentsPage from "@/pages/product-owner-dashboard/Payments";
 import ProductOwnerSettings from "@/pages/product-owner-dashboard/Settings";
 import ProductOwnerConversations from "@/pages/product-owner-dashboard/Conversations";
 import FreelancerInstructions from "@/pages/FreelancerInstructions";
@@ -122,6 +125,27 @@ function Router() {
         {() => (
           <ProductOwnerDashboardLayout>
             <ProductOwnerProjects />
+          </ProductOwnerDashboardLayout>
+        )}
+      </Route>
+      <Route path="/product-owner-dashboard/projects/active">
+        {() => (
+          <ProductOwnerDashboardLayout>
+            <ActiveProjects />
+          </ProductOwnerDashboardLayout>
+        )}
+      </Route>
+      <Route path="/product-owner-dashboard/projects/completed">
+        {() => (
+          <ProductOwnerDashboardLayout>
+            <CompletedProjects />
+          </ProductOwnerDashboardLayout>
+        )}
+      </Route>
+      <Route path="/product-owner-dashboard/payments">
+        {() => (
+          <ProductOwnerDashboardLayout>
+            <PaymentsPage />
           </ProductOwnerDashboardLayout>
         )}
       </Route>

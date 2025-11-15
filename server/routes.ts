@@ -465,6 +465,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Change password endpoint
+  app.post("/api/auth/change-password", authMiddleware, async (req: AuthRequest, res) => {
+    try {
+      const { currentPassword, newPassword } = req.body;
+
+      if (!currentPassword || !newPassword) {
+        return res.status(400).json({ error: "كلمة المرور الحالية والجديدة مطلوبة" });
+      }
+
+      if (newPassword.length < 6) {
+        return res.status(400).json({ error: "كلمة المرور يجب أن تكون 6 أحرف على الأقل" });
+      }
+
+      const userId = req.user!.userId;
+      const userType = req.user!.userType;
+
+      // Get user based on type
+      let user;
+      if (userType === "freelancer") {
+        user = await storage.getFreelancer(userId);
+      } else {
+        user = await storage.getProductOwner(userId);
+      }
+
+      if (!user) {
+        return res.status(404).json({ error: "المستخدم غير موجود" });
+      }
+
+      // Verify current password
+      const isPasswordValid = await bcrypt.compare(currentPassword, user.password);
+      if (!isPasswordValid) {
+        return res.status(401).json({ error: "كلمة المرور الحالية غير صحيحة" });
+      }
+
+      // Hash new password
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+      // Update password
+      if (userType === "freelancer") {
+        await storage.updateFreelancer(userId, { password: hashedPassword });
+      } else {
+        await storage.updateProductOwner(userId, { password: hashedPassword });
+      }
+
+      res.json({ message: "تم تغيير كلمة المرور بنجاح" });
+    } catch (error) {
+      console.error("Error changing password:", error);
+      res.status(500).json({ error: "حدث خطأ أثناء تغيير كلمة المرور" });
+    }
+  });
+
   // ============================================
   // CAMPAIGN ROUTES
   // ============================================
@@ -844,6 +895,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         feedback: feedback || "",
         completedAt: new Date(),
       });
+
+      // Create notification for freelancer
+      if (task.freelancerId) {
+        await storage.createNotification({
+          userId: task.freelancerId,
+          userType: "freelancer",
+          title: "تمت الموافقة على مهمتك",
+          message: `تمت الموافقة على المهمة "${task.title}" وتم إضافة ${task.reward} ر.س إلى محفظتك`,
+          type: "task_approved",
+        });
+      }
 
       // Update freelancer wallet - add reward to balance
       if (task.freelancerId) {
@@ -2312,6 +2374,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const message = await storage.sendMessage(conversationId, userId, userType, content);
+
+      // Create notification for the recipient
+      const recipientId = userType === "product_owner" ? conversation.leaderId : conversation.productOwnerId;
+      const recipientType = userType === "product_owner" ? "freelancer" : "product_owner";
+      
+      await storage.createNotification({
+        userId: recipientId,
+        userType: recipientType,
+        title: "رسالة جديدة",
+        message: `لديك رسالة جديدة في المحادثة`,
+        type: "new_message",
+      });
 
       res.json(message);
     } catch (error) {
