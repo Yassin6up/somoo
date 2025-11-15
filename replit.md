@@ -75,7 +75,9 @@ The platform is built with a modern web stack, featuring a modular project struc
 
 **System Design Choices:**
 - **Data Schemas:** Shared TypeScript data models for consistency across the stack.
-- **Layout Architecture:** Consistent sidebar width and proper `h-screen`/`overflow-auto` for scrollable content areas.
+- **Layout Architecture:** 
+    - Consistent sidebar width and proper `h-screen`/`overflow-auto` for scrollable content areas
+    - **Dashboard Layouts (Nov 15, 2025):** Fixed sidebar positioning to prevent content overlay. Structure: `SidebarProvider > flex wrapper (dir="rtl") > Sidebar (side="right") + main content`. Sidebar placed BEFORE content in DOM order to prevent overlay while maintaining RTL visual layout (sidebar appears on right, content on left). Both FreelancerDashboardLayout and ProductOwnerDashboardLayout use this pattern.
 
 ## External Dependencies
 - **OpenAI (via Replit AI Integrations):** For AI-powered suggestions.
