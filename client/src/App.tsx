@@ -30,6 +30,11 @@ import WalletPage from "@/pages/freelancer-dashboard/Wallet";
 import WithdrawalsPage from "@/pages/freelancer-dashboard/Withdrawals";
 import OrdersPage from "@/pages/freelancer-dashboard/Orders";
 import SettingsPage from "@/pages/freelancer-dashboard/Settings";
+import { ProductOwnerDashboardLayout } from "@/components/ProductOwnerDashboardLayout";
+import ProductOwnerOverview from "@/pages/product-owner-dashboard/Overview";
+import ProductOwnerProjects from "@/pages/product-owner-dashboard/Projects";
+import ProductOwnerOrders from "@/pages/product-owner-dashboard/Orders";
+import ProductOwnerSettings from "@/pages/product-owner-dashboard/Settings";
 
 function Router() {
   return (
@@ -92,7 +97,35 @@ function Router() {
         )}
       </Route>
 
-      <Route path="/product-owner-dashboard" component={ProductOwnerDashboard} />
+      {/* Product Owner Dashboard with Sidebar */}
+      <Route path="/product-owner-dashboard">
+        {() => (
+          <ProductOwnerDashboardLayout>
+            <ProductOwnerOverview />
+          </ProductOwnerDashboardLayout>
+        )}
+      </Route>
+      <Route path="/product-owner-dashboard/projects">
+        {() => (
+          <ProductOwnerDashboardLayout>
+            <ProductOwnerProjects />
+          </ProductOwnerDashboardLayout>
+        )}
+      </Route>
+      <Route path="/product-owner-dashboard/orders">
+        {() => (
+          <ProductOwnerDashboardLayout>
+            <ProductOwnerOrders />
+          </ProductOwnerDashboardLayout>
+        )}
+      </Route>
+      <Route path="/product-owner-dashboard/settings">
+        {() => (
+          <ProductOwnerDashboardLayout>
+            <ProductOwnerSettings />
+          </ProductOwnerDashboardLayout>
+        )}
+      </Route>
       <Route path="/profile" component={Profile} />
       <Route path="/campaigns" component={Campaigns} />
       <Route path="/freelancers" component={Freelancers} />
