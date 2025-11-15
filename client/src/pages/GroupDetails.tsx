@@ -96,27 +96,10 @@ export default function GroupDetails() {
     },
   });
 
-  // Start conversation mutation (for product owners)
-  const startConversationMutation = useMutation({
-    mutationFn: async () => {
-      const res = await apiRequest("POST", `/api/conversations`, { groupId });
-      return await res.json();
-    },
-    onSuccess: (data) => {
-      toast({
-        title: "تم فتح المحادثة",
-        description: "جاري الانتقال إلى صفحة المحادثات...",
-      });
-      navigate("/product-owner-dashboard/conversations");
-    },
-    onError: (error: any) => {
-      toast({
-        title: "خطأ",
-        description: error.message || "حدث خطأ أثناء فتح المحادثة",
-        variant: "destructive",
-      });
-    },
-  });
+  // Navigate to chat page
+  const handleStartConversation = () => {
+    navigate(`/groups/${groupId}/chat`);
+  };
 
   if (groupLoading) {
     return (
@@ -215,8 +198,7 @@ export default function GroupDetails() {
               <div className="flex gap-2">
                 {isProductOwner && (
                   <Button
-                    onClick={() => startConversationMutation.mutate()}
-                    disabled={startConversationMutation.isPending}
+                    onClick={handleStartConversation}
                     data-testid="button-start-conversation"
                   >
                     <MessageCircle className="ml-2 h-4 w-4" />
