@@ -27,9 +27,11 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <a href="#services" className="text-muted-foreground hover:text-foreground transition-colors" data-testid="link-footer-services">
-                  الخدمات
-                </a>
+                <Link href="/services">
+                  <span className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer" data-testid="link-footer-services">
+                    الخدمات
+                  </span>
+                </Link>
               </li>
               <li>
                 <a href="#how-it-works" className="text-muted-foreground hover:text-foreground transition-colors" data-testid="link-footer-how-it-works">
@@ -44,14 +46,25 @@ export function Footer() {
             <h3 className="font-semibold mb-4">قانوني</h3>
             <ul className="space-y-2 text-sm">
               <li>
-                <a href="#privacy" className="text-muted-foreground hover:text-foreground transition-colors" data-testid="link-privacy">
-                  سياسة الخصوصية
-                </a>
+                <Link href="/privacy-policy">
+                  <span className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer" data-testid="link-privacy">
+                    سياسة الخصوصية
+                  </span>
+                </Link>
               </li>
               <li>
-                <a href="#terms" className="text-muted-foreground hover:text-foreground transition-colors" data-testid="link-terms">
-                  الشروط والأحكام
-                </a>
+                <Link href="/terms-conditions">
+                  <span className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer" data-testid="link-terms">
+                    الشروط والأحكام
+                  </span>
+                </Link>
+              </li>
+              <li>
+                <Link href="/refund-policy">
+                  <span className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer" data-testid="link-refund">
+                    سياسة استرداد الأموال
+                  </span>
+                </Link>
               </li>
             </ul>
           </div>

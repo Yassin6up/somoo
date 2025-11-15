@@ -38,12 +38,18 @@ import ProductOwnerSettings from "@/pages/product-owner-dashboard/Settings";
 import FreelancerInstructions from "@/pages/FreelancerInstructions";
 import ProductOwnerInstructions from "@/pages/ProductOwnerInstructions";
 import Services from "@/pages/Services";
+import TermsConditions from "@/pages/TermsConditions";
+import PrivacyPolicy from "@/pages/PrivacyPolicy";
+import RefundPolicy from "@/pages/RefundPolicy";
 
 function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/services" component={Services} />
+      <Route path="/terms-conditions" component={TermsConditions} />
+      <Route path="/privacy-policy" component={PrivacyPolicy} />
+      <Route path="/refund-policy" component={RefundPolicy} />
       <Route path="/login" component={Login} />
       <Route path="/role-selection" component={RoleSelection} />
       <Route path="/freelancer-signup" component={FreelancerSignup} />

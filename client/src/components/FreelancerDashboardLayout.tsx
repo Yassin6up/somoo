@@ -13,8 +13,7 @@ export function FreelancerDashboardLayout({ children }: FreelancerDashboardLayou
 
   return (
     <SidebarProvider style={style as React.CSSProperties}>
-      <div className="flex h-screen w-full">
-        <FreelancerSidebar />
+      <div className="flex h-screen w-full" dir="rtl">
         <div className="flex flex-col flex-1">
           <header className="flex items-center p-4 border-b">
             <SidebarTrigger data-testid="button-sidebar-toggle" />
@@ -23,6 +22,7 @@ export function FreelancerDashboardLayout({ children }: FreelancerDashboardLayou
             {children}
           </main>
         </div>
+        <FreelancerSidebar />
       </div>
     </SidebarProvider>
   );

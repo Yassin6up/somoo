@@ -120,6 +120,11 @@ export function Navbar() {
                 الرئيسية
               </div>
             </Link>
+            <Link href="/services">
+              <div className="px-4 py-2 hover-elevate active-elevate-2 rounded-xl transition-all text-sm font-medium cursor-pointer" data-testid="link-services-nav">
+                الخدمات
+              </div>
+            </Link>
             <Link href="/groups">
               <div className="px-4 py-2 hover-elevate active-elevate-2 rounded-xl transition-all text-sm font-medium cursor-pointer" data-testid="link-groups-nav">
                 الجروبات
@@ -224,6 +229,11 @@ export function Navbar() {
             <Link href="/">
               <div className="block px-4 py-2 hover-elevate active-elevate-2 rounded-xl text-sm font-medium cursor-pointer" data-testid="link-home-mobile">
                 الرئيسية
+              </div>
+            </Link>
+            <Link href="/services">
+              <div className="block px-4 py-2 hover-elevate active-elevate-2 rounded-xl text-sm font-medium cursor-pointer" data-testid="link-services-mobile">
+                الخدمات
               </div>
             </Link>
             <Link href="/groups">

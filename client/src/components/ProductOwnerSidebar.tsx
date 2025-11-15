@@ -60,7 +60,7 @@ export function ProductOwnerSidebar() {
   const [location] = useLocation();
 
   return (
-    <Sidebar>
+    <Sidebar side="right">
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel className="text-lg font-bold text-primary">
