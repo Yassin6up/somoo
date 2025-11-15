@@ -22,7 +22,11 @@ The platform is built with a modern web stack, featuring a modular project struc
 - **Backend:** Express.js.
 - **Forms:** Multi-step forms with robust validation for registration. All auth forms include autocomplete attributes.
 - **User Authentication:** JWT-based sessions and role-based authorization. Navbar synchronizes immediately after signup/login. Profile page shows graceful error states. User data read from localStorage at form submission.
-- **Mandatory Freelancer Instructions:** New freelancers must accept comprehensive guidelines (e.g., ethical review practices, platform liability) before accessing the dashboard, tracked by an `acceptedInstructions` database field.
+- **Mandatory Instructions for Both User Types:** 
+    - **Freelancers:** Must accept comprehensive guidelines covering ethical review practices (minimum 3.4-star ratings), platform liability, and professional conduct before accessing the dashboard.
+    - **Product Owners:** Must accept 7-section guidelines covering transparency requirements, truthful information provision, constructive feedback acceptance, company verification allowance, freelancer coordination policies, platform usage ethics, and violation consequences.
+    - Both tracked by `acceptedInstructions` database field in respective tables.
+    - Signup flow: registration → mandatory instructions acceptance → dashboard access.
 - **Group-Based Work System:**
     - **Groups:** Freelancers can create groups (up to 700 members) with custom image uploads (max 5MB) and a portfolio gallery (up to 12 images). Group leaders manage members, accept projects, and earn a 5% commission.
     - **Projects:** Product owners create projects; group leaders browse and accept them. Project workflow: pending → accepted → in_progress → completed.
