@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { CheckCircle2, ShieldAlert, AlertCircle, ArrowRight } from "lucide-react";
+import { CheckCircle2, ShieldAlert, AlertCircle, ArrowRight, Lightbulb, AlertTriangle, XCircle } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -152,7 +152,10 @@ export default function ProductOwnerInstructions() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <p className="font-bold text-lg mb-2">✅ المنصة مخصصة لـ:</p>
+              <div className="flex items-center gap-2 mb-2">
+                <CheckCircle2 className="h-5 w-5 text-green-600" />
+                <p className="font-bold text-lg">المنصة مخصصة لـ:</p>
+              </div>
               <ul className="space-y-1 mr-6 list-disc text-sm">
                 <li>شركات خدمية جيدة لديها بعض المشاكل البسيطة.</li>
                 <li>شركات تضررت من هجمات منافسين أو تقييمات غير عادلة.</li>
@@ -161,7 +164,10 @@ export default function ProductOwnerInstructions() {
             </div>
 
             <div className="bg-destructive/10 border-2 border-destructive rounded-lg p-4">
-              <p className="font-bold text-destructive mb-2">⛔ وليست مخصصة لـ:</p>
+              <div className="flex items-center gap-2 mb-2">
+                <XCircle className="h-5 w-5 text-destructive" />
+                <p className="font-bold text-destructive">وليست مخصصة لـ:</p>
+              </div>
               <ul className="space-y-1 mr-6 list-disc text-sm text-destructive">
                 <li>شركات سيئة فعليًا</li>
                 <li>شركات تستغل العملاء</li>
@@ -201,6 +207,57 @@ export default function ProductOwnerInstructions() {
             <p className="text-lg leading-relaxed">
               هدفنا هو <strong>تحسين سمعة الشركات التي تستحق فعلًا</strong>، ومساعدتها على الظهور بالشكل الصحيح، 
               وليس <span className="text-destructive font-bold">"تلميع"</span> شركات غير جيدة أو مضللة.
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Section 8: آلية العمل وضمان التقييمات */}
+        <Card className="border-green-500 border-2">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-xl text-green-600 dark:text-green-400">
+              <ShieldAlert className="h-6 w-6" />
+              8. آلية العمل لضمان تقييمات حقيقية
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="bg-green-50 dark:bg-green-950 border border-green-300 dark:border-green-700 rounded-lg p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400" />
+                <p className="font-bold text-green-800 dark:text-green-200 text-lg">
+                  نوفر ضمان لمدة أسبوع
+                </p>
+              </div>
+              <p className="text-green-900 dark:text-green-100">
+                إذا تم مسح التقييمات خلال أسبوع من تنفيذها، <strong>يتم استرداد كامل المبلغ إلى حسابك تلقائيًا</strong>.
+              </p>
+            </div>
+
+            <div className="bg-amber-50 dark:bg-amber-950 border border-amber-300 dark:border-amber-700 rounded-lg p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <Lightbulb className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                <p className="font-bold text-amber-800 dark:text-amber-200">
+                  نصيحتنا لك لضمان بقاء التقييمات:
+                </p>
+              </div>
+              <ul className="space-y-2 mr-6 list-disc text-amber-900 dark:text-amber-100">
+                <li className="font-semibold">
+                  اختر مستقلين من <strong>نفس بلدك</strong>
+                </li>
+                <li>
+                  <strong>مثال:</strong> إذا كنت في مصر، اختر مستقلين من مصر لتقييم مطعمك أو شركتك
+                </li>
+                <li>
+                  <strong>مثال:</strong> إذا كنت في السعودية، اختر مستقلين من السعودية
+                </li>
+                <li className="flex items-start gap-2 text-amber-800 dark:text-amber-200 font-bold mt-2">
+                  <AlertTriangle className="h-5 w-5 flex-shrink-0 mt-0.5" />
+                  <span>هذا يقلل بشكل كبير من احتمالية مسح التقييمات من قبل المنصات (Google, App Store, إلخ)</span>
+                </li>
+              </ul>
+            </div>
+
+            <p className="text-muted-foreground text-sm mt-4">
+              التقييمات من نفس المنطقة الجغرافية تبدو أكثر طبيعية ومصداقية للخوارزميات الآلية.
             </p>
           </CardContent>
         </Card>

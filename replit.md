@@ -23,10 +23,14 @@ The platform is built with a modern web stack, featuring a modular project struc
 - **Forms:** Multi-step forms with robust validation for registration. All auth forms include autocomplete attributes.
 - **User Authentication:** JWT-based sessions and role-based authorization. Navbar synchronizes immediately after signup/login. Profile page shows graceful error states. User data read from localStorage at form submission.
 - **Mandatory Instructions for Both User Types:** 
-    - **Freelancers:** Must accept comprehensive guidelines covering ethical review practices (minimum 3.4-star ratings), platform liability, and professional conduct before accessing the dashboard.
-    - **Product Owners:** Must accept 7-section guidelines covering transparency requirements, truthful information provision, constructive feedback acceptance, company verification allowance, freelancer coordination policies, platform usage ethics, and violation consequences.
+    - **Freelancers:** Must accept comprehensive guidelines covering ethical review practices (minimum 3.4-star ratings), platform liability, professional conduct, and **money holding policy** (7-day hold period to ensure legitimacy) before accessing the dashboard.
+    - **Product Owners:** Must accept 8-section guidelines covering transparency requirements, truthful information provision, constructive feedback acceptance, company verification allowance, freelancer coordination policies, platform usage ethics, violation consequences, and **quality assurance mechanism** (7-day guarantee for review deletion refunds, location-based freelancer selection recommendations).
     - Both tracked by `acceptedInstructions` database field in respective tables.
     - Signup flow: registration → mandatory instructions acceptance → dashboard access.
+    - **Quality Assurance Features:**
+        - Product owners get 7-day guarantee: full refund if reviews are deleted
+        - Freelancers have 7-day earnings hold to ensure review legitimacy
+        - Recommendation system: choose freelancers from same country for better review retention
 - **Group-Based Work System:**
     - **Groups:** Freelancers can create groups (up to 700 members) with custom image uploads (max 5MB) and a portfolio gallery (up to 12 images). Group leaders manage members, accept projects, and earn a 5% commission.
     - **Projects:** Product owners create projects; group leaders browse and accept them. Project workflow: pending → accepted → in_progress → completed.
