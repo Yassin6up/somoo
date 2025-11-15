@@ -9,7 +9,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Navbar } from "@/components/Navbar";
-import { Users, ArrowRight, Crown, UserMinus, MessageCircle, Briefcase, CheckCircle2, Clock } from "lucide-react";
+import { Users, ArrowRight, Crown, UserMinus, MessageCircle, Briefcase, CheckCircle2, Clock, MessageSquareText } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { Group, GroupMember, Project, Task, Freelancer } from "@shared/schema";
 
@@ -196,6 +196,16 @@ export default function GroupDetails() {
               </div>
 
               <div className="flex gap-2">
+                {!isProductOwner && (
+                  <Button
+                    onClick={() => navigate(`/groups/${groupId}/community`)}
+                    variant="default"
+                    data-testid="button-community"
+                  >
+                    <MessageSquareText className="ml-2 h-4 w-4" />
+                    مجتمع المجموعة
+                  </Button>
+                )}
                 {isProductOwner && (
                   <Button
                     onClick={handleStartConversation}

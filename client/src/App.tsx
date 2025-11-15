@@ -18,6 +18,7 @@ import Profile from "@/pages/Profile";
 import Groups from "@/pages/Groups";
 import CreateGroup from "@/pages/CreateGroup";
 import GroupDetails from "@/pages/GroupDetails";
+import GroupCommunity from "@/pages/GroupCommunity";
 import ChatWithLeader from "@/pages/ChatWithLeader";
 import Projects from "@/pages/Projects";
 import ProjectDetails from "@/pages/ProjectDetails";
@@ -201,6 +202,7 @@ function Router() {
       <Route path="/freelancers" component={Freelancers} />
       <Route path="/groups" component={Groups} />
       <Route path="/groups/create" component={CreateGroup} />
+      <Route path="/groups/:id/community" component={GroupCommunity} />
       <Route path="/groups/:id/chat" component={ChatWithLeader} />
       <Route path="/groups/:id" component={GroupDetails} />
       <Route path="/purchase/:groupId" component={PurchaseService} />
