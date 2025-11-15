@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertFreelancerSchema, insertProductOwnerSchema, insertCampaignSchema, insertOrderSchema, type Campaign } from "@shared/schema";
+import { insertFreelancerSchema, insertProductOwnerSchema, insertCampaignSchema, insertOrderSchema, type Campaign, postComments } from "@shared/schema";
 import { z } from "zod";
 import OpenAI from "openai";
 import multer from "multer";
@@ -10,6 +10,8 @@ import { join } from "path";
 import { existsSync } from "fs";
 import bcrypt from "bcrypt";
 import { generateToken, authMiddleware, requireRole, type AuthRequest } from "./middleware/auth";
+import { db } from "./db";
+import { eq } from "drizzle-orm";
 
 // Initialize OpenAI client using Replit AI Integrations
 // This provides OpenAI-compatible API access without requiring your own OpenAI API key
@@ -2466,6 +2468,263 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error sending message:", error);
       res.status(500).json({ error: "حدث خطأ أثناء إرسال الرسالة" });
+    }
+  });
+
+  // ============================================
+  // GROUP POSTS ROUTES (Community Feature)
+  // ============================================
+
+  // Get posts by group
+  app.get("/api/groups/:groupId/posts", authMiddleware, async (req: AuthRequest, res) => {
+    try {
+      const { groupId } = req.params;
+      const userId = req.user!.userId;
+
+      // Verify user is a group member or leader
+      const group = await storage.getGroup(groupId);
+      if (!group) {
+        return res.status(404).json({ error: "المجموعة غير موجودة" });
+      }
+
+      const isMember = await storage.isGroupMember(groupId, userId);
+      const isLeader = group.leaderId === userId;
+
+      if (!isMember && !isLeader) {
+        return res.status(403).json({ error: "يجب أن تكون عضواً في المجموعة" });
+      }
+
+      const posts = await storage.getPostsByGroup(groupId);
+      res.json(posts);
+    } catch (error) {
+      console.error("Error fetching group posts:", error);
+      res.status(500).json({ error: "حدث خطأ أثناء جلب المنشورات" });
+    }
+  });
+
+  // Create post
+  app.post("/api/groups/:groupId/posts", authMiddleware, async (req: AuthRequest, res) => {
+    try {
+      const { groupId } = req.params;
+      const { content, imageUrl } = req.body;
+      const userId = req.user!.userId;
+
+      // Validate content
+      if (!content || content.trim() === "") {
+        return res.status(400).json({ error: "محتوى المنشور مطلوب" });
+      }
+
+      // Verify user is a group member or leader
+      const group = await storage.getGroup(groupId);
+      if (!group) {
+        return res.status(404).json({ error: "المجموعة غير موجودة" });
+      }
+
+      const isMember = await storage.isGroupMember(groupId, userId);
+      const isLeader = group.leaderId === userId;
+
+      if (!isMember && !isLeader) {
+        return res.status(403).json({ error: "يجب أن تكون عضواً في المجموعة" });
+      }
+
+      const newPost = await storage.createPost({
+        groupId,
+        authorId: userId,
+        content: content.trim(),
+        imageUrl: imageUrl || null,
+      });
+
+      res.status(201).json(newPost);
+    } catch (error) {
+      console.error("Error creating post:", error);
+      res.status(500).json({ error: "حدث خطأ أثناء إنشاء المنشور" });
+    }
+  });
+
+  // Delete post
+  app.delete("/api/posts/:postId", authMiddleware, async (req: AuthRequest, res) => {
+    try {
+      const { postId } = req.params;
+      const userId = req.user!.userId;
+
+      const post = await storage.getPost(postId);
+      if (!post) {
+        return res.status(404).json({ error: "المنشور غير موجود" });
+      }
+
+      // Only author or group leader can delete
+      const group = await storage.getGroup(post.groupId);
+      if (post.authorId !== userId && group?.leaderId !== userId) {
+        return res.status(403).json({ error: "غير مصرح لك بحذف هذا المنشور" });
+      }
+
+      await storage.deletePost(postId);
+      res.json({ message: "تم حذف المنشور بنجاح" });
+    } catch (error) {
+      console.error("Error deleting post:", error);
+      res.status(500).json({ error: "حدث خطأ أثناء حذف المنشور" });
+    }
+  });
+
+  // Get comments for a post
+  app.get("/api/posts/:postId/comments", authMiddleware, async (req: AuthRequest, res) => {
+    try {
+      const { postId } = req.params;
+      const userId = req.user!.userId;
+
+      const post = await storage.getPost(postId);
+      if (!post) {
+        return res.status(404).json({ error: "المنشور غير موجود" });
+      }
+
+      // Verify user is a group member
+      const isMember = await storage.isGroupMember(post.groupId, userId);
+      const group = await storage.getGroup(post.groupId);
+      const isLeader = group?.leaderId === userId;
+
+      if (!isMember && !isLeader) {
+        return res.status(403).json({ error: "يجب أن تكون عضواً في المجموعة" });
+      }
+
+      const comments = await storage.getCommentsByPost(postId);
+      res.json(comments);
+    } catch (error) {
+      console.error("Error fetching comments:", error);
+      res.status(500).json({ error: "حدث خطأ أثناء جلب التعليقات" });
+    }
+  });
+
+  // Create comment
+  app.post("/api/posts/:postId/comments", authMiddleware, async (req: AuthRequest, res) => {
+    try {
+      const { postId } = req.params;
+      const { content, imageUrl } = req.body;
+      const userId = req.user!.userId;
+
+      if (!content || content.trim() === "") {
+        return res.status(400).json({ error: "محتوى التعليق مطلوب" });
+      }
+
+      const post = await storage.getPost(postId);
+      if (!post) {
+        return res.status(404).json({ error: "المنشور غير موجود" });
+      }
+
+      // Verify user is a group member
+      const isMember = await storage.isGroupMember(post.groupId, userId);
+      const group = await storage.getGroup(post.groupId);
+      const isLeader = group?.leaderId === userId;
+
+      if (!isMember && !isLeader) {
+        return res.status(403).json({ error: "يجب أن تكون عضواً في المجموعة" });
+      }
+
+      const newComment = await storage.createComment({
+        postId,
+        authorId: userId,
+        content: content.trim(),
+        imageUrl: imageUrl || null,
+      });
+
+      res.status(201).json(newComment);
+    } catch (error) {
+      console.error("Error creating comment:", error);
+      res.status(500).json({ error: "حدث خطأ أثناء إنشاء التعليق" });
+    }
+  });
+
+  // Delete comment
+  app.delete("/api/comments/:commentId", authMiddleware, async (req: AuthRequest, res) => {
+    try {
+      const { commentId } = req.params;
+      const userId = req.user!.userId;
+
+      const [comment] = await db.select().from(postComments).where(eq(postComments.id, commentId));
+      
+      if (!comment) {
+        return res.status(404).json({ error: "التعليق غير موجود" });
+      }
+
+      const post = await storage.getPost(comment.postId);
+      if (!post) {
+        return res.status(404).json({ error: "المنشور غير موجود" });
+      }
+
+      // Only author or group leader can delete
+      const group = await storage.getGroup(post.groupId);
+      if (comment.authorId !== userId && group?.leaderId !== userId) {
+        return res.status(403).json({ error: "غير مصرح لك بحذف هذا التعليق" });
+      }
+
+      await storage.deleteComment(commentId);
+      res.json({ message: "تم حذف التعليق بنجاح" });
+    } catch (error) {
+      console.error("Error deleting comment:", error);
+      res.status(500).json({ error: "حدث خطأ أثناء حذف التعليق" });
+    }
+  });
+
+  // Get reactions for a post
+  app.get("/api/posts/:postId/reactions", authMiddleware, async (req: AuthRequest, res) => {
+    try {
+      const { postId } = req.params;
+      const userId = req.user!.userId;
+
+      const post = await storage.getPost(postId);
+      if (!post) {
+        return res.status(404).json({ error: "المنشور غير موجود" });
+      }
+
+      const reactions = await storage.getReactionsByPost(postId);
+      const userReaction = await storage.getUserReaction(postId, userId);
+
+      res.json({ reactions, userReaction });
+    } catch (error) {
+      console.error("Error fetching reactions:", error);
+      res.status(500).json({ error: "حدث خطأ أثناء جلب التفاعلات" });
+    }
+  });
+
+  // Toggle reaction (like/unlike)
+  app.post("/api/posts/:postId/reactions", authMiddleware, async (req: AuthRequest, res) => {
+    try {
+      const { postId } = req.params;
+      const { type = "like" } = req.body;
+      const userId = req.user!.userId;
+
+      const post = await storage.getPost(postId);
+      if (!post) {
+        return res.status(404).json({ error: "المنشور غير موجود" });
+      }
+
+      // Verify user is a group member
+      const isMember = await storage.isGroupMember(post.groupId, userId);
+      const group = await storage.getGroup(post.groupId);
+      const isLeader = group?.leaderId === userId;
+
+      if (!isMember && !isLeader) {
+        return res.status(403).json({ error: "يجب أن تكون عضواً في المجموعة" });
+      }
+
+      // Check if user already reacted
+      const existingReaction = await storage.getUserReaction(postId, userId);
+
+      if (existingReaction) {
+        // Remove reaction (unlike)
+        await storage.deleteReaction(postId, userId);
+        res.json({ message: "تم إلغاء الإعجاب", liked: false });
+      } else {
+        // Add reaction (like)
+        await storage.createReaction({
+          postId,
+          userId,
+          type,
+        });
+        res.json({ message: "تم الإعجاب بالمنشور", liked: true });
+      }
+    } catch (error) {
+      console.error("Error toggling reaction:", error);
+      res.status(500).json({ error: "حدث خطأ أثناء التفاعل مع المنشور" });
     }
   });
 
