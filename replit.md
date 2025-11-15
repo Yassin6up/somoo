@@ -46,6 +46,12 @@ The platform is built with a modern web stack, featuring a modular project struc
 - **Authentication Architecture:** `user`, `userType`, and `token` stored in localStorage. Role-based checks read `userType` from localStorage.
 - **API Request Layer:** `apiRequest()` function automatically includes JWT token in Authorization header for all authenticated mutations.
 - **Orders Display & Notifications:** Both dashboards display orders with service type, quantity, payment method, status, and total amount. A Navbar component includes a notifications dropdown with unread badge and mark-as-read functionality.
+- **Services Showcase Page:** Public-facing page (/services) displaying 4 main platform services with modern SaaS design:
+    - **Google Maps Reviews**: Professional Google Maps rating improvement with targeted audience engagement
+    - **App Reviews (Android & iOS)**: Authentic reviews for apps to increase trust and downloads
+    - **UX Testing**: Comprehensive user experience analysis before product launch
+    - **Social Media Engagement**: Real interaction services for increased reach and followers
+    - Design features: Dark navy background (#030712), gradient blue cards (navy→light blue), RTL layout, responsive 4-column grid, rounded corners (rounded-3xl), shadow effects, hover animations, AI-generated illustrations for each service
 - **Original Features:** Campaign management, freelancer listing, file uploads (profile images, ID verification, task proof), SEO/social media optimization, and Framer Motion animations on homepage.
 
 **System Design Choices:**
