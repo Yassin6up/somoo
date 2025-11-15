@@ -1,8 +1,9 @@
 import { Link, useLocation } from "wouter";
-import { Menu, X, LogIn, UserPlus, User, LogOut, LayoutDashboard, Settings } from "lucide-react";
+import { Menu, X, LogIn, UserPlus, User, LogOut, LayoutDashboard, Settings, Briefcase, Building2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { NotificationsDropdown } from "@/components/NotificationsDropdown";
 import {
   DropdownMenu,
@@ -16,21 +17,26 @@ import {
 export function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [user, setUser] = useState<any>(null);
+  const [userType, setUserType] = useState<string | null>(null);
   const [, navigate] = useLocation();
 
   const loadUserData = () => {
     const token = localStorage.getItem("token");
     const userData = localStorage.getItem("user");
+    const type = localStorage.getItem("userType");
     
     if (token && userData) {
       try {
         setUser(JSON.parse(userData));
+        setUserType(type);
       } catch (e) {
         console.error("Error parsing user data:", e);
         setUser(null);
+        setUserType(null);
       }
     } else {
       setUser(null);
+      setUserType(null);
     }
   };
 
@@ -39,7 +45,7 @@ export function Navbar() {
 
     // Listen for storage events (login/logout in other tabs)
     const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === "user" || e.key === "token") {
+      if (e.key === "user" || e.key === "token" || e.key === "userType") {
         loadUserData();
       }
     };
@@ -73,6 +79,25 @@ export function Navbar() {
       return names[0][0] + names[1][0];
     }
     return names[0][0];
+  };
+
+  const getUserTypeBadge = () => {
+    if (userType === "freelancer") {
+      return (
+        <Badge variant="default" className="text-xs gap-1 bg-primary/90 hover:bg-primary" data-testid="badge-user-type">
+          <Briefcase className="h-3 w-3" />
+          مستقل
+        </Badge>
+      );
+    } else if (userType === "product_owner") {
+      return (
+        <Badge variant="secondary" className="text-xs gap-1" data-testid="badge-user-type">
+          <Building2 className="h-3 w-3" />
+          صاحب مشروع
+        </Badge>
+      );
+    }
+    return null;
   };
 
   return (
@@ -120,20 +145,32 @@ export function Navbar() {
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <button className="flex items-center gap-2 hover-elevate active-elevate-2 rounded-xl px-3 py-2" data-testid="button-user-menu">
-                      <Avatar className="h-8 w-8" data-testid="avatar-user">
-                        <AvatarImage src={user.profileImage} alt={user.fullName} />
-                        <AvatarFallback className="bg-primary/10 text-primary text-sm font-semibold">
-                          {getUserInitials()}
-                        </AvatarFallback>
-                      </Avatar>
+                      <div className="relative">
+                        <Avatar className="h-8 w-8" data-testid="avatar-user">
+                          <AvatarImage src={user.profileImage} alt={user.fullName} />
+                          <AvatarFallback className="bg-primary/10 text-primary text-sm font-semibold">
+                            {getUserInitials()}
+                          </AvatarFallback>
+                        </Avatar>
+                        {userType && (
+                          <div className="absolute -bottom-1 -right-1 bg-background rounded-full p-0.5" data-testid="avatar-badge-container">
+                            {userType === "freelancer" ? (
+                              <Briefcase className="h-3 w-3 text-primary" data-testid="icon-freelancer" />
+                            ) : (
+                              <Building2 className="h-3 w-3 text-secondary-foreground" data-testid="icon-product-owner" />
+                            )}
+                          </div>
+                        )}
+                      </div>
                       <span className="text-sm font-medium">{user.fullName}</span>
                     </button>
                   </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56 rounded-xl">
                   <DropdownMenuLabel className="font-normal">
-                    <div className="flex flex-col space-y-1">
+                    <div className="flex flex-col space-y-2">
                       <p className="text-sm font-medium">{user.fullName}</p>
                       <p className="text-xs text-muted-foreground">{user.email}</p>
+                      {getUserTypeBadge()}
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
@@ -208,16 +245,28 @@ export function Navbar() {
             <div className="pt-2 flex flex-col gap-2">
               {user ? (
                 <>
-                  <div className="flex items-center gap-2 px-4 py-2 rounded-xl border" data-testid="mobile-user-info">
-                    <Avatar className="h-10 w-10">
-                      <AvatarImage src={user.profileImage} alt={user.fullName} />
-                      <AvatarFallback className="bg-primary/10 text-primary font-semibold">
-                        {getUserInitials()}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
+                  <div className="flex items-center gap-3 px-4 py-2 rounded-xl border" data-testid="mobile-user-info">
+                    <div className="relative">
+                      <Avatar className="h-10 w-10">
+                        <AvatarImage src={user.profileImage} alt={user.fullName} />
+                        <AvatarFallback className="bg-primary/10 text-primary font-semibold">
+                          {getUserInitials()}
+                        </AvatarFallback>
+                      </Avatar>
+                      {userType && (
+                        <div className="absolute -bottom-1 -right-1 bg-background rounded-full p-0.5" data-testid="avatar-badge-container-mobile">
+                          {userType === "freelancer" ? (
+                            <Briefcase className="h-3 w-3 text-primary" />
+                          ) : (
+                            <Building2 className="h-3 w-3 text-secondary-foreground" />
+                          )}
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1">
                       <p className="text-sm font-medium">{user.fullName}</p>
                       <p className="text-xs text-muted-foreground">{user.email}</p>
+                      <div className="mt-1">{getUserTypeBadge()}</div>
                     </div>
                   </div>
                   <Button variant="outline" className="w-full rounded-2xl justify-start" onClick={() => { navigate("/dashboard"); setMobileMenuOpen(false); }} data-testid="button-dashboard-mobile">
