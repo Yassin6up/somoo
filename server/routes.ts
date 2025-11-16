@@ -2192,29 +2192,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const validatedData = insertOrderSchema.parse(req.body);
       
-      // Calculate platform fee (10%) and net amount
+      // Get group info to know member count
+      const group = await storage.getGroupById(validatedData.groupId);
+      if (!group) {
+        return res.status(404).json({ error: "الجروب غير موجود" });
+      }
+      
+      // Calculate commission distribution:
+      // 1. Platform fee (10% of total)
       const totalAmount = parseFloat(validatedData.totalAmount.toString());
       const platformFee = (totalAmount * 0.10).toFixed(2);
       const netAmount = (totalAmount - parseFloat(platformFee)).toFixed(2);
+      
+      // 2. Leader commission (3% of net amount)
+      const leaderCommission = (parseFloat(netAmount) * 0.03).toFixed(2);
+      
+      // 3. Member distribution (net amount - leader commission)
+      const memberDistribution = (parseFloat(netAmount) - parseFloat(leaderCommission)).toFixed(2);
+      
+      // 4. Per member amount (member distribution / group members count)
+      const groupMembersCount = group.currentMembers || 1; // Prevent division by zero
+      const perMemberAmount = (parseFloat(memberDistribution) / groupMembersCount).toFixed(2);
       
       const order = await storage.createOrder({
         ...validatedData,
         productOwnerId: req.user!.userId,
         platformFee,
         netAmount,
+        leaderCommission,
+        memberDistribution,
+        groupMembersCount,
+        perMemberAmount,
       });
 
       // Create notification for group leader
-      const group = await storage.getGroupById(validatedData.groupId);
-      if (group) {
-        await storage.createNotification({
-          userId: group.leaderId,
-          userType: "freelancer",
-          title: "طلب خدمة جديد",
-          message: `لديك طلب خدمة جديد بقيمة $${netAmount} (بعد خصم رسوم المنصة 10%)`,
-          type: "order_created",
-        });
-      }
+      await storage.createNotification({
+        userId: group.leaderId,
+        userType: "freelancer",
+        title: "طلب خدمة جديد",
+        message: `لديك طلب خدمة جديد بقيمة $${totalAmount}. صافي الجروب: $${netAmount}، عمولتك: $${leaderCommission}، للأعضاء: $${memberDistribution}`,
+        type: "order_created",
+      });
 
       res.status(201).json(order);
     } catch (error: any) {

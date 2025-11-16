@@ -214,7 +214,11 @@ export const orders = pgTable("orders", {
   pricePerUnit: decimal("price_per_unit", { precision: 10, scale: 2 }).notNull(), // السعر لكل وحدة
   totalAmount: decimal("total_amount", { precision: 10, scale: 2 }).notNull(), // الإجمالي
   platformFee: decimal("platform_fee", { precision: 10, scale: 2 }).notNull().default("0"), // رسوم المنصة 10%
-  netAmount: decimal("net_amount", { precision: 10, scale: 2 }).notNull().default("0"), // المبلغ الصافي للفريلانسر بعد خصم رسوم المنصة
+  netAmount: decimal("net_amount", { precision: 10, scale: 2 }).notNull().default("0"), // المبلغ الصافي للجروب بعد خصم رسوم المنصة
+  leaderCommission: decimal("leader_commission", { precision: 10, scale: 2 }).notNull().default("0"), // عمولة قائد الجروب 3% من netAmount
+  memberDistribution: decimal("member_distribution", { precision: 10, scale: 2 }).notNull().default("0"), // المبلغ المتبقي للتوزيع على الأعضاء (netAmount - leaderCommission)
+  groupMembersCount: integer("group_members_count").notNull().default(1), // عدد أعضاء الجروب وقت الطلب
+  perMemberAmount: decimal("per_member_amount", { precision: 10, scale: 2 }).notNull().default("0"), // نصيب كل عضو (memberDistribution / groupMembersCount)
   paymentMethod: text("payment_method").notNull(), // vodafone_cash, etisalat_cash, orange_cash, bank_card
   paymentDetails: text("payment_details"), // رقم الهاتف أو بيانات البطاقة
   status: text("status").notNull().default("pending"), // pending, payment_confirmed, in_progress, completed, cancelled

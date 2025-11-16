@@ -177,6 +177,40 @@ export default function OrdersPage() {
                       </div>
                     )}
                   </div>
+
+                  {/* تفاصيل توزيع المبلغ */}
+                  {order.platformFee && (
+                    <div className="p-3 bg-muted/50 rounded-xl space-y-1.5 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">المبلغ الإجمالي:</span>
+                        <span className="font-medium">${order.totalAmount}</span>
+                      </div>
+                      <div className="flex justify-between text-amber-600">
+                        <span>رسوم المنصة (10%):</span>
+                        <span className="font-medium">-${order.platformFee}</span>
+                      </div>
+                      <div className="flex justify-between pt-1.5 border-t border-border">
+                        <span className="text-muted-foreground">صافي المبلغ للجروب:</span>
+                        <span className="font-semibold">${order.netAmount}</span>
+                      </div>
+                      {order.leaderCommission && (
+                        <>
+                          <div className="flex justify-between text-blue-600">
+                            <span>عمولة قائد الجروب (3%):</span>
+                            <span className="font-medium">${order.leaderCommission}</span>
+                          </div>
+                          <div className="flex justify-between text-green-600 pt-1.5 border-t border-border">
+                            <span>للتوزيع على الأعضاء ({order.groupMembersCount} عضو):</span>
+                            <span className="font-bold">${order.memberDistribution}</span>
+                          </div>
+                          <div className="text-xs text-muted-foreground text-center pt-1">
+                            نصيب كل عضو: ${order.perMemberAmount}
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  )}
+
                   {order.paymentDetails && (
                     <div className="pt-2 border-t">
                       <span className="text-sm text-muted-foreground">تفاصيل الدفع:</span>

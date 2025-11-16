@@ -92,13 +92,34 @@ export default function OrdersPage() {
                       <span>رسوم المنصة (10%):</span>
                       <span className="font-medium">-${order.platformFee}</span>
                     </div>
-                    <div className="flex justify-between pt-1.5 border-t border-border text-base font-bold text-green-600">
-                      <span>صافي المبلغ للجروب:</span>
-                      <span>${order.netAmount || (parseFloat(order.totalAmount) - parseFloat(order.platformFee)).toFixed(2)}</span>
+                    <div className="flex justify-between pt-1.5 border-t border-border">
+                      <span className="text-muted-foreground">صافي المبلغ للجروب:</span>
+                      <span className="font-semibold">${order.netAmount || (parseFloat(order.totalAmount) - parseFloat(order.platformFee)).toFixed(2)}</span>
                     </div>
                   </>
                 )}
               </div>
+
+              {/* تفاصيل التوزيع */}
+              {order.leaderCommission && (
+                <div className="p-3 bg-blue-50 dark:bg-blue-950/20 rounded-xl space-y-1.5 text-sm border border-blue-200 dark:border-blue-800">
+                  <div className="flex justify-between text-blue-700 dark:text-blue-400">
+                    <span className="font-medium">عمولة قائد الجروب (3%):</span>
+                    <span className="font-bold">${order.leaderCommission}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">المبلغ للتوزيع على الأعضاء:</span>
+                    <span className="font-semibold">${order.memberDistribution}</span>
+                  </div>
+                  <div className="flex justify-between text-xs pt-1.5 border-t border-blue-200 dark:border-blue-800">
+                    <span className="text-muted-foreground">عدد الأعضاء: {order.groupMembersCount}</span>
+                    <span>
+                      <span className="text-muted-foreground">نصيب كل عضو: </span>
+                      <span className="font-bold text-green-600">${order.perMemberAmount}</span>
+                    </span>
+                  </div>
+                </div>
+              )}
               
               <div className="grid grid-cols-2 gap-2 text-sm">
                 <div>

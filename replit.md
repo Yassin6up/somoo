@@ -16,91 +16,27 @@ The platform is built with a modern web stack, featuring a modular project struc
 - **Responsiveness & RTL:** Fully responsive design with comprehensive Right-to-Left (RTL) support.
 - **Interactive Elements:** Hover effects, 3D elevations, and Framer Motion animations.
 - **Component Library:** Shadcn UI for consistent and rapid development.
-- **Icon System:** All UI elements use lucide-react icons exclusively (NO emojis permitted). Icon usage follows semantic color coding: CheckCircle2 (positive/approval), XCircle (prohibitions), AlertTriangle (warnings), Lightbulb (recommendations), Wallet (financial), Pin (objectives), ShieldAlert (security/policy).
+- **Icon System:** All UI elements use `lucide-react` icons exclusively.
 
 **Technical Implementations & Feature Specifications:**
 - **Frontend:** React with TypeScript, Wouter for routing, Tailwind CSS, Shadcn UI, React Hook Form with Zod for validation, and TanStack Query for data management.
 - **Backend:** Express.js.
-- **Forms:** Multi-step forms with robust validation for registration. All auth forms include autocomplete attributes.
-- **User Authentication:** JWT-based sessions and role-based authorization. Navbar synchronizes immediately after signup/login. Profile page shows graceful error states. User data read from localStorage at form submission.
-- **Mandatory Instructions for Both User Types:** 
-    - **Freelancers:** Must accept comprehensive 5-section guidelines (FreelancerInstructions.tsx) covering ethical review practices (minimum 3.4-star ratings), platform liability, professional conduct, and **money holding policy** (Section 5: 7-day hold period with Wallet/Pin/CheckCircle2/ShieldAlert icons) before accessing the dashboard.
-    - **Product Owners:** Must accept 8-section guidelines (ProductOwnerInstructions.tsx) covering transparency requirements, truthful information provision, constructive feedback acceptance, company verification allowance, freelancer coordination policies, platform usage ethics, violation consequences, and **quality assurance mechanism** (Section 8: 7-day guarantee with CheckCircle2/Lightbulb/AlertTriangle icons for review deletion refunds and location-based freelancer selection recommendations).
-    - Both tracked by `acceptedInstructions` database field in respective tables.
-    - Signup flow: registration → mandatory instructions acceptance → dashboard access.
-    - All instruction pages use RTL layout with color-coded sections (blue for policies, green for benefits, amber for warnings, red for prohibitions) and lucide-react icons only (zero emojis).
-    - **Quality Assurance Features:**
-        - Product owners get 7-day guarantee: full refund if reviews are deleted
-        - Freelancers have 7-day earnings hold to ensure review legitimacy
-        - Recommendation system: choose freelancers from same country for better review retention
-- **Platform Commission System (Nov 16, 2025):** 10% platform fee automatically deducted from all orders and tasks:
-    - **Database Schema:** `platformFee` and `netAmount` fields added to orders table; `platformFee` and `netReward` fields added to tasks table
-    - **Backend Calculation:** Routes automatically calculate 10% platform fee when creating orders/tasks
-    - **UI Display:** All order/task pages show detailed fee breakdown: Total Amount → Platform Fee (10%) → Net Amount
-    - **Earnings Update:** Freelancer earnings automatically updated with net reward (after platform fee) when tasks are approved
-    - **Notifications:** Task approval notifications include net amount after platform fee deduction
-- **Group-Based Work System:**
-    - **Groups:** Freelancers can create groups (up to 700 members) with custom image uploads (max 5MB) and a portfolio gallery (up to 12 images). Group leaders manage members, accept projects, and earn a 5% commission.
-    - **Projects:** Product owners create projects; group leaders browse and accept them. Project workflow: pending → accepted → in_progress → completed.
-    - **Tasks:** Leaders create and assign tasks to members. Task workflow: available → assigned → in_progress → submitted → approved/rejected. Members submit proof images/reports.
-    - **Internal Messaging:** Real-time messaging for group members (text, file, project-related).
-    - **Earnings & Withdrawals:** Automatic earnings calculation (with 10% platform fee deduction), wallet balance tracking, withdrawal request system (Vodafone Cash, Etisalat Cash, Orange Cash, Bank Card, Bank Transfer), and withdrawal history.
-- **Direct Purchase System:** Product owners can purchase services directly from group leaders (e.g., Google Play reviews, UX testing, Google Maps reviews) with defined pricing ($1-$2 per service). Payment methods include Vodafone Cash, Etisalat Cash, Orange Cash, Bank Card. Order management tracks status: pending → payment_confirmed → in_progress → completed. All orders subject to 10% platform fee automatically calculated and displayed.
-- **Conversations System:** Real-time messaging between product owners and group leaders for direct communication:
-    - **Database Schema:** Two tables: `conversations` (tracks conversation threads) and `conversationMessages` (stores individual messages)
-    - **Access Points:** 
-        - Product owners: "المحادثات" page in dashboard sidebar (/product-owner-dashboard/conversations)
-        - Product owners: Dedicated chat page with leader profile (/groups/:id/chat)
-        - Freelancers: "المحادثات" page in dashboard sidebar (/freelancer-dashboard/conversations)
-    - **Conversation Initiation:** Product owners can start conversations from GroupDetails page via "ابدأ محادثة" (Start Conversation) button which redirects to dedicated chat page
-    - **Chat with Leader Page Features:**
-        - Split-view layout: leader profile card (right, sticky with z-50) and chat area (left)
-        - Leader profile displays: avatar, name, online status, service, rating (4.8 stars), location, response time, safety guidelines
-        - Safety guidelines with color-coded icons (ShieldAlert, CheckCircle2, AlertTriangle, Lightbulb)
-        - Action buttons: "طلب محادثة شفهية" (coming soon) and "المحادثة النصية نشطة"
-        - Auto-creates conversation on page load for authenticated product owners
-        - Message refresh every 3 seconds, auto-scroll to bottom, Enter to send
-    - **Message Features:** Real-time message display, sender identification (product_owner vs freelancer), read/unread status tracking, timestamp display
-    - **UI Components:** Split-view interface with conversation list and active chat area, RTL-optimized message bubbles
-    - **API Endpoints:** POST /api/conversations (create/get conversation), GET /api/conversations (list all), GET /api/conversations/:id/messages (fetch messages), POST /api/conversations/:id/messages (send message)
-    - **Security:** Backend authentication verification via /api/auth/user, role-based access control, conversation creation only for authenticated product owners
-- **Product Owner Signup:** Simplified 3-step form (Basic Info → Service Selection & Calculation → Confirmation) with 7 service types and automatic cost calculation based on quantity (1-1000 reviews).
-- **Dashboards:** Freelancer and Product Owner dashboards with real-time stats and modular Shadcn sidebar navigation. Freelancer dashboard has 9 pages: Overview, Available Tasks, My Tasks, Wallet, Withdrawals, Orders, Conversations, Notifications, Settings. Product Owner dashboard has 9 pages: Overview, Projects, Active Projects, Completed Projects, Payments, Orders, Conversations, Notifications, Settings.
-- **Notifications System (Nov 15, 2025):** Comprehensive notification system for both user types:
-    - **Database Schema:** notifications table with userId, userType, title, message, type, isRead, createdAt
-    - **Notification Pages:** Dedicated pages for both dashboards (/freelancer-dashboard/notifications, /product-owner-dashboard/notifications) with:
-        - Full list of notifications with icon-based types
-        - Mark individual notification as read
-        - Mark all as read functionality
-        - Unread badge counter
-        - RTL layout with color-coded notification types
-    - **Sidebar Integration:** Bell icon with "الإشعارات" link in both FreelancerSidebar and ProductOwnerSidebar
-    - **Automatic Notifications:** Backend creates notifications for:
-        - **Withdrawals:** withdrawal_created (when freelancer creates withdrawal request)
-        - **Orders:** payment_confirmed (both users), order_in_progress (both users), order_completed (both users)
-        - **Tasks:** task_assigned, task_submitted, task_approved, task_rejected
-        - **Messages:** new_message
-        - **Groups:** group_member_joined, group_member_removed
-    - **API Endpoints:** GET /api/notifications (filtered by user), GET /api/notifications/unread/count, PATCH /api/notifications/:id/read, PATCH /api/notifications/read-all
-    - **Icon Mapping:** Bell (general), CheckCircle2 (approved/completed), XCircle (rejected), Wallet (withdrawals/payments), MessageSquare (messages), Users (group), ClipboardList (tasks)
-- **Project Details Page:** Comprehensive project view (/projects/:id) displaying project information, task list, stats, and task creation interface (for group leaders).
-- **User Type Badge:** Visual indicator (briefcase for freelancers, building for product owners) displayed in the Navbar dropdown menu.
-- **Authentication Architecture:** `user`, `userType`, and `token` stored in localStorage. Role-based checks read `userType` from localStorage.
-- **API Request Layer:** `apiRequest()` function automatically includes JWT token in Authorization header for all authenticated mutations.
-- **Orders Display & Notifications:** Both dashboards display orders with service type, quantity, payment method, status, and total amount. A Navbar component includes a notifications dropdown with unread badge and mark-as-read functionality.
-- **Services Showcase Page:** Public-facing page (/services) displaying 4 main platform services with modern SaaS design:
-    - **Google Maps Reviews**: Professional Google Maps rating improvement with targeted audience engagement
-    - **App Reviews (Android & iOS)**: Authentic reviews for apps to increase trust and downloads
-    - **UX Testing**: Comprehensive user experience analysis before product launch
-    - **Social Media Engagement**: Real interaction services for increased reach and followers
-    - Design features: Dark navy background (#030712), gradient blue cards (navy→light blue), RTL layout, responsive 4-column grid, rounded corners (rounded-3xl), shadow effects, hover animations, AI-generated illustrations for each service
-- **Original Features:** Campaign management, freelancer listing, file uploads (profile images, ID verification, task proof), SEO/social media optimization, and Framer Motion animations on homepage.
+- **User Authentication:** JWT-based sessions and role-based authorization.
+- **Mandatory Instructions:** Both Freelancers and Product Owners must accept comprehensive guidelines covering ethical practices, platform policies, and financial terms (e.g., 7-day earnings hold for freelancers, 7-day guarantee for product owners). These are tracked in the database and presented during signup.
+- **Quality Assurance Features:** Includes a 7-day product owner guarantee for review deletion refunds and a 7-day freelancer earnings hold to ensure review legitimacy. Features a recommendation system for selecting freelancers from the same country.
+- **Platform Commission System:** A multi-tier commission structure automatically deducts 10% platform fee, 3% leader commission, and distributes the remainder among group members.
+- **Group-Based Work System:** Freelancers can form groups (up to 700 members) to accept projects from product owners. Includes project workflow (pending to completed), task assignment, and internal messaging.
+- **Direct Purchase System:** Product owners can purchase services directly from group leaders with defined pricing and various payment methods.
+- **Conversations System:** Real-time messaging between product owners and group leaders with dedicated chat pages, user profiles, and safety guidelines.
+- **Notifications System:** A comprehensive system for both user types, including database schema, dedicated notification pages, unread badges, and automated notifications for various platform activities (e.g., withdrawals, orders, messages).
+- **Product Owner Signup:** A simplified 3-step form for product owners to select services and calculate costs.
+- **Dashboards:** Dedicated Freelancer and Product Owner dashboards with real-time stats and modular navigation.
+- **Services Showcase Page:** A public-facing page detailing four main platform services: Google Maps Reviews, App Reviews, UX Testing, and Social Media Engagement.
+- **API Request Layer:** Custom `apiRequest()` function automatically includes JWT tokens for authenticated requests.
 
 **System Design Choices:**
-- **Data Schemas:** Shared TypeScript data models for consistency across the stack.
-- **Layout Architecture:** 
-    - Consistent sidebar width and proper `h-screen`/`overflow-auto` for scrollable content areas
-    - **Dashboard Layouts (Nov 15, 2025):** Fixed sidebar positioning to prevent content overlay. Structure: `SidebarProvider > flex wrapper (dir="rtl") > Sidebar (side="right") + main content`. Sidebar placed BEFORE content in DOM order to prevent overlay while maintaining RTL visual layout (sidebar appears on right, content on left). Both FreelancerDashboardLayout and ProductOwnerDashboardLayout use this pattern.
+- **Data Schemas:** Shared TypeScript data models for consistency.
+- **Layout Architecture:** Consistent dashboard layouts with fixed sidebars (RTL optimized) to prevent content overlay, ensuring the sidebar appears on the right for RTL users.
 
 ## External Dependencies
 - **OpenAI (via Replit AI Integrations):** For AI-powered suggestions.
