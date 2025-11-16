@@ -33,10 +33,9 @@ export default function AdminLogin() {
         throw new Error(data.error || "فشل تسجيل الدخول");
       }
 
-      // Store auth data in localStorage
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("user", JSON.stringify(data.user));
-      localStorage.setItem("userType", "admin");
+      // No need to store token - it's now in HttpOnly cookie
+      // Only store non-sensitive user data for UI purposes
+      localStorage.setItem("adminUser", JSON.stringify(data.user));
 
       toast({
         title: "تم تسجيل الدخول بنجاح",

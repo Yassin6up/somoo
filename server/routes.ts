@@ -2837,17 +2837,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
         roleId: admin.roleId,
       });
 
+      // Set HttpOnly cookie for security
+      res.cookie("adminToken", token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      });
+
       const { password: _, ...adminWithoutPassword } = admin;
 
       res.json({
         user: { ...adminWithoutPassword, role },
-        token,
         message: "تم تسجيل الدخول بنجاح",
       });
     } catch (error) {
       console.error("Admin login error:", error);
       res.status(500).json({ error: "حدث خطأ أثناء تسجيل الدخول" });
     }
+  });
+
+  // Admin Logout
+  app.post("/api/admin/logout", adminAuthMiddleware, (req, res) => {
+    // Clear the admin token cookie
+    res.clearCookie("adminToken", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+    });
+    res.json({ message: "تم تسجيل الخروج بنجاح" });
   });
 
   // Get current admin user info

@@ -96,12 +96,27 @@ export function requireRole(allowedRoles: ("freelancer" | "product_owner" | "adm
 
 // Admin authentication middleware
 export function adminAuthMiddleware(req: AuthRequest, res: Response, next: NextFunction) {
-  authMiddleware(req, res, () => {
-    if (req.user?.userType !== "admin") {
+  try {
+    // Check for admin token in cookie first, then fallback to Authorization header
+    const token = req.cookies?.adminToken 
+      || (req.headers.authorization?.startsWith("Bearer ") 
+          ? req.headers.authorization.substring(7) 
+          : null);
+
+    if (!token) {
+      return res.status(401).json({ error: "غير مصرح - يرجى تسجيل الدخول" });
+    }
+
+    const payload = verifyToken(token);
+    if (!payload || payload.userType !== "admin") {
       return res.status(403).json({ error: "ممنوع - هذه الصفحة للمسؤولين فقط" });
     }
+
+    req.user = payload;
     next();
-  });
+  } catch (error) {
+    return res.status(401).json({ error: "خطأ في المصادقة" });
+  }
 }
 
 // Permission-based authorization middleware for admin users

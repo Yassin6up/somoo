@@ -21,7 +21,9 @@ The platform is built with a modern web stack, featuring a modular project struc
 **Technical Implementations & Feature Specifications:**
 - **Frontend:** React with TypeScript, Wouter for routing, Tailwind CSS, Shadcn UI, React Hook Form with Zod for validation, and TanStack Query for data management.
 - **Backend:** Express.js.
-- **User Authentication:** JWT-based sessions and role-based authorization.
+- **User Authentication:** JWT-based sessions and role-based authorization for both users and administrators.
+- **Admin Control Panel:** Comprehensive administrative system with separate authentication flow, permission-based access control (37 permissions across 5 default roles), and complete platform management capabilities including user management, financial oversight, and analytics dashboard.
+- **Admin Roles & Permissions:** Five predefined roles (مدير/Admin, مبرمج/Developer, مسوّق/Marketer, دعم فني/Support, شريك/Partner) with granular permissions using resource:action pattern (e.g., users:view, freelancers:edit, withdrawals:approve).
 - **Mandatory Instructions:** Both Freelancers and Product Owners must accept comprehensive guidelines covering ethical practices, platform policies, and financial terms (e.g., 7-day earnings hold for freelancers, 7-day guarantee for product owners). These are tracked in the database and presented during signup.
 - **Quality Assurance Features:** Includes a 7-day product owner guarantee for review deletion refunds and a 7-day freelancer earnings hold to ensure review legitimacy. Features a recommendation system for selecting freelancers from the same country.
 - **Platform Commission System:** A multi-tier commission structure automatically deducts 10% platform fee, 3% leader commission, and distributes the remainder among group members.
@@ -30,7 +32,7 @@ The platform is built with a modern web stack, featuring a modular project struc
 - **Conversations System:** Real-time messaging between product owners and group leaders with dedicated chat pages, user profiles, and safety guidelines.
 - **Notifications System:** A comprehensive system for both user types, including database schema, dedicated notification pages, unread badges, and automated notifications for various platform activities (e.g., withdrawals, orders, messages).
 - **Product Owner Signup:** A simplified 3-step form for product owners to select services and calculate costs.
-- **Dashboards:** Dedicated Freelancer and Product Owner dashboards with real-time stats and modular navigation.
+- **Dashboards:** Dedicated Freelancer, Product Owner, and Admin dashboards with real-time stats and modular navigation.
 - **Services Showcase Page:** A public-facing page detailing four main platform services: Google Maps Reviews, App Reviews, UX Testing, and Social Media Engagement.
 - **API Request Layer:** Custom `apiRequest()` function automatically includes JWT tokens for authenticated requests.
 

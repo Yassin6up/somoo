@@ -109,20 +109,32 @@ export function AdminSidebar() {
   const [location, setLocation] = useLocation();
   const { toast } = useToast();
 
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    localStorage.removeItem("userType");
-    
-    toast({
-      title: "تم تسجيل الخروج",
-      description: "نراك قريباً",
-    });
-    
-    setLocation("/admin/login");
+  const handleLogout = async () => {
+    try {
+      // Call logout endpoint to clear HttpOnly cookie
+      await fetch("/api/admin/logout", {
+        method: "POST",
+        credentials: "include", // Important: include cookies
+      });
+      
+      // Clear local user data (non-sensitive)
+      localStorage.removeItem("adminUser");
+      
+      toast({
+        title: "تم تسجيل الخروج",
+        description: "نراك قريباً",
+      });
+      
+      setLocation("/admin/login");
+    } catch (error) {
+      console.error("Logout error:", error);
+      // Still clear local data and redirect even if API call fails
+      localStorage.removeItem("adminUser");
+      setLocation("/admin/login");
+    }
   };
 
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const user = JSON.parse(localStorage.getItem("adminUser") || "{}");
 
   return (
     <Sidebar side="right">
