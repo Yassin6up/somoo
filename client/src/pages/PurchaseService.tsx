@@ -14,13 +14,14 @@ import { ArrowLeft, ShoppingCart, Check } from "lucide-react";
 import type { Group } from "@shared/schema";
 
 const SERVICE_TYPES = [
-  { value: "google_play_reviews", label: "تقييم تطبيقات Google Play", price: 1 },
-  { value: "ios_reviews", label: "تقييم تطبيقات iOS", price: 1 },
-  { value: "website_reviews", label: "تقييم مواقع إلكترونية", price: 1 },
-  { value: "ux_testing", label: "اختبار تجربة المستخدم UX", price: 1 },
-  { value: "software_testing", label: "اختبار أنظمة Software", price: 1 },
-  { value: "social_media", label: "التفاعل مع السوشيال ميديا", price: 1 },
-  { value: "google_maps", label: "تقييم خرائط Google Maps", price: 2 },
+  { value: "google_play_reviews", label: "تقييم تطبيقات Google Play", price: 1, isPerUnit: true },
+  { value: "ios_reviews", label: "تقييم تطبيقات iOS", price: 1, isPerUnit: true },
+  { value: "website_reviews", label: "تقييم مواقع إلكترونية", price: 1, isPerUnit: true },
+  { value: "ux_testing", label: "اختبار تجربة المستخدم UX", price: 1, isPerUnit: true },
+  { value: "software_testing", label: "اختبار أنظمة Software", price: 1, isPerUnit: true },
+  { value: "social_media_single", label: "التفاعل مع السوشيال ميديا (حساب واحد شهرياً)", price: 700, isPerUnit: false },
+  { value: "social_media_dual", label: "التفاعل مع السوشيال ميديا (حسابين شهرياً)", price: 1200, isPerUnit: false },
+  { value: "google_maps", label: "تقييم خرائط Google Maps", price: 2, isPerUnit: true },
 ];
 
 const PAYMENT_METHODS = [
@@ -68,7 +69,8 @@ export default function PurchaseService() {
   // Calculate total price
   const selectedService = SERVICE_TYPES.find(s => s.value === serviceType);
   const pricePerUnit = selectedService?.price || 0;
-  const totalAmount = pricePerUnit * quantity;
+  const isPerUnit = selectedService?.isPerUnit ?? true;
+  const totalAmount = isPerUnit ? pricePerUnit * quantity : pricePerUnit;
 
   // Create order mutation
   const createOrderMutation = useMutation({
@@ -79,7 +81,7 @@ export default function PurchaseService() {
         productOwnerId: currentUser?.id,
         groupId: groupId,
         serviceType,
-        quantity,
+        quantity: isPerUnit ? quantity : 1, // For monthly services, quantity is always 1
         pricePerUnit: pricePerUnit.toString(),
         totalAmount: totalAmount.toString(),
         paymentMethod,
@@ -185,45 +187,64 @@ export default function PurchaseService() {
                   <SelectContent>
                     {SERVICE_TYPES.map((service) => (
                       <SelectItem key={service.value} value={service.value}>
-                        {service.label} - ${service.price} لكل وحدة
+                        {service.label} - ${service.price} {service.isPerUnit ? "لكل وحدة" : "شهرياً"}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="quantity">عدد المراجعات / المهام</Label>
-                <Input
-                  id="quantity"
-                  type="number"
-                  min="1"
-                  max="1000"
-                  value={quantity}
-                  onChange={(e) => setQuantity(Math.max(1, Math.min(1000, parseInt(e.target.value) || 1)))}
-                  data-testid="input-quantity"
-                />
-                <p className="text-sm text-muted-foreground">
-                  (من 1 إلى 1000)
-                </p>
-              </div>
+              {isPerUnit && (
+                <div className="space-y-2">
+                  <Label htmlFor="quantity">عدد المراجعات / المهام</Label>
+                  <Input
+                    id="quantity"
+                    type="number"
+                    min="1"
+                    max="1000"
+                    value={quantity}
+                    onChange={(e) => setQuantity(Math.max(1, Math.min(1000, parseInt(e.target.value) || 1)))}
+                    data-testid="input-quantity"
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    (من 1 إلى 1000)
+                  </p>
+                </div>
+              )}
 
               {serviceType && (
                 <div className="bg-muted p-4 rounded-lg">
-                  <div className="flex justify-between mb-2">
-                    <span>السعر لكل وحدة:</span>
-                    <span className="font-bold">${pricePerUnit}</span>
-                  </div>
-                  <div className="flex justify-between mb-2">
-                    <span>الكمية:</span>
-                    <span className="font-bold">{quantity}</span>
-                  </div>
-                  <div className="border-t pt-2 mt-2">
-                    <div className="flex justify-between text-lg">
-                      <span className="font-bold">الإجمالي:</span>
-                      <span className="font-bold text-primary">${totalAmount}</span>
-                    </div>
-                  </div>
+                  {isPerUnit ? (
+                    <>
+                      <div className="flex justify-between mb-2">
+                        <span>السعر لكل وحدة:</span>
+                        <span className="font-bold">${pricePerUnit}</span>
+                      </div>
+                      <div className="flex justify-between mb-2">
+                        <span>الكمية:</span>
+                        <span className="font-bold">{quantity}</span>
+                      </div>
+                      <div className="border-t pt-2 mt-2">
+                        <div className="flex justify-between text-lg">
+                          <span className="font-bold">الإجمالي:</span>
+                          <span className="font-bold text-primary">${totalAmount}</span>
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="flex justify-between mb-2">
+                        <span>نوع الاشتراك:</span>
+                        <span className="font-bold">شهري</span>
+                      </div>
+                      <div className="border-t pt-2 mt-2">
+                        <div className="flex justify-between text-lg">
+                          <span className="font-bold">المبلغ الشهري:</span>
+                          <span className="font-bold text-primary">${totalAmount}</span>
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </div>
               )}
 

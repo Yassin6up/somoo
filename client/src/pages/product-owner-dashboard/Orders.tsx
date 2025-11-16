@@ -20,8 +20,12 @@ const serviceTypes: Record<string, string> = {
   website_reviews: "مراجعات المواقع",
   ux_testing: "اختبار تجربة المستخدم",
   software_testing: "اختبار البرمجيات",
+  social_media: "وسائل التواصل الاجتماعي",
   social_media_engagement: "تفاعل وسائل التواصل",
+  social_media_single: "التفاعل مع السوشيال ميديا (حساب واحد شهرياً)",
+  social_media_dual: "التفاعل مع السوشيال ميديا (حسابين شهرياً)",
   google_maps_reviews: "مراجعات Google Maps",
+  google_maps: "مراجعات Google Maps",
 };
 
 export default function OrdersPage() {

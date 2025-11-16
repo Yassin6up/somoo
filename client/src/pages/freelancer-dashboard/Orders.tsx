@@ -31,7 +31,10 @@ export default function OrdersPage() {
       ux_testing: "اختبار تجربة المستخدم",
       software_testing: "اختبار البرمجيات",
       social_media: "وسائل التواصل الاجتماعي",
+      social_media_single: "التفاعل مع السوشيال ميديا (حساب واحد شهرياً)",
+      social_media_dual: "التفاعل مع السوشيال ميديا (حسابين شهرياً)",
       google_maps_reviews: "مراجعات Google Maps",
+      google_maps: "مراجعات Google Maps",
     };
     return services[serviceType] || serviceType;
   };
