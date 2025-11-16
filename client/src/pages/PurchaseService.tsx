@@ -60,6 +60,14 @@ export default function PurchaseService() {
     }
   }, [navigate, toast]);
 
+  // Reset quantity to 1 when selecting a monthly subscription service
+  useEffect(() => {
+    const selectedService = SERVICE_TYPES.find(s => s.value === serviceType);
+    if (selectedService && !selectedService.isPerUnit) {
+      setQuantity(1);
+    }
+  }, [serviceType]);
+
   // Fetch group details
   const { data: group, isLoading } = useQuery<Group>({
     queryKey: ["/api/groups", groupId],
