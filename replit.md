@@ -33,13 +33,19 @@ The platform is built with a modern web stack, featuring a modular project struc
         - Product owners get 7-day guarantee: full refund if reviews are deleted
         - Freelancers have 7-day earnings hold to ensure review legitimacy
         - Recommendation system: choose freelancers from same country for better review retention
+- **Platform Commission System (Nov 16, 2025):** 10% platform fee automatically deducted from all orders and tasks:
+    - **Database Schema:** `platformFee` and `netAmount` fields added to orders table; `platformFee` and `netReward` fields added to tasks table
+    - **Backend Calculation:** Routes automatically calculate 10% platform fee when creating orders/tasks
+    - **UI Display:** All order/task pages show detailed fee breakdown: Total Amount → Platform Fee (10%) → Net Amount
+    - **Earnings Update:** Freelancer earnings automatically updated with net reward (after platform fee) when tasks are approved
+    - **Notifications:** Task approval notifications include net amount after platform fee deduction
 - **Group-Based Work System:**
     - **Groups:** Freelancers can create groups (up to 700 members) with custom image uploads (max 5MB) and a portfolio gallery (up to 12 images). Group leaders manage members, accept projects, and earn a 5% commission.
     - **Projects:** Product owners create projects; group leaders browse and accept them. Project workflow: pending → accepted → in_progress → completed.
     - **Tasks:** Leaders create and assign tasks to members. Task workflow: available → assigned → in_progress → submitted → approved/rejected. Members submit proof images/reports.
     - **Internal Messaging:** Real-time messaging for group members (text, file, project-related).
-    - **Earnings & Withdrawals:** Automatic earnings calculation, wallet balance tracking, withdrawal request system (Vodafone Cash, Etisalat Cash, Orange Cash, Bank Card, Bank Transfer), and withdrawal history.
-- **Direct Purchase System:** Product owners can purchase services directly from group leaders (e.g., Google Play reviews, UX testing, Google Maps reviews) with defined pricing ($1-$2 per service). Payment methods include Vodafone Cash, Etisalat Cash, Orange Cash, Bank Card. Order management tracks status: pending → payment_confirmed → in_progress → completed.
+    - **Earnings & Withdrawals:** Automatic earnings calculation (with 10% platform fee deduction), wallet balance tracking, withdrawal request system (Vodafone Cash, Etisalat Cash, Orange Cash, Bank Card, Bank Transfer), and withdrawal history.
+- **Direct Purchase System:** Product owners can purchase services directly from group leaders (e.g., Google Play reviews, UX testing, Google Maps reviews) with defined pricing ($1-$2 per service). Payment methods include Vodafone Cash, Etisalat Cash, Orange Cash, Bank Card. Order management tracks status: pending → payment_confirmed → in_progress → completed. All orders subject to 10% platform fee automatically calculated and displayed.
 - **Conversations System:** Real-time messaging between product owners and group leaders for direct communication:
     - **Database Schema:** Two tables: `conversations` (tracks conversation threads) and `conversationMessages` (stores individual messages)
     - **Access Points:** 

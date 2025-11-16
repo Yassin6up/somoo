@@ -94,10 +94,26 @@ export default function MyTasks() {
               </div>
             </CardHeader>
             <CardContent className="space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">المكافأة:</span>
-                <span className="font-bold text-primary">{task.reward} ر.س</span>
+              {/* تفاصيل المكافأة */}
+              <div className="p-3 bg-muted/50 rounded-xl space-y-1.5 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">المكافأة الإجمالية:</span>
+                  <span className="font-medium">${task.reward}</span>
+                </div>
+                {task.platformFee && parseFloat(task.platformFee) > 0 && (
+                  <>
+                    <div className="flex justify-between text-amber-600">
+                      <span>رسوم المنصة (10%):</span>
+                      <span className="font-medium">-${task.platformFee}</span>
+                    </div>
+                    <div className="flex justify-between pt-1.5 border-t border-border text-base font-bold text-green-600">
+                      <span>صافي المكافأة:</span>
+                      <span>${task.netReward || (parseFloat(task.reward) - parseFloat(task.platformFee)).toFixed(2)}</span>
+                    </div>
+                  </>
+                )}
               </div>
+              
               {task.feedback && task.status === "rejected" && (
                 <div className="p-3 bg-destructive/10 rounded-xl">
                   <p className="text-sm text-destructive font-medium">سبب الرفض:</p>

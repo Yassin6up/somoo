@@ -69,7 +69,7 @@ export default function OrdersPage() {
                   <div>
                     <CardTitle className="text-lg">{getServiceLabel(order.serviceType)}</CardTitle>
                     <CardDescription>
-                      الكمية: {order.quantity} • المبلغ: ${order.totalAmount}
+                      الكمية: {order.quantity}
                     </CardDescription>
                   </div>
                 </div>
@@ -77,6 +77,26 @@ export default function OrdersPage() {
               </div>
             </CardHeader>
             <CardContent className="space-y-3">
+              {/* تفاصيل المبلغ */}
+              <div className="p-3 bg-muted/50 rounded-xl space-y-1.5 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">المبلغ الإجمالي:</span>
+                  <span className="font-medium">${order.totalAmount}</span>
+                </div>
+                {order.platformFee && parseFloat(order.platformFee) > 0 && (
+                  <>
+                    <div className="flex justify-between text-amber-600">
+                      <span>رسوم المنصة (10%):</span>
+                      <span className="font-medium">-${order.platformFee}</span>
+                    </div>
+                    <div className="flex justify-between pt-1.5 border-t border-border text-base font-bold text-green-600">
+                      <span>صافي المبلغ للجروب:</span>
+                      <span>${order.netAmount || (parseFloat(order.totalAmount) - parseFloat(order.platformFee)).toFixed(2)}</span>
+                    </div>
+                  </>
+                )}
+              </div>
+              
               <div className="grid grid-cols-2 gap-2 text-sm">
                 <div>
                   <p className="text-muted-foreground">طريقة الدفع:</p>

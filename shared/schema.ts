@@ -108,6 +108,8 @@ export const tasks = pgTable("tasks", {
   description: text("description").notNull(),
   serviceType: text("service_type").notNull(),
   reward: decimal("reward", { precision: 10, scale: 2 }).notNull(),
+  platformFee: decimal("platform_fee", { precision: 10, scale: 2 }).notNull().default("0"), // رسوم المنصة 10%
+  netReward: decimal("net_reward", { precision: 10, scale: 2 }).notNull().default("0"), // المكافأة الصافية للفريلانسر بعد خصم رسوم المنصة
   status: text("status").notNull().default("available"), // available, assigned, in_progress, submitted, approved, rejected
   assignedAt: timestamp("assigned_at"),
   submittedAt: timestamp("submitted_at"),
@@ -211,6 +213,8 @@ export const orders = pgTable("orders", {
   quantity: integer("quantity").notNull(), // عدد المراجعات/المهام المطلوبة
   pricePerUnit: decimal("price_per_unit", { precision: 10, scale: 2 }).notNull(), // السعر لكل وحدة
   totalAmount: decimal("total_amount", { precision: 10, scale: 2 }).notNull(), // الإجمالي
+  platformFee: decimal("platform_fee", { precision: 10, scale: 2 }).notNull().default("0"), // رسوم المنصة 10%
+  netAmount: decimal("net_amount", { precision: 10, scale: 2 }).notNull().default("0"), // المبلغ الصافي للفريلانسر بعد خصم رسوم المنصة
   paymentMethod: text("payment_method").notNull(), // vodafone_cash, etisalat_cash, orange_cash, bank_card
   paymentDetails: text("payment_details"), // رقم الهاتف أو بيانات البطاقة
   status: text("status").notNull().default("pending"), // pending, payment_confirmed, in_progress, completed, cancelled

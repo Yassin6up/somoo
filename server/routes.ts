@@ -1569,6 +1569,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create tasks
       const createdTasks = [];
       for (const taskData of tasks) {
+        // Calculate platform fee (10%) and net reward
+        const reward = parseFloat(taskData.reward || "0");
+        const platformFee = (reward * 0.10).toFixed(2);
+        const netReward = (reward - parseFloat(platformFee)).toFixed(2);
+        
         const task = await storage.createTask({
           projectId,
           groupId: project.acceptedByGroupId,
@@ -1577,6 +1582,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           description: taskData.description || "",
           taskUrl: taskData.taskUrl || "",
           reward: taskData.reward || "0",
+          platformFee,
+          netReward,
           status: taskData.freelancerId ? "assigned" : "available",
           campaignId: "", // Not used in new system
         });
@@ -1588,7 +1595,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             userId: taskData.freelancerId,
             userType: "freelancer",
             title: "تم تعيين مهمة جديدة لك",
-            message: `تم تعيين مهمة "${task.title}" لك في مشروع "${project.title}"`,
+            message: `تم تعيين مهمة "${task.title}" لك في مشروع "${project.title}" بمكافأة $${netReward} (بعد خصم رسوم المنصة 10%)`,
             type: "task_assigned",
           });
         }
@@ -1822,13 +1829,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
         feedback: feedback || "تمت الموافقة",
       });
 
+      // Update freelancer earnings with net reward (after platform fee)
+      if (task.freelancerId && task.netReward) {
+        const freelancer = await storage.getFreelancer(task.freelancerId);
+        if (freelancer) {
+          const currentEarnings = parseFloat(freelancer.totalEarnings || "0");
+          const netReward = parseFloat(task.netReward);
+          const newEarnings = (currentEarnings + netReward).toFixed(2);
+          
+          await storage.updateFreelancerEarnings(task.freelancerId, newEarnings);
+        }
+      }
+
       // Notify freelancer
       if (task.freelancerId) {
+        const netAmount = task.netReward || (parseFloat(task.reward) - parseFloat(task.platformFee || "0")).toFixed(2);
         await storage.createNotification({
           userId: task.freelancerId,
           userType: "freelancer",
           title: "تمت الموافقة على مهمتك",
-          message: `تمت الموافقة على مهمة "${task.title}" من قبل قائد الجروب`,
+          message: `تمت الموافقة على مهمة "${task.title}". تمت إضافة $${netAmount} إلى رصيدك (بعد خصم رسوم المنصة 10%)`,
           type: "task_approved_by_leader",
         });
       }
@@ -2172,9 +2192,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const validatedData = insertOrderSchema.parse(req.body);
       
+      // Calculate platform fee (10%) and net amount
+      const totalAmount = parseFloat(validatedData.totalAmount.toString());
+      const platformFee = (totalAmount * 0.10).toFixed(2);
+      const netAmount = (totalAmount - parseFloat(platformFee)).toFixed(2);
+      
       const order = await storage.createOrder({
         ...validatedData,
         productOwnerId: req.user!.userId,
+        platformFee,
+        netAmount,
       });
 
       // Create notification for group leader
@@ -2184,7 +2211,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           userId: group.leaderId,
           userType: "freelancer",
           title: "طلب خدمة جديد",
-          message: `لديك طلب خدمة جديد بقيمة $${validatedData.totalAmount}`,
+          message: `لديك طلب خدمة جديد بقيمة $${netAmount} (بعد خصم رسوم المنصة 10%)`,
           type: "order_created",
         });
       }
