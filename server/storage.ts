@@ -137,6 +137,13 @@ export interface IStorage {
   removeGroupMember(groupId: string, freelancerId: string): Promise<void>;
   isGroupMember(groupId: string, freelancerId: string): Promise<boolean>;
 
+  // Group Join Request methods
+  getJoinRequestsByGroup(groupId: string): Promise<GroupJoinRequest[]>;
+  getJoinRequestByFreelancer(groupId: string, freelancerId: string): Promise<GroupJoinRequest | undefined>;
+  createJoinRequest(request: InsertGroupJoinRequest): Promise<GroupJoinRequest>;
+  updateJoinRequest(id: string, updates: Partial<GroupJoinRequest>): Promise<GroupJoinRequest | undefined>;
+  deleteJoinRequest(id: string): Promise<void>;
+
   // Project methods
   getProject(id: string): Promise<Project | undefined>;
   getProjectsByOwner(productOwnerId: string): Promise<Project[]>;
@@ -355,6 +362,11 @@ export class MemStorage implements IStorage {
   async addGroupMember(): Promise<GroupMember> { throw new Error("Not implemented in MemStorage"); }
   async removeGroupMember(): Promise<void> { throw new Error("Not implemented in MemStorage"); }
   async isGroupMember(): Promise<boolean> { throw new Error("Not implemented in MemStorage"); }
+  async getJoinRequestsByGroup(): Promise<GroupJoinRequest[]> { throw new Error("Not implemented in MemStorage"); }
+  async getJoinRequestByFreelancer(): Promise<GroupJoinRequest | undefined> { throw new Error("Not implemented in MemStorage"); }
+  async createJoinRequest(): Promise<GroupJoinRequest> { throw new Error("Not implemented in MemStorage"); }
+  async updateJoinRequest(): Promise<GroupJoinRequest | undefined> { throw new Error("Not implemented in MemStorage"); }
+  async deleteJoinRequest(): Promise<void> { throw new Error("Not implemented in MemStorage"); }
   async getProject(): Promise<Project | undefined> { throw new Error("Not implemented in MemStorage"); }
   async getProjectsByOwner(): Promise<Project[]> { throw new Error("Not implemented in MemStorage"); }
   async getPendingProjects(): Promise<Project[]> { throw new Error("Not implemented in MemStorage"); }
@@ -642,6 +654,31 @@ export class DatabaseStorage implements IStorage {
     const [member] = await db.select().from(groupMembers)
       .where(and(eq(groupMembers.groupId, groupId), eq(groupMembers.freelancerId, freelancerId)));
     return !!member;
+  }
+
+  // Group Join Request methods
+  async getJoinRequestsByGroup(groupId: string): Promise<GroupJoinRequest[]> {
+    return await db.select().from(groupJoinRequests).where(eq(groupJoinRequests.groupId, groupId));
+  }
+
+  async getJoinRequestByFreelancer(groupId: string, freelancerId: string): Promise<GroupJoinRequest | undefined> {
+    const [request] = await db.select().from(groupJoinRequests)
+      .where(and(eq(groupJoinRequests.groupId, groupId), eq(groupJoinRequests.freelancerId, freelancerId)));
+    return request || undefined;
+  }
+
+  async createJoinRequest(request: InsertGroupJoinRequest): Promise<GroupJoinRequest> {
+    const [newRequest] = await db.insert(groupJoinRequests).values(request).returning();
+    return newRequest;
+  }
+
+  async updateJoinRequest(id: string, updates: Partial<GroupJoinRequest>): Promise<GroupJoinRequest | undefined> {
+    const [updated] = await db.update(groupJoinRequests).set(updates).where(eq(groupJoinRequests.id, id)).returning();
+    return updated || undefined;
+  }
+
+  async deleteJoinRequest(id: string): Promise<void> {
+    await db.delete(groupJoinRequests).where(eq(groupJoinRequests.id, id));
   }
 
   // Project methods

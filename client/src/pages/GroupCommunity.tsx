@@ -26,6 +26,7 @@ import {
   X,
   Home,
   UserPlus,
+  UserCheck,
   Video,
   FileText,
   ShoppingBag,
@@ -106,6 +107,7 @@ export default function GroupCommunity() {
     ? JSON.parse(localStorage.getItem("user")!) 
     : null;
   const currentUserId = currentUser?.id;
+  const userType = localStorage.getItem("userType");
 
   // Fetch group data
   const { data: group, isLoading: groupLoading } = useQuery<Group>({
@@ -116,6 +118,10 @@ export default function GroupCommunity() {
   const { data: members = [] } = useQuery<GroupMember[]>({
     queryKey: [`/api/groups/${groupId}/members`],
   });
+
+  // Check if current user is a member
+  const isMember = members.some(m => m.freelancerId === currentUserId);
+  const isLeader = group?.leaderId === currentUserId;
 
   // Fetch freelancers info for members
   const { data: freelancers = [] } = useQuery<Freelancer[]>({
@@ -170,7 +176,7 @@ export default function GroupCommunity() {
     return new Date(lastSeen) > fiveMinutesAgo;
   };
 
-  const isLeader = (userId: string) => {
+  const checkIsLeader = (userId: string) => {
     return group?.leaderId === userId;
   };
 
@@ -279,6 +285,41 @@ export default function GroupCommunity() {
       content: newPostContent,
       imageUrl: newPostImage,
     });
+  };
+
+  // Join group mutation
+  const joinGroupMutation = useMutation({
+    mutationFn: async () => {
+      return await apiRequest(`/api/groups/${groupId}/join`, "POST", {});
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/groups/${groupId}`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/groups/${groupId}/members`] });
+      toast({
+        title: "تم الانضمام بنجاح",
+        description: "تم إضافتك إلى المجموعة بنجاح",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "خطأ",
+        description: error.message || "حدث خطأ أثناء الانضمام للمجموعة",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleJoinGroup = () => {
+    if (!currentUserId || userType !== "freelancer") {
+      toast({
+        title: "تنبيه",
+        description: "يجب تسجيل الدخول كفريلانسر للانضمام للمجموعة",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    joinGroupMutation.mutate();
   };
 
   if (groupLoading) {
@@ -397,14 +438,33 @@ export default function GroupCommunity() {
 
                 {/* Action Buttons */}
                 <div className="flex gap-3">
-                  <Button className="flex-1" disabled>
-                    <UserPlus className="ml-2 h-4 w-4" />
-                    الانضمام للجروب
-                  </Button>
+                  {!isMember && !isLeader && userType === "freelancer" && (
+                    <Button 
+                      className="flex-1" 
+                      onClick={handleJoinGroup}
+                      disabled={joinGroupMutation.isPending}
+                      data-testid="button-join-group"
+                    >
+                      <UserPlus className="ml-2 h-4 w-4" />
+                      {joinGroupMutation.isPending ? "جارِ الانضمام..." : "الانضمام للجروب"}
+                    </Button>
+                  )}
+                  {(isMember || isLeader) && (
+                    <Button 
+                      className="flex-1" 
+                      variant="secondary"
+                      disabled
+                      data-testid="button-already-member"
+                    >
+                      <UserCheck className="ml-2 h-4 w-4" />
+                      عضو بالفعل
+                    </Button>
+                  )}
                   <Button 
                     variant="outline" 
                     className="flex-1"
                     onClick={() => navigate(`/groups/${groupId}/chat`)}
+                    data-testid="button-send-message"
                   >
                     <MessageSquare className="ml-2 h-4 w-4" />
                     إرسال رسالة
@@ -620,7 +680,7 @@ export default function GroupCommunity() {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
                             <p className="font-semibold text-sm">{author?.fullName}</p>
-                            {isLeader(post.authorId) && (
+                            {checkIsLeader(post.authorId) && (
                               <Badge variant="secondary" className="bg-amber-100 text-amber-700 text-xs">
                                 <Star className="h-3 w-3 ml-1" />
                                 قائد
@@ -704,7 +764,7 @@ export default function GroupCommunity() {
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold truncate flex items-center gap-2">
                         {member.fullName}
-                        {isLeader(member.id) && (
+                        {checkIsLeader(member.id) && (
                           <Star className="h-3 w-3 text-amber-500 flex-shrink-0" />
                         )}
                       </p>
@@ -857,7 +917,7 @@ function PostCard({
     },
   });
 
-  const canDelete = currentUserId && (post.authorId === currentUserId || isLeader(currentUserId));
+  const canDelete = currentUserId && (post.authorId === currentUserId || checkIsLeader(currentUserId));
 
   return (
     <Card>
@@ -1001,7 +1061,7 @@ function PostCard({
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
                           <p className="font-semibold text-sm">{commentAuthor?.fullName}</p>
-                          {isLeader(comment.authorId) && (
+                          {checkIsLeader(comment.authorId) && (
                             <Badge variant="secondary" className="bg-amber-100 text-amber-700 text-xs">
                               <Star className="h-2 w-2 ml-1" />
                               قائد
