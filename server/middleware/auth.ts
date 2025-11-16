@@ -11,8 +11,9 @@ const JWT_EXPIRES_IN = "7d"; // Token expires in 7 days
 
 export interface AuthPayload {
   userId: string;
-  userType: "freelancer" | "product_owner";
+  userType: "freelancer" | "product_owner" | "admin";
   email: string;
+  roleId?: string; // For admin users
 }
 
 export interface AuthRequest extends Request {
@@ -79,7 +80,7 @@ export function optionalAuthMiddleware(req: AuthRequest, res: Response, next: Ne
 }
 
 // Role-based authorization middleware
-export function requireRole(allowedRoles: ("freelancer" | "product_owner")[]) {
+export function requireRole(allowedRoles: ("freelancer" | "product_owner" | "admin")[]) {
   return (req: AuthRequest, res: Response, next: NextFunction) => {
     if (!req.user) {
       return res.status(401).json({ error: "غير مصرح - يرجى تسجيل الدخول" });
@@ -90,5 +91,64 @@ export function requireRole(allowedRoles: ("freelancer" | "product_owner")[]) {
     }
 
     next();
+  };
+}
+
+// Admin authentication middleware
+export function adminAuthMiddleware(req: AuthRequest, res: Response, next: NextFunction) {
+  authMiddleware(req, res, () => {
+    if (req.user?.userType !== "admin") {
+      return res.status(403).json({ error: "ممنوع - هذه الصفحة للمسؤولين فقط" });
+    }
+    next();
+  });
+}
+
+// Permission-based authorization middleware for admin users
+export function requirePermission(permission: string) {
+  return async (req: AuthRequest, res: Response, next: NextFunction) => {
+    if (!req.user || req.user.userType !== "admin") {
+      return res.status(403).json({ error: "ممنوع - ليس لديك صلاحية للوصول" });
+    }
+
+    try {
+      // Import here to avoid circular dependencies
+      const { db } = await import("../db");
+      const { adminUsers, roles, permissions, rolePermissions } = await import("@shared/schema");
+      const { eq } = await import("drizzle-orm");
+
+      // Get admin user with role
+      const [admin] = await db.select().from(adminUsers).where(eq(adminUsers.id, req.user.userId));
+      if (!admin || !admin.isActive) {
+        return res.status(403).json({ error: "حساب غير نشط" });
+      }
+
+      // Get role
+      const [role] = await db.select().from(roles).where(eq(roles.id, admin.roleId));
+      if (!role) {
+        return res.status(403).json({ error: "دور غير موجود" });
+      }
+
+      // Get role permissions
+      const userPermissions = await db
+        .select({
+          name: permissions.name,
+        })
+        .from(rolePermissions)
+        .innerJoin(permissions, eq(rolePermissions.permissionId, permissions.id))
+        .where(eq(rolePermissions.roleId, role.id));
+
+      const permissionNames = userPermissions.map(p => p.name);
+
+      // Check if user has the required permission
+      if (!permissionNames.includes(permission)) {
+        return res.status(403).json({ error: `ليس لديك صلاحية: ${permission}` });
+      }
+
+      next();
+    } catch (error) {
+      console.error("Error checking permission:", error);
+      return res.status(500).json({ error: "خطأ في التحقق من الصلاحيات" });
+    }
   };
 }

@@ -51,6 +51,11 @@ import Services from "@/pages/Services";
 import TermsConditions from "@/pages/TermsConditions";
 import PrivacyPolicy from "@/pages/PrivacyPolicy";
 import RefundPolicy from "@/pages/RefundPolicy";
+import AdminLogin from "@/pages/AdminLogin";
+import { AdminDashboardLayout } from "@/components/AdminDashboardLayout";
+import AdminDashboard from "@/pages/admin/Dashboard";
+import AdminUsers from "@/pages/admin/Users";
+import CreateAdminUser from "@/pages/admin/CreateUser";
 
 function Router() {
   return (
@@ -210,6 +215,31 @@ function Router() {
       <Route path="/projects/create" component={CreateProject} />
       <Route path="/projects/:id" component={ProjectDetails} />
       <Route path="/my-tasks" component={MyTasks} />
+      
+      {/* Admin Dashboard Routes */}
+      <Route path="/admin/login" component={AdminLogin} />
+      <Route path="/admin">
+        {() => (
+          <AdminDashboardLayout>
+            <AdminDashboard />
+          </AdminDashboardLayout>
+        )}
+      </Route>
+      <Route path="/admin/users">
+        {() => (
+          <AdminDashboardLayout>
+            <AdminUsers />
+          </AdminDashboardLayout>
+        )}
+      </Route>
+      <Route path="/admin/users/create">
+        {() => (
+          <AdminDashboardLayout>
+            <CreateAdminUser />
+          </AdminDashboardLayout>
+        )}
+      </Route>
+
       <Route component={NotFound} />
     </Switch>
   );

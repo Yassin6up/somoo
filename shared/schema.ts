@@ -693,3 +693,79 @@ export const insertUserSchema = createInsertSchema(users).pick({
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
+
+// ============================================
+// Admin Dashboard System
+// ============================================
+
+// Roles table - أدوار المستخدمين الإداريين
+export const roles = pgTable("roles", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull().unique(),
+  nameAr: text("name_ar").notNull(),
+  description: text("description"),
+  isSystemRole: boolean("is_system_role").default(false).notNull(), // الأدوار النظامية لا يمكن حذفها
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Permissions table - الصلاحيات
+export const permissions = pgTable("permissions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull().unique(), // مثل users:view, users:create
+  nameAr: text("name_ar").notNull(),
+  resource: text("resource").notNull(), // users, freelancers, groups, etc.
+  action: text("action").notNull(), // view, create, edit, delete, approve
+  description: text("description"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Role Permissions table - ربط الأدوار بالصلاحيات
+export const rolePermissions = pgTable("role_permissions", {
+  roleId: varchar("role_id").notNull().references(() => roles.id, { onDelete: 'cascade' }),
+  permissionId: varchar("permission_id").notNull().references(() => permissions.id, { onDelete: 'cascade' }),
+}, (table) => ({
+  pk: uniqueIndex("role_permission_pk").on(table.roleId, table.permissionId),
+}));
+
+// Admin Users table - المستخدمون الإداريون
+export const adminUsers = pgTable("admin_users", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  email: text("email").notNull().unique(),
+  password: text("password").notNull(),
+  fullName: text("full_name").notNull(),
+  phone: text("phone"),
+  roleId: varchar("role_id").notNull().references(() => roles.id),
+  isActive: boolean("is_active").default(true).notNull(),
+  lastLogin: timestamp("last_login"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Insert schemas and types
+export const insertRoleSchema = createInsertSchema(roles).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertPermissionSchema = createInsertSchema(permissions).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertAdminUserSchema = createInsertSchema(adminUsers).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  lastLogin: true,
+});
+
+export type Role = typeof roles.$inferSelect;
+export type InsertRole = z.infer<typeof insertRoleSchema>;
+
+export type Permission = typeof permissions.$inferSelect;
+export type InsertPermission = z.infer<typeof insertPermissionSchema>;
+
+export type AdminUser = typeof adminUsers.$inferSelect;
+export type InsertAdminUser = z.infer<typeof insertAdminUserSchema>;
+
+export type RolePermission = typeof rolePermissions.$inferSelect;

@@ -9,7 +9,7 @@ import { writeFile, mkdir } from "fs/promises";
 import { join } from "path";
 import { existsSync } from "fs";
 import bcrypt from "bcrypt";
-import { generateToken, authMiddleware, requireRole, type AuthRequest } from "./middleware/auth";
+import { generateToken, authMiddleware, requireRole, adminAuthMiddleware, requirePermission, type AuthRequest } from "./middleware/auth";
 import { db } from "./db";
 import { eq } from "drizzle-orm";
 
@@ -2786,6 +2786,329 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error toggling reaction:", error);
       res.status(500).json({ error: "حدث خطأ أثناء التفاعل مع المنشور" });
+    }
+  });
+
+  // ============================================
+  // ADMIN DASHBOARD ROUTES
+  // ============================================
+
+  // Admin Login
+  app.post("/api/admin/login", async (req, res) => {
+    try {
+      const { email, password } = req.body;
+
+      if (!email || !password) {
+        return res.status(400).json({ error: "البريد الإلكتروني وكلمة المرور مطلوبان" });
+      }
+
+      const { adminUsers, roles } = await import("@shared/schema");
+      
+      // Find admin user
+      const [admin] = await db.select().from(adminUsers).where(eq(adminUsers.email, email));
+      
+      if (!admin) {
+        return res.status(401).json({ error: "بيانات تسجيل الدخول غير صحيحة" });
+      }
+
+      if (!admin.isActive) {
+        return res.status(403).json({ error: "الحساب غير نشط" });
+      }
+
+      // Verify password
+      const isValidPassword = await bcrypt.compare(password, admin.password);
+      if (!isValidPassword) {
+        return res.status(401).json({ error: "بيانات تسجيل الدخول غير صحيحة" });
+      }
+
+      // Get role
+      const [role] = await db.select().from(roles).where(eq(roles.id, admin.roleId));
+
+      // Update last login
+      await db.update(adminUsers)
+        .set({ lastLogin: new Date() })
+        .where(eq(adminUsers.id, admin.id));
+
+      // Generate token
+      const token = generateToken({
+        userId: admin.id,
+        userType: "admin",
+        email: admin.email,
+        roleId: admin.roleId,
+      });
+
+      const { password: _, ...adminWithoutPassword } = admin;
+
+      res.json({
+        user: { ...adminWithoutPassword, role },
+        token,
+        message: "تم تسجيل الدخول بنجاح",
+      });
+    } catch (error) {
+      console.error("Admin login error:", error);
+      res.status(500).json({ error: "حدث خطأ أثناء تسجيل الدخول" });
+    }
+  });
+
+  // Get current admin user info
+  app.get("/api/admin/me", adminAuthMiddleware, async (req, res) => {
+    try {
+      const { adminUsers, roles, permissions, rolePermissions } = await import("@shared/schema");
+      
+      const [admin] = await db.select().from(adminUsers).where(eq(adminUsers.id, req.user!.userId));
+      if (!admin) {
+        return res.status(404).json({ error: "المستخدم غير موجود" });
+      }
+
+      const [role] = await db.select().from(roles).where(eq(roles.id, admin.roleId));
+
+      // Get user permissions
+      const userPermissions = await db
+        .select({
+          id: permissions.id,
+          name: permissions.name,
+          nameAr: permissions.nameAr,
+          resource: permissions.resource,
+          action: permissions.action,
+        })
+        .from(rolePermissions)
+        .innerJoin(permissions, eq(rolePermissions.permissionId, permissions.id))
+        .where(eq(rolePermissions.roleId, admin.roleId));
+
+      const { password: _, ...adminWithoutPassword } = admin;
+
+      res.json({
+        ...adminWithoutPassword,
+        role,
+        permissions: userPermissions,
+      });
+    } catch (error) {
+      console.error("Error fetching admin user:", error);
+      res.status(500).json({ error: "حدث خطأ في جلب بيانات المستخدم" });
+    }
+  });
+
+  // Get all admin users
+  app.get("/api/admin/users", adminAuthMiddleware, requirePermission("admin_users:view"), async (req, res) => {
+    try {
+      const { adminUsers, roles } = await import("@shared/schema");
+      
+      const users = await db
+        .select({
+          id: adminUsers.id,
+          email: adminUsers.email,
+          fullName: adminUsers.fullName,
+          phone: adminUsers.phone,
+          roleId: adminUsers.roleId,
+          isActive: adminUsers.isActive,
+          lastLogin: adminUsers.lastLogin,
+          createdAt: adminUsers.createdAt,
+          roleName: roles.name,
+          roleNameAr: roles.nameAr,
+        })
+        .from(adminUsers)
+        .leftJoin(roles, eq(adminUsers.roleId, roles.id));
+
+      res.json(users);
+    } catch (error) {
+      console.error("Error fetching admin users:", error);
+      res.status(500).json({ error: "حدث خطأ في جلب المستخدمين" });
+    }
+  });
+
+  // Create new admin user
+  app.post("/api/admin/users", adminAuthMiddleware, requirePermission("admin_users:create"), async (req, res) => {
+    try {
+      const { adminUsers, insertAdminUserSchema } = await import("@shared/schema");
+      const validatedData = insertAdminUserSchema.parse(req.body);
+
+      // Check if email exists
+      const [existing] = await db.select().from(adminUsers).where(eq(adminUsers.email, validatedData.email));
+      if (existing) {
+        return res.status(400).json({ error: "البريد الإلكتروني مستخدم بالفعل" });
+      }
+
+      // Hash password
+      const hashedPassword = await bcrypt.hash(validatedData.password, 10);
+
+      const [newAdmin] = await db.insert(adminUsers).values({
+        ...validatedData,
+        password: hashedPassword,
+      }).returning();
+
+      const { password: _, ...adminWithoutPassword } = newAdmin;
+
+      res.status(201).json({
+        user: adminWithoutPassword,
+        message: "تم إنشاء المستخدم بنجاح",
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors });
+      }
+      console.error("Error creating admin user:", error);
+      res.status(500).json({ error: "حدث خطأ في إنشاء المستخدم" });
+    }
+  });
+
+  // Update admin user
+  app.patch("/api/admin/users/:id", adminAuthMiddleware, requirePermission("admin_users:edit"), async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { adminUsers } = await import("@shared/schema");
+
+      const { password, ...updateData } = req.body;
+
+      // If password is being updated, hash it
+      const dataToUpdate: any = updateData;
+      if (password) {
+        dataToUpdate.password = await bcrypt.hash(password, 10);
+      }
+
+      const [updated] = await db.update(adminUsers)
+        .set({ ...dataToUpdate, updatedAt: new Date() })
+        .where(eq(adminUsers.id, id))
+        .returning();
+
+      if (!updated) {
+        return res.status(404).json({ error: "المستخدم غير موجود" });
+      }
+
+      const { password: _, ...adminWithoutPassword } = updated;
+
+      res.json({
+        user: adminWithoutPassword,
+        message: "تم تحديث المستخدم بنجاح",
+      });
+    } catch (error) {
+      console.error("Error updating admin user:", error);
+      res.status(500).json({ error: "حدث خطأ في تحديث المستخدم" });
+    }
+  });
+
+  // Delete admin user
+  app.delete("/api/admin/users/:id", adminAuthMiddleware, requirePermission("admin_users:delete"), async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { adminUsers } = await import("@shared/schema");
+
+      // Prevent deleting yourself
+      if (id === req.user!.userId) {
+        return res.status(400).json({ error: "لا يمكنك حذف حسابك الخاص" });
+      }
+
+      await db.delete(adminUsers).where(eq(adminUsers.id, id));
+
+      res.json({ message: "تم حذف المستخدم بنجاح" });
+    } catch (error) {
+      console.error("Error deleting admin user:", error);
+      res.status(500).json({ error: "حدث خطأ في حذف المستخدم" });
+    }
+  });
+
+  // Get all roles
+  app.get("/api/admin/roles", adminAuthMiddleware, requirePermission("roles:view"), async (req, res) => {
+    try {
+      const { roles } = await import("@shared/schema");
+      
+      const allRoles = await db.select().from(roles);
+
+      res.json(allRoles);
+    } catch (error) {
+      console.error("Error fetching roles:", error);
+      res.status(500).json({ error: "حدث خطأ في جلب الأدوار" });
+    }
+  });
+
+  // Get role with permissions
+  app.get("/api/admin/roles/:id", adminAuthMiddleware, requirePermission("roles:view"), async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { roles, permissions, rolePermissions } = await import("@shared/schema");
+
+      const [role] = await db.select().from(roles).where(eq(roles.id, id));
+      
+      if (!role) {
+        return res.status(404).json({ error: "الدور غير موجود" });
+      }
+
+      const rolePerms = await db
+        .select({
+          id: permissions.id,
+          name: permissions.name,
+          nameAr: permissions.nameAr,
+          resource: permissions.resource,
+          action: permissions.action,
+          description: permissions.description,
+        })
+        .from(rolePermissions)
+        .innerJoin(permissions, eq(rolePermissions.permissionId, permissions.id))
+        .where(eq(rolePermissions.roleId, id));
+
+      res.json({
+        ...role,
+        permissions: rolePerms,
+      });
+    } catch (error) {
+      console.error("Error fetching role:", error);
+      res.status(500).json({ error: "حدث خطأ في جلب الدور" });
+    }
+  });
+
+  // Get all permissions
+  app.get("/api/admin/permissions", adminAuthMiddleware, requirePermission("roles:view"), async (req, res) => {
+    try {
+      const { permissions } = await import("@shared/schema");
+      
+      const allPermissions = await db.select().from(permissions);
+
+      res.json(allPermissions);
+    } catch (error) {
+      console.error("Error fetching permissions:", error);
+      res.status(500).json({ error: "حدث خطأ في جلب الصلاحيات" });
+    }
+  });
+
+  // Admin Dashboard Statistics
+  app.get("/api/admin/statistics", adminAuthMiddleware, async (req, res) => {
+    try {
+      const { freelancers, productOwners, groups, projects, orders, tasks, withdrawals } = await import("@shared/schema");
+      const { sql } = await import("drizzle-orm");
+
+      // Get counts
+      const [freelancersCount] = await db.select({ count: sql<number>`count(*)::int` }).from(freelancers);
+      const [productOwnersCount] = await db.select({ count: sql<number>`count(*)::int` }).from(productOwners);
+      const [groupsCount] = await db.select({ count: sql<number>`count(*)::int` }).from(groups);
+      const [projectsCount] = await db.select({ count: sql<number>`count(*)::int` }).from(projects);
+      const [ordersCount] = await db.select({ count: sql<number>`count(*)::int` }).from(orders);
+      const [tasksCount] = await db.select({ count: sql<number>`count(*)::int` }).from(tasks);
+      const [withdrawalsCount] = await db.select({ count: sql<number>`count(*)::int` }).from(withdrawals);
+
+      // Get pending withdrawals
+      const [pendingWithdrawals] = await db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(withdrawals)
+        .where(eq(withdrawals.status, "pending"));
+
+      // Get total revenue (sum of platform fees from orders)
+      const [revenue] = await db
+        .select({ total: sql<number>`COALESCE(SUM(platform_fee), 0)::numeric` })
+        .from(orders);
+
+      res.json({
+        freelancers: freelancersCount.count,
+        productOwners: productOwnersCount.count,
+        groups: groupsCount.count,
+        projects: projectsCount.count,
+        orders: ordersCount.count,
+        tasks: tasksCount.count,
+        withdrawals: withdrawalsCount.count,
+        pendingWithdrawals: pendingWithdrawals.count,
+        totalRevenue: Number(revenue.total),
+      });
+    } catch (error) {
+      console.error("Error fetching statistics:", error);
+      res.status(500).json({ error: "حدث خطأ في جلب الإحصائيات" });
     }
   });
 
