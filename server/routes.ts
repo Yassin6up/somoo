@@ -2475,10 +2475,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // GROUP POSTS ROUTES (Community Feature)
   // ============================================
 
-  // Get posts by group
+  // Get posts by group (with optional filtering and sorting)
   app.get("/api/groups/:groupId/posts", authMiddleware, async (req: AuthRequest, res) => {
     try {
       const { groupId } = req.params;
+      const { sort, mediaOnly } = req.query;
       const userId = req.user!.userId;
 
       // Verify user is a group member or leader
@@ -2494,7 +2495,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ error: "يجب أن تكون عضواً في المجموعة" });
       }
 
-      const posts = await storage.getPostsByGroup(groupId);
+      let posts = await storage.getPostsByGroup(groupId);
+      
+      // Filter media-only posts if requested
+      if (mediaOnly === 'true') {
+        posts = posts.filter(post => post.imageUrl);
+      }
+      
+      // Sort posts if requested
+      if (sort === 'popular') {
+        posts = posts.sort((a, b) => {
+          const scoreA = (a.likesCount || 0) + (a.commentsCount || 0);
+          const scoreB = (b.likesCount || 0) + (b.commentsCount || 0);
+          return scoreB - scoreA;
+        });
+      }
+      
       res.json(posts);
     } catch (error) {
       console.error("Error fetching group posts:", error);
