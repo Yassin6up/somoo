@@ -886,16 +886,20 @@ function PostCard({
 
   // Add comment mutation
   const addCommentMutation = useMutation({
-    mutationFn: async (content: string) => {
+    mutationFn: async ({ content, imageUrl }: { content: string; imageUrl: string | null }) => {
       return await apiRequest(`/api/posts/${post.id}/comments`, "POST", {
         content,
-        imageUrl: null,
+        imageUrl,
       });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/posts/${post.id}/comments`] });
       queryClient.invalidateQueries({ queryKey: [`/api/groups/${groupId}/posts`] });
+      queryClient.invalidateQueries({ queryKey: ['/api/groups', groupId, 'posts'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/groups', groupId, 'posts', 'popular'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/groups', groupId, 'posts', 'media'] });
       setCommentInputs(prev => ({ ...prev, [post.id]: "" }));
+      setCommentImages(prev => ({ ...prev, [post.id]: "" }));
       toast({
         title: "تم إضافة التعليق",
         description: "تم إضافة تعليقك بنجاح",
@@ -1013,35 +1017,88 @@ function PostCard({
           <div className="space-y-4 mt-4 pt-4 border-t">
             {/* Add Comment */}
             {currentUserId && (
-              <div className="flex items-start gap-3">
-                <Avatar className="w-8 h-8">
-                  <AvatarFallback className="bg-[#002e62] text-white text-xs">
-                    Me
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1 flex gap-2">
-                  <Input
-                    placeholder="اكتب تعليق..."
-                    value={commentInputs[post.id] || ""}
-                    onChange={(e) => setCommentInputs(prev => ({ ...prev, [post.id]: e.target.value }))}
-                    onKeyPress={(e) => {
-                      if (e.key === 'Enter' && commentInputs[post.id]?.trim()) {
-                        addCommentMutation.mutate(commentInputs[post.id]);
-                      }
-                    }}
-                  />
-                  <Button
-                    size="sm"
-                    onClick={() => {
-                      if (commentInputs[post.id]?.trim()) {
-                        addCommentMutation.mutate(commentInputs[post.id]);
-                      }
-                    }}
-                    disabled={addCommentMutation.isPending || !commentInputs[post.id]?.trim()}
-                  >
-                    <Send className="h-4 w-4" />
-                  </Button>
+              <div className="flex flex-col gap-2">
+                <div className="flex items-start gap-3">
+                  <Avatar className="w-8 h-8">
+                    <AvatarFallback className="bg-[#002e62] text-white text-xs">
+                      Me
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 flex gap-2">
+                    <Input
+                      placeholder="اكتب تعليق..."
+                      value={commentInputs[post.id] || ""}
+                      onChange={(e) => setCommentInputs(prev => ({ ...prev, [post.id]: e.target.value }))}
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter' && commentInputs[post.id]?.trim()) {
+                          addCommentMutation.mutate({
+                            content: commentInputs[post.id],
+                            imageUrl: commentImages[post.id] || null,
+                          });
+                        }
+                      }}
+                      data-testid={`input-comment-${post.id}`}
+                    />
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      id={`comment-image-${post.id}`}
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          const url = await handleImageUpload(file, 'comment', post.id);
+                          if (url) {
+                            setCommentImages(prev => ({ ...prev, [post.id]: url }));
+                          }
+                        }
+                      }}
+                    />
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => document.getElementById(`comment-image-${post.id}`)?.click()}
+                      data-testid={`button-upload-comment-image-${post.id}`}
+                    >
+                      <ImageIcon className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={() => {
+                        if (commentInputs[post.id]?.trim()) {
+                          addCommentMutation.mutate({
+                            content: commentInputs[post.id],
+                            imageUrl: commentImages[post.id] || null,
+                          });
+                        }
+                      }}
+                      disabled={addCommentMutation.isPending || !commentInputs[post.id]?.trim()}
+                      data-testid={`button-send-comment-${post.id}`}
+                    >
+                      <Send className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
+                
+                {/* Comment Image Preview */}
+                {commentImages[post.id] && (
+                  <div className="mr-11 relative inline-block">
+                    <img
+                      src={commentImages[post.id]}
+                      alt="معاينة الصورة"
+                      className="h-24 rounded-lg border"
+                    />
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      className="absolute top-1 left-1 h-6 w-6 p-0"
+                      onClick={() => setCommentImages(prev => ({ ...prev, [post.id]: "" }))}
+                      data-testid={`button-remove-comment-image-${post.id}`}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
               </div>
             )}
 
