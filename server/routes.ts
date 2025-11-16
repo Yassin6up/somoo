@@ -3131,6 +3131,501 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // ============================================
+  // FREELANCERS MANAGEMENT (ADMIN)
+  // ============================================
+
+  // Get all freelancers
+  app.get("/api/admin/freelancers", adminAuthMiddleware, requirePermission("freelancers:view"), async (req, res) => {
+    try {
+      const { freelancers, users } = await import("@shared/schema");
+      
+      const allFreelancers = await db
+        .select({
+          id: freelancers.id,
+          userId: freelancers.userId,
+          fullName: freelancers.fullName,
+          email: users.email,
+          country: freelancers.country,
+          rating: freelancers.rating,
+          totalEarnings: freelancers.totalEarnings,
+          availableBalance: freelancers.availableBalance,
+          pendingBalance: freelancers.pendingBalance,
+          tasksCompleted: freelancers.tasksCompleted,
+          isActive: freelancers.isActive,
+          createdAt: freelancers.createdAt,
+        })
+        .from(freelancers)
+        .leftJoin(users, eq(freelancers.userId, users.id));
+
+      res.json(allFreelancers);
+    } catch (error) {
+      console.error("Error fetching freelancers:", error);
+      res.status(500).json({ error: "حدث خطأ في جلب الفريلانسرز" });
+    }
+  });
+
+  // Get freelancer details
+  app.get("/api/admin/freelancers/:id", adminAuthMiddleware, requirePermission("freelancers:view"), async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { freelancers, users, groups, groupMembers } = await import("@shared/schema");
+
+      const [freelancer] = await db
+        .select({
+          id: freelancers.id,
+          userId: freelancers.userId,
+          fullName: freelancers.fullName,
+          email: users.email,
+          country: freelancers.country,
+          phoneNumber: freelancers.phoneNumber,
+          profilePicture: freelancers.profilePicture,
+          rating: freelancers.rating,
+          totalEarnings: freelancers.totalEarnings,
+          availableBalance: freelancers.availableBalance,
+          pendingBalance: freelancers.pendingBalance,
+          tasksCompleted: freelancers.tasksCompleted,
+          isActive: freelancers.isActive,
+          acceptedInstructions: freelancers.acceptedInstructions,
+          createdAt: freelancers.createdAt,
+        })
+        .from(freelancers)
+        .leftJoin(users, eq(freelancers.userId, users.id))
+        .where(eq(freelancers.id, id));
+
+      if (!freelancer) {
+        return res.status(404).json({ error: "الفريلانسر غير موجود" });
+      }
+
+      // Get groups this freelancer is in
+      const freelancerGroups = await db
+        .select({
+          id: groups.id,
+          name: groups.name,
+          leaderId: groups.leaderId,
+          memberCount: groups.memberCount,
+        })
+        .from(groupMembers)
+        .innerJoin(groups, eq(groupMembers.groupId, groups.id))
+        .where(eq(groupMembers.freelancerId, id));
+
+      res.json({
+        ...freelancer,
+        groups: freelancerGroups,
+      });
+    } catch (error) {
+      console.error("Error fetching freelancer:", error);
+      res.status(500).json({ error: "حدث خطأ في جلب بيانات الفريلانسر" });
+    }
+  });
+
+  // Toggle freelancer active status
+  app.patch("/api/admin/freelancers/:id/toggle-status", adminAuthMiddleware, requirePermission("freelancers:edit"), async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { freelancers } = await import("@shared/schema");
+
+      const [freelancer] = await db.select().from(freelancers).where(eq(freelancers.id, id));
+      
+      if (!freelancer) {
+        return res.status(404).json({ error: "الفريلانسر غير موجود" });
+      }
+
+      const [updated] = await db
+        .update(freelancers)
+        .set({ isActive: !freelancer.isActive })
+        .where(eq(freelancers.id, id))
+        .returning();
+
+      res.json({
+        freelancer: updated,
+        message: `تم ${updated.isActive ? 'تفعيل' : 'إيقاف'} الحساب بنجاح`,
+      });
+    } catch (error) {
+      console.error("Error toggling freelancer status:", error);
+      res.status(500).json({ error: "حدث خطأ في تعديل حالة الفريلانسر" });
+    }
+  });
+
+  // ============================================
+  // PRODUCT OWNERS MANAGEMENT (ADMIN)
+  // ============================================
+
+  // Get all product owners
+  app.get("/api/admin/product-owners", adminAuthMiddleware, requirePermission("product_owners:view"), async (req, res) => {
+    try {
+      const { productOwners, users } = await import("@shared/schema");
+      
+      const allProductOwners = await db
+        .select({
+          id: productOwners.id,
+          userId: productOwners.userId,
+          fullName: productOwners.fullName,
+          email: users.email,
+          companyName: productOwners.companyName,
+          country: productOwners.country,
+          totalSpent: productOwners.totalSpent,
+          projectsCreated: productOwners.projectsCreated,
+          ordersPlaced: productOwners.ordersPlaced,
+          isActive: productOwners.isActive,
+          createdAt: productOwners.createdAt,
+        })
+        .from(productOwners)
+        .leftJoin(users, eq(productOwners.userId, users.id));
+
+      res.json(allProductOwners);
+    } catch (error) {
+      console.error("Error fetching product owners:", error);
+      res.status(500).json({ error: "حدث خطأ في جلب أصحاب المنتجات" });
+    }
+  });
+
+  // Get product owner details
+  app.get("/api/admin/product-owners/:id", adminAuthMiddleware, requirePermission("product_owners:view"), async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { productOwners, users, projects, orders } = await import("@shared/schema");
+
+      const [productOwner] = await db
+        .select({
+          id: productOwners.id,
+          userId: productOwners.userId,
+          fullName: productOwners.fullName,
+          email: users.email,
+          companyName: productOwners.companyName,
+          country: productOwners.country,
+          phoneNumber: productOwners.phoneNumber,
+          profilePicture: productOwners.profilePicture,
+          totalSpent: productOwners.totalSpent,
+          projectsCreated: productOwners.projectsCreated,
+          ordersPlaced: productOwners.ordersPlaced,
+          isActive: productOwners.isActive,
+          acceptedInstructions: productOwners.acceptedInstructions,
+          createdAt: productOwners.createdAt,
+        })
+        .from(productOwners)
+        .leftJoin(users, eq(productOwners.userId, users.id))
+        .where(eq(productOwners.id, id));
+
+      if (!productOwner) {
+        return res.status(404).json({ error: "صاحب المنتج غير موجود" });
+      }
+
+      // Get recent projects
+      const recentProjects = await db
+        .select({
+          id: projects.id,
+          title: projects.title,
+          status: projects.status,
+          totalBudget: projects.totalBudget,
+          createdAt: projects.createdAt,
+        })
+        .from(projects)
+        .where(eq(projects.productOwnerId, id))
+        .limit(5);
+
+      // Get recent orders
+      const recentOrders = await db
+        .select({
+          id: orders.id,
+          serviceType: orders.serviceType,
+          status: orders.status,
+          totalAmount: orders.totalAmount,
+          createdAt: orders.createdAt,
+        })
+        .from(orders)
+        .where(eq(orders.productOwnerId, id))
+        .limit(5);
+
+      res.json({
+        ...productOwner,
+        recentProjects,
+        recentOrders,
+      });
+    } catch (error) {
+      console.error("Error fetching product owner:", error);
+      res.status(500).json({ error: "حدث خطأ في جلب بيانات صاحب المنتج" });
+    }
+  });
+
+  // Toggle product owner active status
+  app.patch("/api/admin/product-owners/:id/toggle-status", adminAuthMiddleware, requirePermission("product_owners:edit"), async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { productOwners } = await import("@shared/schema");
+
+      const [productOwner] = await db.select().from(productOwners).where(eq(productOwners.id, id));
+      
+      if (!productOwner) {
+        return res.status(404).json({ error: "صاحب المنتج غير موجود" });
+      }
+
+      const [updated] = await db
+        .update(productOwners)
+        .set({ isActive: !productOwner.isActive })
+        .where(eq(productOwners.id, id))
+        .returning();
+
+      res.json({
+        productOwner: updated,
+        message: `تم ${updated.isActive ? 'تفعيل' : 'إيقاف'} الحساب بنجاح`,
+      });
+    } catch (error) {
+      console.error("Error toggling product owner status:", error);
+      res.status(500).json({ error: "حدث خطأ في تعديل حالة صاحب المنتج" });
+    }
+  });
+
+  // ============================================
+  // GROUPS MANAGEMENT (ADMIN)
+  // ============================================
+
+  // Get all groups
+  app.get("/api/admin/groups", adminAuthMiddleware, requirePermission("groups:view"), async (req, res) => {
+    try {
+      const { groups, freelancers } = await import("@shared/schema");
+      
+      const allGroups = await db
+        .select({
+          id: groups.id,
+          name: groups.name,
+          description: groups.description,
+          leaderId: groups.leaderId,
+          leaderName: freelancers.fullName,
+          memberCount: groups.memberCount,
+          maxMembers: groups.maxMembers,
+          country: groups.country,
+          projectsCompleted: groups.projectsCompleted,
+          rating: groups.rating,
+          isActive: groups.isActive,
+          createdAt: groups.createdAt,
+        })
+        .from(groups)
+        .leftJoin(freelancers, eq(groups.leaderId, freelancers.id));
+
+      res.json(allGroups);
+    } catch (error) {
+      console.error("Error fetching groups:", error);
+      res.status(500).json({ error: "حدث خطأ في جلب الجروبات" });
+    }
+  });
+
+  // Toggle group active status
+  app.patch("/api/admin/groups/:id/toggle-status", adminAuthMiddleware, requirePermission("groups:edit"), async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { groups } = await import("@shared/schema");
+
+      const [group] = await db.select().from(groups).where(eq(groups.id, id));
+      
+      if (!group) {
+        return res.status(404).json({ error: "الجروب غير موجود" });
+      }
+
+      const [updated] = await db
+        .update(groups)
+        .set({ isActive: !group.isActive })
+        .where(eq(groups.id, id))
+        .returning();
+
+      res.json({
+        group: updated,
+        message: `تم ${updated.isActive ? 'تفعيل' : 'إيقاف'} الجروب بنجاح`,
+      });
+    } catch (error) {
+      console.error("Error toggling group status:", error);
+      res.status(500).json({ error: "حدث خطأ في تعديل حالة الجروب" });
+    }
+  });
+
+  // ============================================
+  // PROJECTS MANAGEMENT (ADMIN)
+  // ============================================
+
+  // Get all projects
+  app.get("/api/admin/projects", adminAuthMiddleware, requirePermission("projects:view"), async (req, res) => {
+    try {
+      const { projects, productOwners, groups } = await import("@shared/schema");
+      
+      const allProjects = await db
+        .select({
+          id: projects.id,
+          title: projects.title,
+          description: projects.description,
+          productOwnerId: projects.productOwnerId,
+          ownerName: productOwners.fullName,
+          groupId: projects.groupId,
+          groupName: groups.name,
+          status: projects.status,
+          totalBudget: projects.totalBudget,
+          platformFee: projects.platformFee,
+          tasksCount: projects.tasksCount,
+          completedTasksCount: projects.completedTasksCount,
+          createdAt: projects.createdAt,
+        })
+        .from(projects)
+        .leftJoin(productOwners, eq(projects.productOwnerId, productOwners.id))
+        .leftJoin(groups, eq(projects.groupId, groups.id));
+
+      res.json(allProjects);
+    } catch (error) {
+      console.error("Error fetching projects:", error);
+      res.status(500).json({ error: "حدث خطأ في جلب المشاريع" });
+    }
+  });
+
+  // ============================================
+  // ORDERS MANAGEMENT (ADMIN)
+  // ============================================
+
+  // Get all orders
+  app.get("/api/admin/orders", adminAuthMiddleware, requirePermission("orders:view"), async (req, res) => {
+    try {
+      const { orders, productOwners, groups } = await import("@shared/schema");
+      
+      const allOrders = await db
+        .select({
+          id: orders.id,
+          productOwnerId: orders.productOwnerId,
+          ownerName: productOwners.fullName,
+          groupId: orders.groupId,
+          groupName: groups.name,
+          serviceType: orders.serviceType,
+          status: orders.status,
+          totalAmount: orders.totalAmount,
+          platformFee: orders.platformFee,
+          leaderCommission: orders.leaderCommission,
+          quantity: orders.quantity,
+          createdAt: orders.createdAt,
+        })
+        .from(orders)
+        .leftJoin(productOwners, eq(orders.productOwnerId, productOwners.id))
+        .leftJoin(groups, eq(orders.groupId, groups.id));
+
+      res.json(allOrders);
+    } catch (error) {
+      console.error("Error fetching orders:", error);
+      res.status(500).json({ error: "حدث خطأ في جلب الطلبات" });
+    }
+  });
+
+  // ============================================
+  // WITHDRAWALS MANAGEMENT (ADMIN)
+  // ============================================
+
+  // Get all withdrawals
+  app.get("/api/admin/withdrawals", adminAuthMiddleware, requirePermission("withdrawals:view"), async (req, res) => {
+    try {
+      const { withdrawals, freelancers } = await import("@shared/schema");
+      
+      const allWithdrawals = await db
+        .select({
+          id: withdrawals.id,
+          freelancerId: withdrawals.freelancerId,
+          freelancerName: freelancers.fullName,
+          amount: withdrawals.amount,
+          status: withdrawals.status,
+          paymentMethod: withdrawals.paymentMethod,
+          accountDetails: withdrawals.accountDetails,
+          createdAt: withdrawals.createdAt,
+          processedAt: withdrawals.processedAt,
+        })
+        .from(withdrawals)
+        .leftJoin(freelancers, eq(withdrawals.freelancerId, freelancers.id));
+
+      res.json(allWithdrawals);
+    } catch (error) {
+      console.error("Error fetching withdrawals:", error);
+      res.status(500).json({ error: "حدث خطأ في جلب طلبات السحب" });
+    }
+  });
+
+  // Approve withdrawal
+  app.patch("/api/admin/withdrawals/:id/approve", adminAuthMiddleware, requirePermission("withdrawals:approve"), async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { withdrawals, freelancers } = await import("@shared/schema");
+
+      const [withdrawal] = await db.select().from(withdrawals).where(eq(withdrawals.id, id));
+      
+      if (!withdrawal) {
+        return res.status(404).json({ error: "طلب السحب غير موجود" });
+      }
+
+      if (withdrawal.status !== "pending") {
+        return res.status(400).json({ error: "طلب السحب تمت معالجته مسبقاً" });
+      }
+
+      const [updated] = await db
+        .update(withdrawals)
+        .set({ 
+          status: "completed",
+          processedAt: new Date(),
+        })
+        .where(eq(withdrawals.id, id))
+        .returning();
+
+      // Deduct from freelancer's available balance
+      await db
+        .update(freelancers)
+        .set({
+          availableBalance: sql`${freelancers.availableBalance} - ${withdrawal.amount}`,
+        })
+        .where(eq(freelancers.id, withdrawal.freelancerId));
+
+      res.json({
+        withdrawal: updated,
+        message: "تم اعتماد طلب السحب بنجاح",
+      });
+    } catch (error) {
+      console.error("Error approving withdrawal:", error);
+      res.status(500).json({ error: "حدث خطأ في اعتماد طلب السحب" });
+    }
+  });
+
+  // Reject withdrawal
+  app.patch("/api/admin/withdrawals/:id/reject", adminAuthMiddleware, requirePermission("withdrawals:approve"), async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { withdrawals, freelancers } = await import("@shared/schema");
+
+      const [withdrawal] = await db.select().from(withdrawals).where(eq(withdrawals.id, id));
+      
+      if (!withdrawal) {
+        return res.status(404).json({ error: "طلب السحب غير موجود" });
+      }
+
+      if (withdrawal.status !== "pending") {
+        return res.status(400).json({ error: "طلب السحب تمت معالجته مسبقاً" });
+      }
+
+      const [updated] = await db
+        .update(withdrawals)
+        .set({ 
+          status: "rejected",
+          processedAt: new Date(),
+        })
+        .where(eq(withdrawals.id, id))
+        .returning();
+
+      // Return amount to freelancer's available balance
+      await db
+        .update(freelancers)
+        .set({
+          availableBalance: sql`${freelancers.availableBalance} + ${withdrawal.amount}`,
+        })
+        .where(eq(freelancers.id, withdrawal.freelancerId));
+
+      res.json({
+        withdrawal: updated,
+        message: "تم رفض طلب السحب",
+      });
+    } catch (error) {
+      console.error("Error rejecting withdrawal:", error);
+      res.status(500).json({ error: "حدث خطأ في رفض طلب السحب" });
+    }
+  });
+
+  // ============================================
   // HEALTH CHECK
   // ============================================
 

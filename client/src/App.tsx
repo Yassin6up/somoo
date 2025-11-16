@@ -56,6 +56,11 @@ import { AdminDashboardLayout } from "@/components/AdminDashboardLayout";
 import AdminDashboard from "@/pages/admin/Dashboard";
 import AdminUsers from "@/pages/admin/Users";
 import CreateAdminUser from "@/pages/admin/CreateUser";
+import AdminFreelancers from "@/pages/admin/Freelancers";
+import AdminProductOwners from "@/pages/admin/ProductOwners";
+import AdminGroups from "@/pages/admin/Groups";
+import AdminOrders from "@/pages/admin/Orders";
+import AdminWithdrawals from "@/pages/admin/Withdrawals";
 
 function Router() {
   return (
@@ -236,6 +241,41 @@ function Router() {
         {() => (
           <AdminDashboardLayout>
             <CreateAdminUser />
+          </AdminDashboardLayout>
+        )}
+      </Route>
+      <Route path="/admin/freelancers">
+        {() => (
+          <AdminDashboardLayout>
+            <AdminFreelancers />
+          </AdminDashboardLayout>
+        )}
+      </Route>
+      <Route path="/admin/product-owners">
+        {() => (
+          <AdminDashboardLayout>
+            <AdminProductOwners />
+          </AdminDashboardLayout>
+        )}
+      </Route>
+      <Route path="/admin/groups">
+        {() => (
+          <AdminDashboardLayout>
+            <AdminGroups />
+          </AdminDashboardLayout>
+        )}
+      </Route>
+      <Route path="/admin/orders">
+        {() => (
+          <AdminDashboardLayout>
+            <AdminOrders />
+          </AdminDashboardLayout>
+        )}
+      </Route>
+      <Route path="/admin/withdrawals">
+        {() => (
+          <AdminDashboardLayout>
+            <AdminWithdrawals />
           </AdminDashboardLayout>
         )}
       </Route>
