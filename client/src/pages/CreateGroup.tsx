@@ -69,6 +69,7 @@ export default function CreateGroup() {
       formData.append('file', file);
       formData.append('type', 'group');
 
+
       // Upload to server
       const response = await fetch('/api/upload', {
         method: 'POST',
@@ -125,7 +126,10 @@ export default function CreateGroup() {
         leaderId: userData.id,
       };
       
-      return await apiRequest("/api/groups", "POST", groupData);
+       // Call apiRequest and parse the JSON response
+    const response = await apiRequest("/api/groups", "POST", groupData);
+    return await response.json(); // Add this line
+
     },
     onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ["/api/groups"] });
@@ -133,7 +137,8 @@ export default function CreateGroup() {
         title: "تم إنشاء الجروب بنجاح",
         description: "تم إنشاء الجروب وأنت الآن قائد الجروب",
       });
-      navigate(`/groups/${data.id}`);
+      console.log("Create Group Success:", data);
+      navigate(`/groups/${data?.id}`);
     },
     onError: (error: any) => {
       toast({
@@ -141,6 +146,8 @@ export default function CreateGroup() {
         description: error.message || "حدث خطأ أثناء إنشاء الجروب",
         variant: "destructive",
       });
+
+      console.log("Create Group Error:", error);
     },
   });
 

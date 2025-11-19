@@ -23,7 +23,7 @@ export default function ProductOwnerNotifications() {
   // Mark notification as read
   const markAsReadMutation = useMutation({
     mutationFn: async (id: string) => {
-      return await apiRequest("PATCH", `/api/notifications/${id}/read`, {});
+      return await apiRequest(`/api/notifications/${id}/read`, "PATCH", {});
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
@@ -34,7 +34,7 @@ export default function ProductOwnerNotifications() {
   // Mark all as read
   const markAllAsReadMutation = useMutation({
     mutationFn: async () => {
-      return await apiRequest("PATCH", "/api/notifications/mark-all-read", {});
+      return await apiRequest("/api/notifications/mark-all-read", "PATCH", {});
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });

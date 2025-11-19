@@ -17,7 +17,7 @@ export default function FreelancerInstructions() {
 
   const acceptInstructionsMutation = useMutation({
     mutationFn: async () => {
-      return apiRequest("PATCH", "/api/freelancers/accept-instructions", {});
+      return apiRequest("/api/freelancers/accept-instructions", "PATCH", {});
     },
     onSuccess: () => {
       toast({

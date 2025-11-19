@@ -17,7 +17,7 @@ export default function ProductOwnerInstructions() {
 
   const acceptInstructionsMutation = useMutation({
     mutationFn: async () => {
-      return apiRequest("PATCH", "/api/product-owners/accept-instructions", {});
+      return apiRequest( "/api/product-owners/accept-instructions","PATCH", {});
     },
     onSuccess: () => {
       toast({

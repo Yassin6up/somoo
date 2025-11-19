@@ -40,7 +40,7 @@ export default function AdminGroups() {
 
   const toggleStatusMutation = useMutation({
     mutationFn: async (id: string) => {
-      const res = await apiRequest("PATCH", `/api/admin/groups/${id}/toggle-status`);
+      const res = await apiRequest( `/api/admin/groups/${id}/toggle-status`,"PATCH", {});
       return res.json();
     },
     onSuccess: (data) => {

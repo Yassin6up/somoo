@@ -56,7 +56,7 @@ export default function ChatWithLeader() {
   // Get or create conversation
   const getConversationMutation = useMutation({
     mutationFn: async () => {
-      const res = await apiRequest("POST", "/api/conversations", { groupId });
+      const res = await apiRequest("/api/conversations","POST", { groupId });
       return await res.json();
     },
     onSuccess: (data: Conversation) => {
@@ -82,7 +82,7 @@ export default function ChatWithLeader() {
   const sendMessageMutation = useMutation({
     mutationFn: async (content: string) => {
       if (!conversationId) throw new Error("لا توجد محادثة");
-      const res = await apiRequest("POST", `/api/conversations/${conversationId}/messages`, { content });
+      const res = await apiRequest(`/api/conversations/${conversationId}/messages`, "POST", { content });
       return await res.json();
     },
     onSuccess: () => {

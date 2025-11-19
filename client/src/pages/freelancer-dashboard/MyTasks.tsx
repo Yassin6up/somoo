@@ -23,7 +23,7 @@ export default function MyTasks() {
 
   const startTaskMutation = useMutation({
     mutationFn: async (taskId: string) => {
-      return apiRequest("PATCH", `/api/tasks/${taskId}/start`);
+      return apiRequest( `/api/tasks/${taskId}/start`,"PATCH", {});
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/tasks/my-tasks"] });
@@ -36,7 +36,7 @@ export default function MyTasks() {
 
   const submitTaskMutation = useMutation({
     mutationFn: async (data: { taskId: string; submission: string }) => {
-      return apiRequest("PATCH", `/api/tasks/${data.taskId}/submit`, { submission: data.submission });
+      return apiRequest( `/api/tasks/${data.taskId}/submit`,"PATCH", { submission: data.submission });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/tasks/my-tasks"] });

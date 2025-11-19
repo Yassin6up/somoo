@@ -31,7 +31,20 @@ import {
   FileText,
   ShoppingBag,
   UserCircle,
-  ChevronRight
+  ChevronRight,
+  ExternalLink,
+  MoreHorizontal,
+  Share,
+  Camera,
+  File,
+  Flag,
+  Search,
+  Bell,
+  Menu,
+  Settings,
+  Bookmark,
+  Heart,
+  Eye
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
@@ -47,8 +60,11 @@ interface Group {
   leaderId: string;
   country: string;
   groupImage: string | null;
+  coverImage: string | null;
   portfolioImages: string[] | null;
   createdAt: Date;
+  rules: string[];
+  tags: string[];
 }
 
 interface GroupMember {
@@ -56,6 +72,7 @@ interface GroupMember {
   groupId: string;
   freelancerId: string;
   joinedAt: Date;
+  role: 'member' | 'admin' | 'moderator';
 }
 
 interface Freelancer {
@@ -64,6 +81,7 @@ interface Freelancer {
   username: string;
   profileImage: string | null;
   lastSeen: Date | null;
+  bio: string | null;
 }
 
 interface GroupPost {
@@ -74,8 +92,10 @@ interface GroupPost {
   imageUrl: string | null;
   likesCount: number;
   commentsCount: number;
+  sharesCount: number;
   createdAt: Date;
   updatedAt: Date;
+  isPinned: boolean;
 }
 
 interface PostComment {
@@ -84,13 +104,26 @@ interface PostComment {
   authorId: string;
   content: string;
   imageUrl: string | null;
+  likesCount: number;
   createdAt: Date;
+}
+
+interface GroupEvent {
+  id: string;
+  groupId: string;
+  title: string;
+  description: string;
+  date: Date;
+  location: string;
+  organizerId: string;
+  attendees: string[];
 }
 
 export default function GroupCommunity() {
   const { id: groupId } = useParams<{ id: string }>();
   const { toast } = useToast();
   const [, navigate] = useLocation();
+  const [activeTab, setActiveTab] = useState('home');
   
   // Post composer state
   const [newPostContent, setNewPostContent] = useState("");
@@ -110,8 +143,34 @@ export default function GroupCommunity() {
   const userType = localStorage.getItem("userType");
 
   // Fetch group data
-  const { data: group, isLoading: groupLoading } = useQuery<Group>({
-    queryKey: [`/api/groups/${groupId}`],
+  const { 
+    data: group, 
+    isLoading: groupLoading, 
+    error: groupError 
+  } = useQuery<Group>({
+    queryKey: [`/groups/${groupId}`],
+    queryFn: async () => {
+      const token = localStorage.getItem("token");
+      const response = await fetch(`/api/groups/${groupId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      });
+      
+      if (!response.ok) {
+        if (response.status === 404) {
+          throw new Error("Group not found");
+        }
+        throw new Error("Failed to fetch group");
+      }
+      
+      const data = await response.json();
+      return data;
+    },
+    retry: 1,
+    enabled: !!groupId,
   });
 
   // Fetch group members
@@ -119,48 +178,56 @@ export default function GroupCommunity() {
     queryKey: [`/api/groups/${groupId}/members`],
   });
 
+  // Fetch group events
+  const { data: events = [] } = useQuery<GroupEvent[]>({
+    queryKey: [`/api/groups/${groupId}/events`],
+    queryFn: async () => {
+      const response = await fetch(`/api/groups/${groupId}/events`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+      if (!response.ok) return [];
+      return response.json();
+    },
+  });
+
+  // Fetch group media
+  const { data: media = [] } = useQuery<GroupPost[]>({
+    queryKey: [`/api/groups/${groupId}/media`],
+    queryFn: async () => {
+      const response = await fetch(`/api/groups/${groupId}/posts?mediaOnly=true`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+      if (!response.ok) return [];
+      return response.json();
+    },
+  });
+
   // Check if current user is a member
   const isMember = members.some(m => m.freelancerId === currentUserId);
   const isLeader = group?.leaderId === currentUserId;
+  const userRole = members.find(m => m.freelancerId === currentUserId)?.role;
 
   // Fetch freelancers info for members
   const { data: freelancers = [] } = useQuery<Freelancer[]>({
     queryKey: ["/api/freelancers"],
   });
 
-  // Fetch posts (all posts)
+  // Fetch posts (only leader posts)
   const { data: posts = [], isLoading: postsLoading } = useQuery<GroupPost[]>({
     queryKey: ['/api/groups', groupId, 'posts'],
-  });
-
-  // Fetch popular posts
-  const { data: popularPosts = [] } = useQuery<GroupPost[]>({
-    queryKey: ['/api/groups', groupId, 'posts', 'popular'],
     queryFn: async () => {
-      const response = await fetch(`/api/groups/${groupId}/posts?sort=popular`, {
+      const response = await fetch(`/api/groups/${groupId}/posts?leaderOnly=true`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem("token")}`,
           'Content-Type': 'application/json',
         },
         credentials: 'include',
       });
-      if (!response.ok) throw new Error("Failed to fetch popular posts");
-      return response.json();
-    },
-  });
-
-  // Fetch media posts
-  const { data: mediaPosts = [] } = useQuery<GroupPost[]>({
-    queryKey: ['/api/groups', groupId, 'posts', 'media'],
-    queryFn: async () => {
-      const response = await fetch(`/api/groups/${groupId}/posts?mediaOnly=true`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem("token")}`,
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-      });
-      if (!response.ok) throw new Error("Failed to fetch media posts");
+      if (!response.ok) throw new Error("Failed to fetch posts");
       return response.json();
     },
   });
@@ -178,6 +245,28 @@ export default function GroupCommunity() {
 
   const checkIsLeader = (userId: string) => {
     return group?.leaderId === userId;
+  };
+
+  // URL detection function
+  const detectUrls = (text: string) => {
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    return text.split(urlRegex).map((part, index) => {
+      if (part.match(urlRegex)) {
+        return (
+          <a 
+            key={index} 
+            href={part} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-blue-500 hover:text-blue-600 underline inline-flex items-center gap-1"
+          >
+            {part}
+            <ExternalLink className="w-3 h-3" />
+          </a>
+        );
+      }
+      return part;
+    });
   };
 
   // Image upload handler
@@ -242,7 +331,7 @@ export default function GroupCommunity() {
     }
   };
 
-  // Create post mutation
+  // Create post mutation (only for leader)
   const createPostMutation = useMutation({
     mutationFn: async ({ content, imageUrl }: { content: string; imageUrl: string | null }) => {
       return await apiRequest(`/api/groups/${groupId}/posts`, "POST", {
@@ -251,10 +340,7 @@ export default function GroupCommunity() {
       });
     },
     onSuccess: () => {
-      // Invalidate all post-related queries
       queryClient.invalidateQueries({ queryKey: ['/api/groups', groupId, 'posts'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/groups', groupId, 'posts', 'popular'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/groups', groupId, 'posts', 'media'] });
       setNewPostContent("");
       setNewPostImage(null);
       toast({
@@ -272,6 +358,15 @@ export default function GroupCommunity() {
   });
 
   const handleCreatePost = async () => {
+    if (!isLeader) {
+      toast({
+        title: "غير مسموح",
+        description: "فقط قائد الجروب يمكنه نشر المنشورات",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (!newPostContent.trim() && !newPostImage) {
       toast({
         title: "تنبيه",
@@ -324,9 +419,9 @@ export default function GroupCommunity() {
 
   if (groupLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-white">
+      <div className="flex items-center justify-center min-h-screen bg-gray-100">
         <div className="text-center">
-          <Users className="w-12 h-12 text-[#002e62] mx-auto mb-4 animate-pulse" />
+          <Users className="w-12 h-12 text-blue-500 mx-auto mb-4 animate-pulse" />
           <p className="text-gray-600">جاري تحميل المجتمع...</p>
         </div>
       </div>
@@ -335,9 +430,10 @@ export default function GroupCommunity() {
 
   if (!group) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-white">
-        <Card className="max-w-md">
+      <div className="flex items-center justify-center min-h-screen bg-gray-100">
+        <Card className="max-w-md shadow-lg">
           <CardContent className="pt-6 text-center">
+            <Users className="w-16 h-16 text-gray-400 mx-auto mb-4" />
             <p className="text-gray-600">المجموعة غير موجودة</p>
             <Button
               variant="outline"
@@ -357,267 +453,307 @@ export default function GroupCommunity() {
     .map(m => getMemberInfo(m.freelancerId))
     .filter(Boolean) as Freelancer[];
 
-  const postsCount = posts.length;
-  const mediaCount = mediaPosts.length;
-  const eventsCount = 0; // TODO: Implement events
+  const upcomingEvents = events.filter(event => new Date(event.date) > new Date());
+  const recentMedia = media.slice(0, 6);
 
   return (
-    <div className="min-h-screen bg-[#0A0A0B]" dir="rtl">
-      {/* Three Column Layout */}
-      <div className="container mx-auto px-4 py-6 max-w-7xl">
-        <div className="grid grid-cols-1 lg:grid-cols-[16rem,1fr,18rem] gap-4">
-          {/* Left Sidebar - Navigation */}
-          <aside className="hidden lg:block">
-            <div className="bg-[#17181C] rounded-xl p-3 space-y-1">
-              <NavItem icon={Home} label="الخلاصة" active />
-              <NavItem icon={Users} label="الأصدقاء" />
-              <NavItem icon={Calendar} label="الأحداث" />
-              <NavItem icon={Video} label="مشاهدة الفيديو" />
-              <NavItem icon={ImageIcon} label="الصور" />
-              <NavItem icon={FileText} label="الملفات" />
-              <NavItem icon={ShoppingBag} label="السوق" />
+    <div className="min-h-screen bg-gray-100" dir="rtl">
+      {/* Facebook-style Header */}
+      <div className="bg-white shadow-sm border-b sticky top-0 z-50">
+        <div className="container mx-auto px-4">
+          <div className="flex items-center justify-between h-16">
+            {/* Left: Group Logo and Name */}
+            <div className="flex items-center space-x-4">
+              <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg flex items-center justify-center text-white font-bold shadow-md">
+                {group.name.substring(0, 2)}
+              </div>
+              <h1 className="text-xl font-bold text-gray-900">{group.name}</h1>
             </div>
+
+            {/* Center: Navigation Tabs */}
+            <div className="hidden md:flex items-center space-x-1">
+              {[
+                { id: 'home', label: 'الرئيسية', icon: Home },
+                { id: 'members', label: 'الأعضاء', icon: Users },
+                { id: 'events', label: 'الفعاليات', icon: Calendar },
+                { id: 'media', label: 'الوسائط', icon: ImageIcon },
+                { id: 'files', label: 'الملفات', icon: FileText },
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${
+                    activeTab === tab.id
+                      ? 'bg-blue-50 text-blue-600 border-b-2 border-blue-600'
+                      : 'text-gray-600 hover:bg-gray-100'
+                  }`}
+                >
+                  <tab.icon className="h-5 w-5" />
+                  <span>{tab.label}</span>
+                </button>
+              ))}
+            </div>
+
+            {/* Right: Actions */}
+            <div className="flex items-center space-x-3">
+              <Button variant="ghost" size="sm" className="text-gray-600">
+                <Search className="h-5 w-5" />
+              </Button>
+              <Button variant="ghost" size="sm" className="text-gray-600">
+                <Bell className="h-5 w-5" />
+              </Button>
+              
+              {!isMember && !isLeader && userType === "freelancer" && (
+                <Button 
+                  className="bg-blue-500 hover:bg-blue-600 text-white px-6 shadow-md"
+                  onClick={handleJoinGroup}
+                  disabled={joinGroupMutation.isPending}
+                >
+                  {joinGroupMutation.isPending ? "جاري الانضمام..." : "الانضمام للمجموعة"}
+                </Button>
+              )}
+              {(isMember || isLeader) && (
+                <Button className="bg-green-500 hover:bg-green-600 text-white px-6 shadow-md">
+                  <UserCheck className="ml-2 h-4 w-4" />
+                  عضو في المجموعة
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="container mx-auto px-4 py-6 max-w-6xl">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* Left Sidebar */}
+          <aside className="lg:col-span-1 space-y-4">
+            {/* Group Info Card */}
+            <div className="bg-white rounded-lg shadow-sm border p-4">
+              <h3 className="font-semibold text-gray-900 mb-3 text-lg">معلومات المجموعة</h3>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-600">الأعضاء</span>
+                  <span className="font-semibold text-blue-600">{group.currentMembers}</span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-600">المنشورات</span>
+                  <span className="font-semibold text-blue-600">{posts.length}</span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-600">تاريخ الإنشاء</span>
+                  <span className="font-semibold text-blue-600">
+                    {formatDistanceToNow(new Date(group.createdAt), { addSuffix: true, locale: ar })}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-600">الخصوصية</span>
+                  <Badge variant="secondary" className="bg-green-100 text-green-700">
+                    عام
+                  </Badge>
+                </div>
+              </div>
+            </div>
+
+            {/* Group Rules */}
+            {group.rules && group.rules.length > 0 && (
+              <div className="bg-white rounded-lg shadow-sm border p-4">
+                <h3 className="font-semibold text-gray-900 mb-3 text-lg">قواعد المجموعة</h3>
+                <ul className="space-y-2 text-sm text-gray-700">
+                  {group.rules.slice(0, 5).map((rule, index) => (
+                    <li key={index} className="flex items-start gap-2">
+                      <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
+                      <span>{rule}</span>
+                    </li>
+                  ))}
+                </ul>
+                {group.rules.length > 5 && (
+                  <button className="text-blue-500 text-sm mt-2 hover:underline">
+                    عرض المزيد
+                  </button>
+                )}
+              </div>
+            )}
+
+            {/* Upcoming Events */}
+            {upcomingEvents.length > 0 && (
+              <div className="bg-white rounded-lg shadow-sm border p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="font-semibold text-gray-900 text-lg">الفعاليات القادمة</h3>
+                  <Button variant="ghost" size="sm" className="text-blue-500 hover:text-blue-600">
+                    عرض الكل
+                  </Button>
+                </div>
+                <div className="space-y-3">
+                  {upcomingEvents.slice(0, 3).map(event => (
+                    <div key={event.id} className="p-3 bg-blue-50 rounded-lg border border-blue-100 hover:bg-blue-100 cursor-pointer transition-colors">
+                      <p className="font-medium text-sm text-gray-900">{event.title}</p>
+                      <div className="flex items-center gap-2 mt-1 text-xs text-gray-600">
+                        <Calendar className="h-3 w-3" />
+                        <span>{formatDistanceToNow(new Date(event.date), { addSuffix: true, locale: ar })}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Popular Tags */}
+            {group.tags && group.tags.length > 0 && (
+              <div className="bg-white rounded-lg shadow-sm border p-4">
+                <h3 className="font-semibold text-gray-900 mb-3 text-lg">الوسوم الشائعة</h3>
+                <div className="flex flex-wrap gap-2">
+                  {group.tags.slice(0, 8).map((tag, index) => (
+                    <span 
+                      key={index}
+                      className="px-3 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full text-sm cursor-pointer transition-colors"
+                    >
+                      #{tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
           </aside>
 
-          {/* Main Content */}
-          <main className="space-y-4">
-            {/* Cover Section */}
-            <div className="bg-[#17181C] rounded-xl overflow-hidden">
-              <div className="relative h-40 bg-gradient-to-br from-purple-600 via-blue-500 to-cyan-500 overflow-hidden">
-                {group.groupImage ? (
-                  <img
-                    src={group.groupImage}
-                    alt={group.name}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <Users className="w-16 h-16 text-white/20" />
-                  </div>
-                )}
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  className="absolute bottom-3 left-3 bg-[#17181C]/80 hover:bg-[#17181C] text-white border-0"
-                  onClick={() => navigate(`/groups/${groupId}`)}
-                  data-testid="button-edit-profile"
-                >
-                  تعديل صورة الغلاف
-                </Button>
-              </div>
-              
-              <div className="p-6">
-                <div className="flex items-start gap-4 mb-6">
-                  {/* Group Avatar */}
-                  <div className="w-24 h-24 bg-[#3B82F6] rounded-xl flex items-center justify-center text-white text-3xl font-bold -mt-16 border-4 border-[#17181C] shadow-xl">
-                    {group.name.substring(0, 2).toUpperCase()}
-                  </div>
-                  
-                  <div className="flex-1 pt-2">
-                    <h1 className="text-2xl font-bold text-white mb-1">
-                      {group.name}
-                    </h1>
-                    <p className="text-gray-400 text-sm">{group.service}</p>
-                  </div>
-                </div>
-
-                {/* Stats */}
-                <div className="grid grid-cols-4 gap-3 mb-6">
-                  <StatBox label="المنشورات" value={postsCount} />
-                  <StatBox label="الأعضاء" value={group.currentMembers} />
-                  <StatBox label="الوسائط" value={mediaCount} />
-                  <StatBox label="الأحداث" value={eventsCount} />
-                </div>
-
-                {/* Members Avatars */}
-                <div className="mb-6">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-sm text-gray-400">الأعضاء × {group.currentMembers.toLocaleString('ar')}</span>
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      className="text-blue-400 hover:text-blue-300 hover:bg-white/5"
-                      data-testid="button-see-all-members"
-                    >
-                      عرض الكل
-                    </Button>
-                  </div>
-                  <div className="flex -space-x-2">
-                    {membersList.slice(0, 10).map((member) => (
-                      <Avatar key={member.id} className="border-2 border-[#17181C] w-10 h-10 hover:scale-110 transition-transform cursor-pointer">
-                        <AvatarImage src={member.profileImage || undefined} />
-                        <AvatarFallback className="bg-[#3B82F6] text-white text-xs">
-                          {member.fullName.substring(0, 2)}
-                        </AvatarFallback>
-                      </Avatar>
-                    ))}
-                    {membersList.length > 10 && (
-                      <div className="w-10 h-10 rounded-full bg-[#1F2937] border-2 border-[#17181C] flex items-center justify-center text-xs font-semibold text-gray-300 hover:scale-110 transition-transform cursor-pointer">
-                        +{membersList.length - 10}
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Action Buttons */}
-                <div className="flex gap-3">
-                  {!isMember && !isLeader && userType === "freelancer" && (
-                    <Button 
-                      className="flex-1 bg-[#3B82F6] hover:bg-[#2563EB]" 
-                      onClick={handleJoinGroup}
-                      disabled={joinGroupMutation.isPending}
-                      data-testid="button-join-group"
-                    >
-                      الانضمام للجروب
-                    </Button>
-                  )}
-                  {(isMember || isLeader) && (
-                    <Button 
-                      className="flex-1 bg-[#22C55E] hover:bg-[#16A34A]"
-                      disabled
-                      data-testid="button-already-member"
-                    >
-                      <UserCheck className="ml-2 h-4 w-4" />
-                      عضو
-                    </Button>
-                  )}
-                  <Button 
-                    variant="outline" 
-                    className="flex-1 border-gray-700 text-gray-300 hover:bg-white/5"
-                    onClick={() => navigate(`/groups/${groupId}/chat`)}
-                    data-testid="button-send-message"
-                  >
-                    إرسال رسالة
-                  </Button>
-                </div>
-              </div>
-            </div>
-
-            {/* Group Created By */}
-            {group.leaderId && getMemberInfo(group.leaderId) && (
-              <div className="bg-[#17181C] rounded-xl p-5">
-                <h3 className="text-white text-sm font-semibold mb-4 flex items-center gap-2">
-                  <Info className="h-4 w-4" />
-                  تم إنشاء الجروب بواسطة
-                </h3>
-                <div className="flex items-center gap-3 p-3 bg-[#1F2937] rounded-lg">
-                  <Avatar className="w-12 h-12">
-                    <AvatarImage src={getMemberInfo(group.leaderId)?.profileImage || undefined} />
-                    <AvatarFallback className="bg-[#3B82F6] text-white">
-                      {getMemberInfo(group.leaderId)?.fullName.substring(0, 2)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1">
-                    <p className="font-semibold text-white">{getMemberInfo(group.leaderId)?.fullName}</p>
-                    <p className="text-xs text-gray-400">{formatDistanceToNow(new Date(group.createdAt), { addSuffix: true, locale: ar })}</p>
-                  </div>
-                  <Button size="sm" className="bg-[#3B82F6] hover:bg-[#2563EB]">
-                    + متابعة
-                  </Button>
-                </div>
-              </div>
-            )}
-
-            {/* About Group */}
-            {group.description && (
-              <div className="bg-[#17181C] rounded-xl p-5">
-                <h3 className="text-white text-sm font-semibold mb-4">حول الجروب</h3>
-                <p className="text-gray-300 leading-relaxed text-sm mb-4">{group.description}</p>
-                <div className="space-y-2 text-sm text-gray-400">
-                  <div className="flex items-center gap-2">
-                    <MapPin className="h-4 w-4" />
-                    <span>{group.country}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Users className="h-4 w-4" />
-                    <span>{group.currentMembers} من {group.maxMembers} عضو</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Calendar className="h-4 w-4" />
-                    <span>تم الإنشاء {formatDistanceToNow(new Date(group.createdAt), { addSuffix: true, locale: ar })}</span>
-                  </div>
-                </div>
-                <Separator className="my-4 bg-gray-700" />
-                <p className="text-xs text-gray-500 leading-relaxed">
-                  مجموعة تجمع المحترفين في {group.service}. نشارك الخبرات ونتعاون في المشاريع. #دبوبلة #بورتفوليو #محتوى #تصميم
-                </p>
-              </div>
-            )}
-
-            {/* Create Post Box */}
-            {currentUserId && (
-              <div className="bg-[#17181C] rounded-xl p-4">
-                <div className="flex items-start gap-3">
-                  <Avatar>
+          {/* Main Feed */}
+          <main className="lg:col-span-2 space-y-4">
+            {/* Create Post - Only for Leader */}
+            {isLeader && (
+              <div className="bg-white rounded-lg shadow-sm border p-4">
+                <div className="flex items-center gap-3 mb-4">
+                  <Avatar className="w-10 h-10 border-2 border-white shadow-sm">
                     <AvatarImage src={currentUser?.profileImage} />
-                    <AvatarFallback className="bg-[#3B82F6] text-white">
+                    <AvatarFallback className="bg-gradient-to-r from-blue-500 to-blue-600 text-white">
                       {currentUser?.fullName?.substring(0, 2) || "Me"}
                     </AvatarFallback>
                   </Avatar>
-                  <div className="flex-1 space-y-3">
-                    <Textarea
-                      placeholder="ما الذي تفكر فيه؟"
-                      value={newPostContent}
-                      onChange={(e) => setNewPostContent(e.target.value)}
-                      className="resize-none min-h-[80px] bg-[#1F2937] border-gray-700 text-white placeholder:text-gray-500"
-                      data-testid="textarea-new-post"
-                    />
-                    
-                    {newPostImage && (
-                      <div className="relative inline-block">
-                        <img
-                          src={newPostImage}
-                          alt="معاينة"
-                          className="max-h-48 rounded-lg border border-gray-700"
-                        />
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          className="absolute top-2 left-2"
-                          onClick={() => setNewPostImage(null)}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    )}
+                  <button 
+                    onClick={() => document.getElementById('post-composer')?.scrollIntoView({ behavior: 'smooth' })}
+                    className="flex-1 text-right px-4 py-3 bg-gray-100 hover:bg-gray-200 rounded-full text-gray-500 transition-colors text-sm font-medium"
+                  >
+                    ما الذي تريد مشاركته مع المجموعة؟
+                  </button>
+                </div>
+                <Separator className="my-3" />
+                <div className="flex items-center justify-between">
+                  <button 
+                    onClick={() => document.getElementById('post-image-input')?.click()}
+                    className="flex items-center gap-2 px-4 py-2 hover:bg-gray-50 rounded-lg text-gray-600 transition-colors"
+                  >
+                    <ImageIcon className="h-5 w-5 text-green-500" />
+                    <span className="text-sm font-medium">صورة</span>
+                  </button>
+                  <input
+                    id="post-image-input"
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        const url = await handleImageUpload(file, 'post');
+                        if (url) setNewPostImage(url);
+                      }
+                    }}
+                  />
+                  <button className="flex items-center gap-2 px-4 py-2 hover:bg-gray-50 rounded-lg text-gray-600 transition-colors">
+                    <FileText className="h-5 w-5 text-blue-500" />
+                    <span className="text-sm font-medium">ملف</span>
+                  </button>
+                  <button className="flex items-center gap-2 px-4 py-2 hover:bg-gray-50 rounded-lg text-gray-600 transition-colors">
+                    <Calendar className="h-5 w-5 text-red-500" />
+                    <span className="text-sm font-medium">فعالية</span>
+                  </button>
+                </div>
+              </div>
+            )}
 
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="ghost"
-                          className="text-gray-400 hover:text-white hover:bg-white/5"
-                          size="sm"
-                          onClick={() => document.getElementById('post-image-input')?.click()}
-                          disabled={isUploadingPostImage}
-                        >
-                          <ImageIcon className="h-4 w-4 ml-2" />
-                          {isUploadingPostImage ? "جاري الرفع..." : "صورة"}
-                        </Button>
-                        <input
-                          id="post-image-input"
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={async (e) => {
-                            const file = e.target.files?.[0];
-                            if (file) {
-                              const url = await handleImageUpload(file, 'post');
-                              if (url) setNewPostImage(url);
-                            }
-                          }}
-                        />
-                      </div>
-
-                      <Button
-                        className="bg-[#3B82F6] hover:bg-[#2563EB]"
-                        onClick={handleCreatePost}
-                        disabled={createPostMutation.isPending || (!newPostContent.trim() && !newPostImage)}
-                        data-testid="button-create-post"
-                      >
-                        {createPostMutation.isPending ? "جاري النشر..." : "نشر"}
-                      </Button>
+            {/* Post Composer - Only for Leader */}
+            {isLeader && (
+              <div id="post-composer" className="bg-white rounded-lg shadow-sm border p-4">
+                <div className="flex items-center gap-3 mb-4">
+                  <Avatar className="w-10 h-10 border-2 border-white shadow-sm">
+                    <AvatarImage src={currentUser?.profileImage} />
+                    <AvatarFallback className="bg-gradient-to-r from-blue-500 to-blue-600 text-white">
+                      {currentUser?.fullName?.substring(0, 2) || "Me"}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <p className="font-semibold text-gray-900">{currentUser?.fullName}</p>
+                    <div className="flex items-center gap-1 text-xs text-gray-500">
+                      <Globe className="h-3 w-3" />
+                      <span>عام • مجموعة {group.name}</span>
                     </div>
                   </div>
+                </div>
+
+                <Textarea
+                  placeholder="ما الذي تريد مشاركته مع المجموعة؟"
+                  value={newPostContent}
+                  onChange={(e) => setNewPostContent(e.target.value)}
+                  className="resize-none min-h-[120px] border-0 text-lg focus:ring-0 placeholder:text-gray-500 text-gray-900"
+                />
+                
+                {newPostImage && (
+                  <div className="relative mt-3 rounded-lg overflow-hidden border">
+                    <img
+                      src={newPostImage}
+                      alt="معاينة"
+                      className="w-full max-h-96 object-cover"
+                    />
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      className="absolute top-3 left-3 bg-black/60 hover:bg-black/80 border-0 shadow-lg"
+                      onClick={() => setNewPostImage(null)}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
+
+                <div className="flex items-center justify-between mt-4 pt-3 border-t">
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => document.getElementById('post-image-input')?.click()}
+                      disabled={isUploadingPostImage}
+                      className="text-gray-600 hover:text-gray-700 border border-gray-300"
+                    >
+                      <ImageIcon className="h-4 w-4 ml-2" />
+                      {isUploadingPostImage ? "جاري الرفع..." : "إضافة صورة"}
+                    </Button>
+                  </div>
+
+                  <Button
+                    className="bg-blue-500 hover:bg-blue-600 text-white px-8 shadow-md"
+                    onClick={handleCreatePost}
+                    disabled={createPostMutation.isPending || (!newPostContent.trim() && !newPostImage)}
+                  >
+                    {createPostMutation.isPending ? "جاري النشر..." : "نشر"}
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Pinned Posts */}
+            {posts.filter(post => post.isPinned).length > 0 && (
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <Bookmark className="h-5 w-5 text-yellow-600 fill-yellow-600" />
+                  <h3 className="font-semibold text-yellow-800">منشورات مثبتة</h3>
+                </div>
+                <div className="space-y-3">
+                  {posts.filter(post => post.isPinned).map(post => (
+                    <PinnedPostCard
+                      key={post.id}
+                      post={post}
+                      getMemberInfo={getMemberInfo}
+                      checkIsLeader={checkIsLeader}
+                    />
+                  ))}
                 </div>
               </div>
             )}
@@ -625,103 +761,102 @@ export default function GroupCommunity() {
             {/* Posts Feed */}
             <div className="space-y-4">
               {postsLoading ? (
-                <Card>
-                  <CardContent className="py-12 text-center">
+                <div className="bg-white rounded-lg shadow-sm border p-8 text-center">
+                  <div className="animate-pulse">
+                    <Users className="w-12 h-12 text-gray-300 mx-auto mb-4" />
                     <p className="text-gray-600">جاري تحميل المنشورات...</p>
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
               ) : posts.length === 0 ? (
-                <Card>
-                  <CardContent className="py-12 text-center">
-                    <MessageSquare className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                    <p className="text-gray-600">لا توجد منشورات بعد</p>
-                    <p className="text-sm text-gray-500 mt-2">كن أول من ينشر في هذا المجتمع!</p>
-                  </CardContent>
-                </Card>
+                <div className="bg-white rounded-lg shadow-sm border p-8 text-center">
+                  <MessageSquare className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                  <p className="text-gray-600">لا توجد منشورات بعد</p>
+                  <p className="text-sm text-gray-500 mt-2">
+                    {isLeader ? "يمكنك نشر أول منشور في المجموعة!" : "قائد المجموعة لم ينشر أي شيء بعد!"}
+                  </p>
+                </div>
               ) : (
-                posts.map(post => (
+                posts.filter(post => !post.isPinned).map(post => (
                   <PostCard
                     key={post.id}
                     post={post}
                     groupId={groupId}
                     currentUserId={currentUserId}
                     getMemberInfo={getMemberInfo}
-                    isLeader={isLeader}
+                    checkIsLeader={checkIsLeader}
                     commentInputs={commentInputs}
                     setCommentInputs={setCommentInputs}
+                    commentImages={commentImages}
+                    setCommentImages={setCommentImages}
                     expandedPosts={expandedPosts}
                     setExpandedPosts={setExpandedPosts}
                     toast={toast}
+                    detectUrls={detectUrls}
+                    handleImageUpload={handleImageUpload}
                   />
                 ))
               )}
             </div>
+          </main>
 
-            {/* Popular Posts */}
-            {popularPosts.length > 0 && (
-              <div className="bg-[#17181C] rounded-xl p-5">
-                <h3 className="text-white text-sm font-semibold mb-4 flex items-center gap-2">
-                  <TrendingUp className="h-4 w-4" />
-                  المنشورات الشائعة
-                </h3>
-                <div className="space-y-3">
-                  {popularPosts.slice(0, 3).map(post => {
-                    const author = getMemberInfo(post.authorId);
-                    return (
-                      <div key={post.id} className="flex items-start gap-3 p-3 hover:bg-white/5 rounded-lg cursor-pointer transition-colors">
-                        <Avatar className="w-10 h-10">
-                          <AvatarImage src={author?.profileImage || undefined} />
-                          <AvatarFallback className="bg-[#3B82F6] text-white text-xs">
-                            {author?.fullName.substring(0, 2)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <p className="font-semibold text-sm text-white">{author?.fullName}</p>
-                            {checkIsLeader(post.authorId) && (
-                              <Badge variant="secondary" className="bg-amber-500/20 text-amber-400 text-xs border-0">
-                                <Star className="h-3 w-3 ml-1 fill-amber-400" />
-                                قائد
-                              </Badge>
-                            )}
-                          </div>
-                          <p className="text-sm text-gray-300 line-clamp-2 mt-1">{post.content}</p>
-                          <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
-                            <span className="flex items-center gap-1">
-                              <ThumbsUp className="h-3 w-3" />
-                              {post.likesCount || 0}
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <MessageSquare className="h-3 w-3" />
-                              {post.commentsCount || 0}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
+          {/* Right Sidebar */}
+          <aside className="lg:col-span-1 space-y-4">
+            {/* Members Card */}
+            <div className="bg-white rounded-lg shadow-sm border p-4">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-semibold text-gray-900 text-lg">الأعضاء ({membersList.length})</h3>
+                <Button variant="ghost" size="sm" className="text-blue-500 hover:text-blue-600">
+                  عرض الكل
+                </Button>
               </div>
-            )}
+              <div className="space-y-3">
+                {membersList.slice(0, 6).map(member => (
+                  <div key={member.id} className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded-lg transition-colors cursor-pointer group">
+                    <div className="relative">
+                      <Avatar className="w-12 h-12 border-2 border-white shadow-sm group-hover:scale-105 transition-transform">
+                        <AvatarImage src={member.profileImage || undefined} />
+                        <AvatarFallback className="bg-gradient-to-r from-blue-500 to-blue-600 text-white">
+                          {member.fullName.substring(0, 2)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div
+                        className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white ${
+                          isOnline(member.lastSeen) ? "bg-green-500" : "bg-gray-400"
+                        }`}
+                      />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-gray-900 truncate">{member.fullName}</p>
+                      <p className="text-xs text-gray-500 truncate">
+                        {isOnline(member.lastSeen) ? (
+                          <span className="text-green-600">نشط الآن</span>
+                        ) : (
+                          `آخر ظهور ${formatDistanceToNow(new Date(member.lastSeen || Date.now()), { addSuffix: true, locale: ar })}`
+                        )}
+                      </p>
+                    </div>
+                    {checkIsLeader(member.id) && (
+                      <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
 
-            {/* Media Gallery */}
-            {mediaPosts.length > 0 && (
-              <div className="bg-[#17181C] rounded-xl p-5">
+            {/* Recent Media */}
+            {recentMedia.length > 0 && (
+              <div className="bg-white rounded-lg shadow-sm border p-4">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-white text-sm font-semibold flex items-center gap-2">
-                    <ImageIcon className="h-4 w-4" />
-                    الوسائط
-                  </h3>
-                  <Button variant="ghost" size="sm" className="text-blue-400 hover:text-blue-300 hover:bg-white/5">
+                  <h3 className="font-semibold text-gray-900 text-lg">آخر الوسائط</h3>
+                  <Button variant="ghost" size="sm" className="text-blue-500 hover:text-blue-600">
                     عرض الكل
-                    <ChevronRight className="mr-2 h-4 w-4" />
                   </Button>
                 </div>
-                <div className="grid grid-cols-4 gap-2">
-                  {mediaPosts.slice(0, 8).map(post => (
-                    <div key={post.id} className="aspect-square relative overflow-hidden rounded-lg bg-[#1F2937] hover:opacity-80 cursor-pointer transition-opacity">
+                <div className="grid grid-cols-3 gap-2">
+                  {recentMedia.map((mediaItem, index) => (
+                    <div key={index} className="aspect-square bg-gray-100 rounded-lg overflow-hidden cursor-pointer hover:opacity-80 transition-opacity">
                       <img
-                        src={post.imageUrl!}
+                        src={mediaItem.imageUrl!}
                         alt="وسائط"
                         className="w-full h-full object-cover"
                       />
@@ -730,70 +865,50 @@ export default function GroupCommunity() {
                 </div>
               </div>
             )}
-          </main>
 
-          {/* Right Sidebar - Members, Friends, Groups */}
-          <aside className="hidden lg:block space-y-4">
-            {/* YOUR PAGES Section */}
-            <div className="bg-[#17181C] rounded-xl p-4">
-              <h3 className="text-white text-sm font-semibold mb-3 uppercase tracking-wide">صفحاتك</h3>
-              <div className="space-y-2">
-                <div className="flex items-center gap-3 text-gray-300 hover:text-white cursor-pointer transition-colors p-2 rounded-lg hover:bg-white/5">
-                  <div className="w-8 h-8 bg-[#3B82F6] rounded flex items-center justify-center text-white text-sm font-bold">
-                    {group.name.substring(0, 2)}
+            {/* Group Description */}
+            {group.description && (
+              <div className="bg-white rounded-lg shadow-sm border p-4">
+                <h3 className="font-semibold text-gray-900 mb-3 text-lg">حول المجموعة</h3>
+                <p className="text-sm text-gray-700 leading-relaxed mb-3">{group.description}</p>
+                <div className="space-y-2 text-sm text-gray-600">
+                  <div className="flex items-center gap-2">
+                    <MapPin className="h-4 w-4 text-blue-500" />
+                    <span>{group.country}</span>
                   </div>
-                  <span className="text-sm">{group.name}</span>
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4 text-blue-500" />
+                    <span>أنشئت {formatDistanceToNow(new Date(group.createdAt), { addSuffix: true, locale: ar })}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Eye className="h-4 w-4 text-blue-500" />
+                    <span>مجموعة {group.service} متخصصة</span>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
 
-            {/* FRIENDS Section */}
-            <div className="bg-[#17181C] rounded-xl p-4">
-              <h3 className="text-white text-sm font-semibold mb-3 uppercase tracking-wide">الأصدقاء</h3>
-              <div className="space-y-3 max-h-[350px] overflow-y-auto">
-                {membersList.slice(0, 10).map(member => (
-                  <div key={member.id} className="flex items-center gap-3 text-gray-300 hover:text-white cursor-pointer transition-colors p-2 rounded-lg hover:bg-white/5">
-                    <div className="relative">
-                      <Avatar className="w-8 h-8">
-                        <AvatarImage src={member.profileImage || undefined} />
-                        <AvatarFallback className="bg-[#3B82F6] text-white text-xs">
-                          {member.fullName.substring(0, 2)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div
-                        className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-[#17181C] ${
-                          isOnline(member.lastSeen) ? "bg-green-500" : "bg-gray-600"
-                        }`}
-                      />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm truncate flex items-center gap-1.5">
-                        {member.fullName}
-                        {checkIsLeader(member.id) && (
-                          <Star className="h-3 w-3 text-yellow-500 flex-shrink-0 fill-yellow-500" />
-                        )}
-                      </p>
-                    </div>
-                    <span className="text-xs text-gray-500">
-                      {isOnline(member.lastSeen) ? "نشط" : formatDistanceToNow(new Date(member.lastSeen || Date.now()), { locale: ar, addSuffix: false })}
-                    </span>
+            {/* Group Insights */}
+            <div className="bg-white rounded-lg shadow-sm border p-4">
+              <h3 className="font-semibold text-gray-900 mb-3 text-lg">إحصائيات المجموعة</h3>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600">نشاط الأعضاء</span>
+                  <div className="w-20 bg-gray-200 rounded-full h-2">
+                    <div className="bg-green-500 h-2 rounded-full" style={{ width: '75%' }}></div>
                   </div>
-                ))}
-              </div>
-            </div>
-
-            {/* GROUPS Section */}
-            <div className="bg-[#17181C] rounded-xl p-4">
-              <h3 className="text-white text-sm font-semibold mb-3 uppercase tracking-wide">المجموعات</h3>
-              <div className="space-y-2">
-                <div className="flex items-center gap-3 text-gray-300 hover:text-white cursor-pointer transition-colors p-2 rounded-lg hover:bg-white/5">
-                  <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-500 rounded flex items-center justify-center text-white text-sm font-bold">
-                    UI
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600">معدل التفاعل</span>
+                  <div className="w-20 bg-gray-200 rounded-full h-2">
+                    <div className="bg-blue-500 h-2 rounded-full" style={{ width: '60%' }}></div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm truncate">{group.name}</p>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600">نمو الأعضاء</span>
+                  <div className="w-20 bg-gray-200 rounded-full h-2">
+                    <div className="bg-purple-500 h-2 rounded-full" style={{ width: '85%' }}></div>
                   </div>
-                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                 </div>
               </div>
             </div>
@@ -804,54 +919,91 @@ export default function GroupCommunity() {
   );
 }
 
-// Subcomponents
+// Pinned Post Card Component
+function PinnedPostCard({ post, getMemberInfo, checkIsLeader }: {
+  post: GroupPost;
+  getMemberInfo: (id: string) => Freelancer | undefined;
+  checkIsLeader: (id: string) => boolean;
+}) {
+  const author = getMemberInfo(post.authorId);
 
-function NavItem({ icon: Icon, label, active = false }: { icon: any; label: string; active?: boolean }) {
   return (
-    <button
-      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
-        active 
-          ? "bg-[#3B82F6] text-white" 
-          : "text-gray-400 hover:bg-white/5 hover:text-white"
-      }`}
-    >
-      <Icon className="h-4 w-4" />
-      <span className="text-sm">{label}</span>
-    </button>
-  );
-}
-
-function StatBox({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="text-center p-3 bg-[#1F2937] rounded-lg border border-gray-700">
-      <p className="text-xl font-bold text-white">{value.toLocaleString('ar')}</p>
-      <p className="text-xs text-gray-400 mt-0.5">{label}</p>
+    <div className="bg-white border border-yellow-300 rounded-lg p-4 shadow-sm">
+      <div className="flex items-center gap-2 mb-2">
+        <Bookmark className="h-4 w-4 text-yellow-600 fill-yellow-600" />
+        <span className="text-xs font-medium text-yellow-700">مثبت</span>
+      </div>
+      <div className="flex items-start gap-3">
+        <Avatar className="w-8 h-8">
+          <AvatarImage src={author?.profileImage || undefined} />
+          <AvatarFallback className="bg-blue-100 text-blue-600 text-xs">
+            {author?.fullName.substring(0, 2)}
+          </AvatarFallback>
+        </Avatar>
+        <div className="flex-1">
+          <div className="flex items-center gap-2">
+            <p className="font-semibold text-sm text-gray-900">{author?.fullName}</p>
+            {checkIsLeader(post.authorId) && (
+              <Star className="h-3 w-3 text-yellow-500 fill-yellow-500" />
+            )}
+          </div>
+          <p className="text-sm text-gray-700 mt-1 line-clamp-2">{post.content}</p>
+          {post.imageUrl && (
+            <img
+              src={post.imageUrl}
+              alt="صورة المنشور"
+              className="mt-2 max-h-32 rounded-lg border"
+            />
+          )}
+        </div>
+      </div>
     </div>
   );
 }
 
+// Facebook-inspired Post Card (Keep the existing PostCard component but enhance it)
+// ... [Previous PostCard component remains the same with Facebook styling] ...
+
+// Add missing Globe icon component
+function Globe({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="currentColor" viewBox="0 0 24 24">
+      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+    </svg>
+  );
+}
+
+// Enhanced PostCard component with Facebook styling (same as before but with better design)
 function PostCard({
   post,
   groupId,
   currentUserId,
   getMemberInfo,
-  isLeader,
+  checkIsLeader,
   commentInputs,
   setCommentInputs,
+  commentImages,
+  setCommentImages,
   expandedPosts,
   setExpandedPosts,
   toast,
+  detectUrls,
+  handleImageUpload,
 }: {
   post: GroupPost;
   groupId: string;
   currentUserId: string | null;
   getMemberInfo: (id: string) => Freelancer | undefined;
-  isLeader: (id: string) => boolean;
+  checkIsLeader: (id: string) => boolean;
   commentInputs: Record<string, string>;
   setCommentInputs: React.Dispatch<React.SetStateAction<Record<string, string>>>;
+  commentImages: Record<string, string>;
+  setCommentImages: React.Dispatch<React.SetStateAction<Record<string, string>>>;
   expandedPosts: Set<string>;
   setExpandedPosts: React.Dispatch<React.SetStateAction<Set<string>>>;
   toast: any;
+  detectUrls: (text: string) => (string | JSX.Element)[];
+  handleImageUpload: (file: File, type: 'post' | 'comment', postId?: string) => Promise<string | null>;
 }) {
   const author = getMemberInfo(post.authorId);
   const isExpanded = expandedPosts.has(post.id);
@@ -887,9 +1039,12 @@ function PostCard({
     },
   });
 
-  // Add comment mutation
+  // Add comment mutation (with image required)
   const addCommentMutation = useMutation({
     mutationFn: async ({ content, imageUrl }: { content: string; imageUrl: string | null }) => {
+      if (!imageUrl) {
+        throw new Error("الصورة مطلوبة للتعليق");
+      }
       return await apiRequest(`/api/posts/${post.id}/comments`, "POST", {
         content,
         imageUrl,
@@ -898,14 +1053,18 @@ function PostCard({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/posts/${post.id}/comments`] });
       queryClient.invalidateQueries({ queryKey: [`/api/groups/${groupId}/posts`] });
-      queryClient.invalidateQueries({ queryKey: ['/api/groups', groupId, 'posts'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/groups', groupId, 'posts', 'popular'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/groups', groupId, 'posts', 'media'] });
       setCommentInputs(prev => ({ ...prev, [post.id]: "" }));
       setCommentImages(prev => ({ ...prev, [post.id]: "" }));
       toast({
         title: "تم إضافة التعليق",
         description: "تم إضافة تعليقك بنجاح",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "خطأ",
+        description: error.message || "حدث خطأ أثناء إضافة التعليق",
+        variant: "destructive",
       });
     },
   });
@@ -927,79 +1086,107 @@ function PostCard({
   const canDelete = currentUserId && (post.authorId === currentUserId || checkIsLeader(currentUserId));
 
   return (
-    <Card>
-      <CardContent className="p-6">
-        {/* Post Header */}
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex items-start gap-3">
-            <Avatar className="w-12 h-12">
+    <div className="bg-white rounded-lg shadow-sm border">
+      {/* Post Header */}
+      <div className="p-4">
+        <div className="flex items-start justify-between">
+          <div className="flex items-center gap-3">
+            <Avatar className="w-10 h-10 border-2 border-white shadow-sm">
               <AvatarImage src={author?.profileImage || undefined} />
-              <AvatarFallback className="bg-[#002e62] text-white">
+              <AvatarFallback className="bg-gradient-to-r from-blue-500 to-blue-600 text-white">
                 {author?.fullName.substring(0, 2)}
               </AvatarFallback>
             </Avatar>
             <div>
               <div className="flex items-center gap-2">
-                <p className="font-semibold">{author?.fullName}</p>
-                {isLeader(post.authorId) && (
-                  <Badge variant="secondary" className="bg-amber-100 text-amber-700">
-                    <Star className="h-3 w-3 ml-1" />
+                <p className="font-semibold text-gray-900">{author?.fullName}</p>
+                {checkIsLeader(post.authorId) && (
+                  <Badge variant="secondary" className="bg-yellow-100 text-yellow-700 text-xs border-0">
+                    <Star className="h-3 w-3 ml-1 fill-yellow-500" />
                     قائد
                   </Badge>
                 )}
               </div>
-              <p className="text-sm text-gray-600">
-                {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true, locale: ar })}
-              </p>
+              <div className="flex items-center gap-1 text-xs text-gray-500">
+                <span>{formatDistanceToNow(new Date(post.createdAt), { addSuffix: true, locale: ar })}</span>
+                <span>•</span>
+                <Globe className="h-3 w-3" />
+              </div>
             </div>
           </div>
-
-          {canDelete && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => deletePostMutation.mutate()}
-              disabled={deletePostMutation.isPending}
-            >
-              <Trash2 className="h-4 w-4 text-red-600" />
+          
+          <div className="flex items-center gap-1">
+            {canDelete && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => deletePostMutation.mutate()}
+                disabled={deletePostMutation.isPending}
+                className="text-gray-500 hover:text-red-600 hover:bg-red-50"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            )}
+            <Button variant="ghost" size="sm" className="text-gray-500 hover:bg-gray-100">
+              <MoreHorizontal className="h-4 w-4" />
             </Button>
-          )}
+          </div>
         </div>
 
         {/* Post Content */}
-        <div className="mb-4">
-          <p className="text-gray-800 whitespace-pre-wrap">{post.content}</p>
-          {post.imageUrl && (
-            <img
-              src={post.imageUrl}
-              alt="صورة المنشور"
-              className="mt-4 max-h-96 w-full object-contain rounded-lg border"
-            />
-          )}
+        <div className="mt-3">
+          <p className="text-gray-900 whitespace-pre-wrap text-[15px] leading-relaxed">
+            {detectUrls(post.content)}
+          </p>
         </div>
+      </div>
 
-        {/* Engagement Stats */}
-        <div className="flex items-center gap-4 text-sm text-gray-600 mb-4">
-          <span>{reactions.length} إعجاب</span>
-          <span>{post.commentsCount || 0} تعليق</span>
+      {/* Post Image */}
+      {post.imageUrl && (
+        <div className="border-y">
+          <img
+            src={post.imageUrl}
+            alt="صورة المنشور"
+            className="w-full max-h-[500px] object-cover"
+          />
         </div>
+      )}
 
-        <Separator className="mb-4" />
+      {/* Engagement Stats */}
+      <div className="px-4 pt-3">
+        <div className="flex items-center justify-between text-sm text-gray-500">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-1">
+              <div className="flex -space-x-1">
+                <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs border-2 border-white">
+                  👍
+                </div>
+                <div className="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center text-white text-xs border-2 border-white">
+                  ❤️
+                </div>
+              </div>
+              <span>{reactions.length}</span>
+            </div>
+            <span>{comments.length} تعليق • {post.sharesCount} مشاركة</span>
+          </div>
+        </div>
+      </div>
 
-        {/* Action Buttons */}
-        <div className="flex items-center gap-2 mb-4">
+      {/* Action Buttons */}
+      <div className="px-2 py-1">
+        <div className="flex items-center border-t">
           <Button
             variant="ghost"
-            size="sm"
+            className={`flex-1 gap-2 py-3 h-auto ${hasLiked ? "text-blue-600" : "text-gray-600"}`}
             onClick={() => toggleLikeMutation.mutate()}
-            className={hasLiked ? "text-blue-600" : ""}
+            disabled={toggleLikeMutation.isPending}
           >
-            <ThumbsUp className={`h-4 w-4 ml-2 ${hasLiked ? 'fill-current' : ''}`} />
-            إعجاب
+            <ThumbsUp className={`h-5 w-5 ${hasLiked ? 'fill-current' : ''}`} />
+            <span className="text-sm font-medium">إعجاب</span>
           </Button>
           <Button
             variant="ghost"
-            size="sm"
+            className="flex-1 gap-2 py-3 h-auto text-gray-600"
             onClick={() => {
               const newExpanded = new Set(expandedPosts);
               if (isExpanded) {
@@ -1010,144 +1197,158 @@ function PostCard({
               setExpandedPosts(newExpanded);
             }}
           >
-            <MessageSquare className="h-4 w-4 ml-2" />
-            تعليق
+            <MessageSquare className="h-5 w-5" />
+            <span className="text-sm font-medium">تعليق</span>
+          </Button>
+          <Button variant="ghost" className="flex-1 gap-2 py-3 h-auto text-gray-600">
+            <Share className="h-5 w-5" />
+            <span className="text-sm font-medium">مشاركة</span>
           </Button>
         </div>
+      </div>
 
-        {/* Comments Section */}
-        {isExpanded && (
-          <div className="space-y-4 mt-4 pt-4 border-t">
-            {/* Add Comment */}
-            {currentUserId && (
-              <div className="flex flex-col gap-2">
-                <div className="flex items-start gap-3">
-                  <Avatar className="w-8 h-8">
-                    <AvatarFallback className="bg-[#002e62] text-white text-xs">
-                      Me
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 flex gap-2">
+      {/* Comments Section */}
+      {isExpanded && (
+        <div className="border-t bg-gray-50">
+          {/* Add Comment */}
+          {currentUserId && (
+            <div className="p-4">
+              <div className="flex items-start gap-3">
+                <Avatar className="w-8 h-8">
+                  <AvatarFallback className="bg-gradient-to-r from-blue-500 to-blue-600 text-white text-xs">
+                    Me
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 space-y-3">
+                  <div className="bg-white rounded-full border px-4 py-2 shadow-sm">
                     <Input
                       placeholder="اكتب تعليق..."
                       value={commentInputs[post.id] || ""}
                       onChange={(e) => setCommentInputs(prev => ({ ...prev, [post.id]: e.target.value }))}
-                      onKeyPress={(e) => {
-                        if (e.key === 'Enter' && commentInputs[post.id]?.trim()) {
-                          addCommentMutation.mutate({
-                            content: commentInputs[post.id],
-                            imageUrl: commentImages[post.id] || null,
-                          });
-                        }
-                      }}
-                      data-testid={`input-comment-${post.id}`}
+                      className="border-0 focus:ring-0 placeholder:text-gray-500"
                     />
-                    <Input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      id={`comment-image-${post.id}`}
-                      onChange={async (e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          const url = await handleImageUpload(file, 'comment', post.id);
-                          if (url) {
-                            setCommentImages(prev => ({ ...prev, [post.id]: url }));
-                          }
-                        }
-                      }}
-                    />
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => document.getElementById(`comment-image-${post.id}`)?.click()}
-                      data-testid={`button-upload-comment-image-${post.id}`}
-                    >
-                      <ImageIcon className="h-4 w-4" />
-                    </Button>
+                  </div>
+                  
+                  {/* Comment Image Upload */}
+                  <div className="flex items-center gap-2">
+                    {!commentImages[post.id] ? (
+                      <>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => document.getElementById(`comment-image-${post.id}`)?.click()}
+                          className="text-gray-500 hover:text-gray-700 border border-gray-300"
+                        >
+                          <Camera className="h-4 w-4 ml-2" />
+                          إضافة صورة
+                        </Button>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          id={`comment-image-${post.id}`}
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              const url = await handleImageUpload(file, 'comment', post.id);
+                              if (url) {
+                                setCommentImages(prev => ({ ...prev, [post.id]: url }));
+                              }
+                            }
+                          }}
+                        />
+                      </>
+                    ) : (
+                      <div className="relative">
+                        <img
+                          src={commentImages[post.id]}
+                          alt="معاينة الصورة"
+                          className="h-20 rounded-lg border shadow-sm"
+                        />
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          className="absolute top-1 left-1 h-6 w-6 p-0 bg-black/60 hover:bg-black/80 border-0"
+                          onClick={() => setCommentImages(prev => ({ ...prev, [post.id]: "" }))}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+
+                  {(commentInputs[post.id]?.trim() || commentImages[post.id]) && (
                     <Button
                       size="sm"
                       onClick={() => {
-                        if (commentInputs[post.id]?.trim()) {
+                        if (commentInputs[post.id]?.trim() && commentImages[post.id]) {
                           addCommentMutation.mutate({
                             content: commentInputs[post.id],
-                            imageUrl: commentImages[post.id] || null,
+                            imageUrl: commentImages[post.id],
+                          });
+                        } else if (!commentImages[post.id]) {
+                          toast({
+                            title: "صورة مطلوبة",
+                            description: "يجب إضافة صورة للتعليق",
+                            variant: "destructive",
                           });
                         }
                       }}
-                      disabled={addCommentMutation.isPending || !commentInputs[post.id]?.trim()}
-                      data-testid={`button-send-comment-${post.id}`}
+                      disabled={addCommentMutation.isPending || !commentInputs[post.id]?.trim() || !commentImages[post.id]}
+                      className="bg-blue-500 hover:bg-blue-600 text-white shadow-md"
                     >
-                      <Send className="h-4 w-4" />
+                      <Send className="h-4 w-4 ml-2" />
+                      {addCommentMutation.isPending ? "جاري الإرسال..." : "إرسال التعليق"}
                     </Button>
-                  </div>
+                  )}
                 </div>
-                
-                {/* Comment Image Preview */}
-                {commentImages[post.id] && (
-                  <div className="mr-11 relative inline-block">
-                    <img
-                      src={commentImages[post.id]}
-                      alt="معاينة الصورة"
-                      className="h-24 rounded-lg border"
-                    />
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      className="absolute top-1 left-1 h-6 w-6 p-0"
-                      onClick={() => setCommentImages(prev => ({ ...prev, [post.id]: "" }))}
-                      data-testid={`button-remove-comment-image-${post.id}`}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-                )}
               </div>
-            )}
+            </div>
+          )}
 
-            {/* Comments List */}
-            {comments.length > 0 && (
-              <div className="space-y-3">
-                {comments.map(comment => {
-                  const commentAuthor = getMemberInfo(comment.authorId);
-                  return (
-                    <div key={comment.id} className="flex items-start gap-3 bg-gray-50 p-3 rounded-lg">
-                      <Avatar className="w-8 h-8">
-                        <AvatarImage src={commentAuthor?.profileImage || undefined} />
-                        <AvatarFallback className="bg-[#002e62] text-white text-xs">
-                          {commentAuthor?.fullName.substring(0, 2)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1">
+          {/* Comments List */}
+          {comments.length > 0 && (
+            <div className="px-4 pb-4 space-y-3">
+              {comments.map(comment => {
+                const commentAuthor = getMemberInfo(comment.authorId);
+                return (
+                  <div key={comment.id} className="flex items-start gap-3">
+                    <Avatar className="w-8 h-8">
+                      <AvatarImage src={commentAuthor?.profileImage || undefined} />
+                      <AvatarFallback className="bg-gradient-to-r from-blue-500 to-blue-600 text-white text-xs">
+                        {commentAuthor?.fullName.substring(0, 2)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1">
+                      <div className="bg-white rounded-2xl px-3 py-2 border shadow-sm">
                         <div className="flex items-center gap-2 mb-1">
-                          <p className="font-semibold text-sm">{commentAuthor?.fullName}</p>
+                          <p className="font-semibold text-sm text-gray-900">{commentAuthor?.fullName}</p>
                           {checkIsLeader(comment.authorId) && (
-                            <Badge variant="secondary" className="bg-amber-100 text-amber-700 text-xs">
-                              <Star className="h-2 w-2 ml-1" />
-                              قائد
-                            </Badge>
+                            <Star className="h-3 w-3 text-yellow-500 fill-yellow-500" />
                           )}
-                          <span className="text-xs text-gray-600">
-                            {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true, locale: ar })}
-                          </span>
                         </div>
-                        <p className="text-sm text-gray-800">{comment.content}</p>
+                        <p className="text-sm text-gray-800 mb-2">{comment.content}</p>
                         {comment.imageUrl && (
                           <img
                             src={comment.imageUrl}
                             alt="صورة التعليق"
-                            className="mt-2 max-h-48 rounded-lg border"
+                            className="mt-2 max-h-48 rounded-lg border shadow-sm"
                           />
                         )}
                       </div>
+                      <div className="flex items-center gap-4 mt-1 px-2 text-xs text-gray-500">
+                        <button className="hover:underline font-medium">إعجاب</button>
+                        <span className="text-gray-400">•</span>
+                        <span>{formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true, locale: ar })}</span>
+                      </div>
                     </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        )}
-      </CardContent>
-    </Card>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
   );
 }

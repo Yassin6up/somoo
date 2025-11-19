@@ -85,7 +85,7 @@ export default function PurchaseService() {
     mutationFn: async () => {
       const currentUser = JSON.parse(localStorage.getItem("user") || "null");
       
-      return await apiRequest("POST", "/api/orders", {
+      return await apiRequest("/api/orders","POST", {
         productOwnerId: currentUser?.id,
         groupId: groupId,
         serviceType,

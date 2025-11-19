@@ -19,7 +19,7 @@ export default function AvailableTasks() {
 
   const acceptTaskMutation = useMutation({
     mutationFn: async (taskId: string) => {
-      return apiRequest("POST", `/api/tasks/${taskId}/accept`);
+      return apiRequest(`/api/tasks/${taskId}/accept`,"POST");
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/tasks/available"] });

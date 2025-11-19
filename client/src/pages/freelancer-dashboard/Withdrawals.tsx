@@ -31,7 +31,7 @@ export default function WithdrawalsPage() {
 
   const createWithdrawalMutation = useMutation({
     mutationFn: async (data: { amount: number; paymentMethod: string; accountNumber: string }) => {
-      return apiRequest("POST", "/api/withdrawals", data);
+      return apiRequest( "/api/withdrawals","POST", data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/withdrawals/my"] });

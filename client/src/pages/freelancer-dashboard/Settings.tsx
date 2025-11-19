@@ -46,7 +46,7 @@ export default function SettingsPage() {
   // Update profile mutation
   const updateProfileMutation = useMutation({
     mutationFn: async (data: Partial<Freelancer>) => {
-      return await apiRequest("PATCH", `/api/freelancers/${user?.id}`, data);
+      return await apiRequest( `/api/freelancers/${user?.id}`,"PATCH", data);
     },
     onSuccess: async (response) => {
       // Update cache
@@ -79,7 +79,7 @@ export default function SettingsPage() {
   // Change password mutation
   const changePasswordMutation = useMutation({
     mutationFn: async (data: { currentPassword: string; newPassword: string }) => {
-      return await apiRequest("PATCH", "/api/auth/change-password", data);
+      return await apiRequest( "/api/auth/change-password","PATCH", data);
     },
     onSuccess: () => {
       setCurrentPassword("");

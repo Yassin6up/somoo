@@ -77,7 +77,9 @@ export const groups = pgTable("groups", {
   leaderId: varchar("leader_id").notNull().references(() => freelancers.id),
   maxMembers: integer("max_members").default(700).notNull(),
   currentMembers: integer("current_members").default(1).notNull(),
-  status: text("status").notNull().default("active"), // active, inactive
+  status: text("status").notNull().default("active"), // active, inactive*
+  averageRating: decimal("average_rating", { precision: 3, scale: 2 }).default("0"),
+  totalRatings: integer("total_ratings").default(0),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -93,6 +95,8 @@ export const projects = pgTable("projects", {
   deadline: timestamp("deadline"),
   status: text("status").notNull().default("pending"), // pending, accepted, in_progress, completed, cancelled
   acceptedByGroupId: varchar("accepted_by_group_id").references(() => groups.id),
+  groupRating: decimal("group_rating", { precision: 3, scale: 2 }), // Rating from 0.00 to 5.00
+  ratedAt: timestamp("rated_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

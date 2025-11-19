@@ -27,7 +27,7 @@ export default function SettingsPage() {
   const updateProfileMutation = useMutation({
     mutationFn: async (data: { fullName: string }) => {
       if (!user?.id) throw new Error("User ID not found");
-      const response = await apiRequest("PATCH", `/api/product-owners/${user.id}`, data);
+      const response = await apiRequest(`/api/product-owners/${user.id}`,"PATCH",  data);
       return { response, submittedData: data };
     },
     onSuccess: ({ response, submittedData }) => {

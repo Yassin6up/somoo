@@ -68,7 +68,7 @@ export default function ProductOwnerDashboard() {
   // Approve task mutation
   const approveTaskMutation = useMutation({
     mutationFn: async ({ taskId, feedback }: { taskId: string; feedback: string }) => {
-      return await apiRequest("PATCH", `/api/tasks/${taskId}/approve`, { feedback });
+      return await apiRequest( `/api/tasks/${taskId}/approve`,"PATCH", { feedback });
     },
     onSuccess: () => {
       toast({
@@ -91,7 +91,7 @@ export default function ProductOwnerDashboard() {
   // Reject task mutation
   const rejectTaskMutation = useMutation({
     mutationFn: async ({ taskId, feedback }: { taskId: string; feedback: string }) => {
-      return await apiRequest("PATCH", `/api/tasks/${taskId}/reject`, { feedback });
+      return await apiRequest( `/api/tasks/${taskId}/reject`,"PATCH", { feedback });
     },
     onSuccess: () => {
       toast({

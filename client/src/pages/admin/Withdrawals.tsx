@@ -37,7 +37,7 @@ export default function AdminWithdrawals() {
 
   const approveMutation = useMutation({
     mutationFn: async (id: string) => {
-      const res = await apiRequest("PATCH", `/api/admin/withdrawals/${id}/approve`);
+      const res = await apiRequest(`/api/admin/withdrawals/${id}/approve`,"PATCH", {});
       return res.json();
     },
     onSuccess: (data) => {
@@ -59,7 +59,7 @@ export default function AdminWithdrawals() {
 
   const rejectMutation = useMutation({
     mutationFn: async (id: string) => {
-      const res = await apiRequest("PATCH", `/api/admin/withdrawals/${id}/reject`);
+      const res = await apiRequest(`/api/admin/withdrawals/${id}/reject`,"PATCH", {});
       return res.json();
     },
     onSuccess: (data) => {

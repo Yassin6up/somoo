@@ -39,7 +39,7 @@ export default function AdminProductOwners() {
 
   const toggleStatusMutation = useMutation({
     mutationFn: async (id: string) => {
-      const res = await apiRequest("PATCH", `/api/admin/product-owners/${id}/toggle-status`);
+      const res = await apiRequest(`/api/admin/product-owners/${id}/toggle-status`,"PATCH", {});
       return res.json();
     },
     onSuccess: (data) => {

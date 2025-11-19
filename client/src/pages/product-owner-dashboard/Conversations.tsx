@@ -58,8 +58,9 @@ export default function Conversations() {
   const sendMessageMutation = useMutation({
     mutationFn: async (content: string) => {
       return await apiRequest(
-        "POST",
+        
         `/api/conversations/${selectedConversation}/messages`,
+        "POST",
         { content }
       );
     },

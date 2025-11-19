@@ -73,7 +73,7 @@ export default function FreelancerDashboard() {
   // Accept task mutation
   const acceptTaskMutation = useMutation({
     mutationFn: async (taskId: string) => {
-      return apiRequest("POST", `/api/tasks/${taskId}/accept`);
+      return apiRequest( `/api/tasks/${taskId}/accept`,"POST", {});
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/tasks/available"] });
@@ -95,7 +95,7 @@ export default function FreelancerDashboard() {
   // Start task mutation
   const startTaskMutation = useMutation({
     mutationFn: async (taskId: string) => {
-      return apiRequest("PATCH", `/api/tasks/${taskId}/start`);
+      return apiRequest( `/api/tasks/${taskId}/start`,"PATCH", {});
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/tasks/my-tasks"] });
@@ -109,7 +109,7 @@ export default function FreelancerDashboard() {
   // Submit task mutation
   const submitTaskMutation = useMutation({
     mutationFn: async ({ taskId, submission }: { taskId: string; submission: string }) => {
-      return apiRequest("PATCH", `/api/tasks/${taskId}/submit`, { submission });
+      return apiRequest( `/api/tasks/${taskId}/submit`,"PATCH", { submission });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/tasks/my-tasks"] });
@@ -162,7 +162,7 @@ export default function FreelancerDashboard() {
   // Withdrawal mutation
   const createWithdrawalMutation = useMutation({
     mutationFn: async (data: { amount: number; paymentMethod: string; accountNumber: string }) => {
-      return apiRequest("POST", "/api/withdrawals", data);
+      return apiRequest("/api/withdrawals","POST", data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/withdrawals/my"] });

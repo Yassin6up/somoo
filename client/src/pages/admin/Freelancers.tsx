@@ -40,7 +40,7 @@ export default function AdminFreelancers() {
 
   const toggleStatusMutation = useMutation({
     mutationFn: async (id: string) => {
-      const res = await apiRequest("PATCH", `/api/admin/freelancers/${id}/toggle-status`);
+      const res = await apiRequest( `/api/admin/freelancers/${id}/toggle-status`,"PATCH", {});
       return res.json();
     },
     onSuccess: (data) => {

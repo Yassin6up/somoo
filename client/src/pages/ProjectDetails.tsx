@@ -72,7 +72,7 @@ export default function ProjectDetails() {
   // Create task mutation
   const createTaskMutation = useMutation({
     mutationFn: async (data: { title: string; description: string; reward: string }) => {
-      return await apiRequest("POST", "/api/tasks", {
+      return await apiRequest( "/api/tasks","POST", {
         ...data,
         projectId: id,
       });

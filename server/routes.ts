@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertFreelancerSchema, insertProductOwnerSchema, insertCampaignSchema, insertOrderSchema, type Campaign, postComments } from "@shared/schema";
 import { z } from "zod";
-import OpenAI from "openai";
+// import OpenAI from "openai";
 import multer from "multer";
 import { writeFile, mkdir } from "fs/promises";
 import { join } from "path";
@@ -16,10 +16,10 @@ import { eq } from "drizzle-orm";
 // Initialize OpenAI client using Replit AI Integrations
 // This provides OpenAI-compatible API access without requiring your own OpenAI API key
 // Charges are billed to your Replit credits
-const openai = new OpenAI({
-  baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
-  apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
-});
+// const openai = new OpenAI({
+//   baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
+//   apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
+// });
 
 // Configure multer for file uploads
 const upload = multer({ storage: multer.memoryStorage() });
@@ -34,12 +34,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/freelancers", async (req, res) => {
     try {
       const validatedData = insertFreelancerSchema.parse(req.body);
-
+console.log("Validated Data:", validatedData);
       // Check if email already exists
       const existingByEmail = await storage.getFreelancerByEmail(validatedData.email);
       if (existingByEmail) {
         return res.status(400).json({ error: "البريد الإلكتروني مستخدم بالفعل" });
       }
+
 
       // Check if username already exists
       const existingByUsername = await storage.getFreelancerByUsername(validatedData.username);
@@ -69,10 +70,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: "تم إنشاء الحساب بنجاح"
       });
     } catch (error) {
+      console.error("Error creating freelancer:",  error);
+
       if (error instanceof z.ZodError) {
         return res.status(400).json({ error: error.errors });
       }
-      console.error("Error creating freelancer:", error);
       res.status(500).json({ error: "حدث خطأ أثناء إنشاء الحساب" });
     }
   });
@@ -321,26 +323,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Using gpt-5 - the newest OpenAI model released August 7, 2025
-      const completion = await openai.chat.completions.create({
-        model: "gpt-5",
-        messages: [
-          {
-            role: "system",
-            content: "أنت مساعد ذكي متخصص في كتابة أوصاف احترافية باللغة العربية. تجيب دائمًا بالعربية الفصحى الواضحة."
-          },
-          {
-            role: "user",
-            content: prompt
-          }
-        ],
-        max_completion_tokens: 200,
-      });
+      // const completion = await openai.chat.completions.create({
+      //   model: "gpt-5",
+      //   messages: [
+      //     {
+      //       role: "system",
+      //       content: "أنت مساعد ذكي متخصص في كتابة أوصاف احترافية باللغة العربية. تجيب دائمًا بالعربية الفصحى الواضحة."
+      //     },
+      //     {
+      //       role: "user",
+      //       content: prompt
+      //     }
+      //   ],
+      //   max_completion_tokens: 200,
+      // });
 
-      const suggestion = completion.choices[0]?.message?.content?.trim();
-
-      if (!suggestion) {
-        return res.status(500).json({ error: "فشل في توليد الاقتراح" });
-      }
+      // const suggestion = completion.choices[0]?.message?.content?.trim();
+      const suggestion = "نموذج اقتراح تم إنشاؤه بنجاح."; // Placeholder response
+      // if (!suggestion) {
+      //   return res.status(500).json({ error: "فشل في توليد الاقتراح" });
+      // }
 
       res.json({ suggestion });
     } catch (error) {
@@ -1004,72 +1006,127 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ============================================
 
   // Create a new group (freelancer only)
-  app.post("/api/groups", authMiddleware, requireRole(["freelancer"]), async (req: AuthRequest, res) => {
-    try {
-      if (!req.user?.userId) {
-        return res.status(401).json({ error: "غير مصرح" });
-      }
-
-      const { name, description, maxMembers = 700 } = req.body;
-
-      if (!name || !name.trim()) {
-        return res.status(400).json({ error: "اسم الجروب مطلوب" });
-      }
-
-      if (maxMembers < 1 || maxMembers > 700) {
-        return res.status(400).json({ error: "الحد الأقصى للأعضاء يجب أن يكون بين 1 و 700" });
-      }
-
-      const group = await storage.createGroup({
-        name: name.trim(),
-        description: description?.trim() || "",
-        leaderId: req.user.userId,
-        maxMembers,
-        currentMembers: 1, // Leader is the first member
-        status: "active",
-      });
-
-      // Add leader as member
-      await storage.addGroupMember({
-        groupId: group.id,
-        freelancerId: req.user.userId,
-        role: "leader",
-      });
-
-      res.status(201).json(group);
-    } catch (error) {
-      console.error("Error creating group:", error);
-      res.status(500).json({ error: "حدث خطأ أثناء إنشاء الجروب" });
+app.post("/api/groups", authMiddleware, requireRole(["freelancer"]), async (req: AuthRequest, res) => {
+  try {
+    if (!req.user?.userId) {
+      return res.status(401).json({ error: "غير مصرح" });
     }
-  });
+
+    const { name, description, maxMembers = 700 } = req.body;
+
+    if (!name || !name.trim()) {
+      return res.status(400).json({ error: "اسم الجروب مطلوب" });
+    }
+
+    if (maxMembers < 1 || maxMembers > 700) {
+      return res.status(400).json({ error: "الحد الأقصى للأعضاء يجب أن يكون بين 1 و 700" });
+    }
+
+    // Just create the group - the storage method should handle everything
+    const group = await storage.createGroup({
+      name: name.trim(),
+      description: description?.trim() || "",
+      leaderId: req.user.userId,
+      maxMembers,
+      groupImage: req.body.groupImage || null,
+      currentMembers: 1, // Leader is the first member
+      status: "active",
+    });
+
+    // Remove these duplicate calls - they're already handled in createGroup
+    // await storage.addGroupMember({
+    //   groupId: group.id,
+    //   freelancerId: req.user.userId,
+    //   role: "leader",
+    // });
+console.log("Group created with ID:", group);
+
+    res.status(201).json(group);
+  } catch (error) {
+    console.error("Error creating group:", error);
+    res.status(500).json({ error: "حدث خطأ أثناء إنشاء الجروب" });
+  }
+});
 
   // Get all groups (for joining)
-  app.get("/api/groups", async (req, res) => {
-    try {
-      const groups = await storage.getAllGroups();
-      res.json(groups);
-    } catch (error) {
-      console.error("Error fetching groups:", error);
-      res.status(500).json({ error: "حدث خطأ أثناء جلب الجروبات" });
-    }
-  });
+app.get("/api/groups", async (req: AuthRequest, res) => {
+  try {
+    const groups = await storage.getAllGroups();
+    const finalGroups = await Promise.all(groups.map(async (group) => {
+      const leader = await storage.getFreelancer(group.leaderId);
+      const groupMembers = await storage.getGroupMembers(group.id);
+      const isJoined = req.user?.userId ? await storage.isGroupMember(group.id, req.user.userId) : false;
+
+      // Get member details for the first 5 members
+      const membersToShow = await Promise.all(
+        groupMembers.slice(0, 5).map(async (member) => {
+          const memberDetails = await storage.getFreelancer(member.freelancerId);
+          return {
+            id: member.freelancerId,
+            name: memberDetails?.fullName || "غير معروف",
+            avatar: memberDetails?.profileImage || null,
+            role: member.role
+          };
+        })
+      );
+
+      return {
+        ...group,
+        leaderName: leader?.fullName || "غير معروف",
+        leaderImage: leader?.profileImage || null,
+        groupRating: await storage.getGroupRating(group.id),
+        isJoined: isJoined,
+        memberCount: groupMembers.length,
+        membersToShow: membersToShow
+      };
+    }));
+    res.json(finalGroups);
+  } catch (error) {
+    console.error("Error fetching groups:", error);
+    res.status(500).json({ error: "حدث خطأ أثناء جلب الجروبات" });
+  }
+});
 
   // Get group by ID with details
-  app.get("/api/groups/:id", async (req, res) => {
-    try {
-      const { id } = req.params;
-      const group = await storage.getGroup(id);
+ app.get("/api/groups/:id", authMiddleware, async (req: AuthRequest, res) => {
+  try {
+    const { id } = req.params;
+    const group = await storage.getGroup(id);
 
-      if (!group) {
-        return res.status(404).json({ error: "الجروب غير موجود" });
-      }
-
-      res.json(group);
-    } catch (error) {
-      console.error("Error fetching group:", error);
-      res.status(500).json({ error: "حدث خطأ أثناء جلب بيانات الجروب" });
+    if (!group) {
+      return res.status(404).json({ error: "الجروب غير موجود" });
     }
-  });
+
+    const leader = await storage.getFreelancer(group.leaderId);
+    
+    // Check if current user is a member of this group
+    const isMember = req.user?.userId ? await storage.isGroupMember(id, req.user.userId) : false;
+    
+    // Get group projects statistics
+    const groupProjects = await storage.getProjectsByGroup(id);
+    const totalProjects = groupProjects.length;
+    const completedProjects = groupProjects.filter(project => project.status === 'completed').length;
+    const inProgressProjects = groupProjects.filter(project => project.status === 'in_progress').length;
+
+    const finalGroup = { 
+      ...group,
+      leaderName: leader?.fullName || "غير معروف",
+      leaderImage: leader?.profileImage || null,
+      isMember: isMember,
+      totalProjects: totalProjects,
+      completedProjects: completedProjects,
+      inProgressProjects: inProgressProjects,
+      // You can also add other useful stats:
+      pendingProjects: groupProjects.filter(project => project.status === 'pending').length,
+      cancelledProjects: groupProjects.filter(project => project.status === 'cancelled').length,
+    };
+
+    res.json(finalGroup);
+  } catch (error) {
+    console.error("Error fetching group:", error);
+    res.status(500).json({ error: "حدث خطأ أثناء جلب بيانات الجروب" });
+  }
+});
 
   // Get groups where user is leader
   app.get("/api/groups/my/leader", authMiddleware, requireRole(["freelancer"]), async (req: AuthRequest, res) => {
@@ -1148,59 +1205,101 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Leave a group (freelancer only, not leader)
-  app.post("/api/groups/:id/leave", authMiddleware, requireRole(["freelancer"]), async (req: AuthRequest, res) => {
-    try {
-      const { id } = req.params;
-      
-      if (!req.user?.userId) {
-        return res.status(401).json({ error: "غير مصرح" });
-      }
-
-      const group = await storage.getGroup(id);
-      if (!group) {
-        return res.status(404).json({ error: "الجروب غير موجود" });
-      }
-
-      if (group.leaderId === req.user.userId) {
-        return res.status(400).json({ error: "لا يمكن لقائد الجروب المغادرة. يمكنك حذف الجروب بدلاً من ذلك" });
-      }
-
-      const isMember = await storage.isGroupMember(id, req.user.userId);
-      if (!isMember) {
-        return res.status(400).json({ error: "أنت لست عضواً في هذا الجروب" });
-      }
-
-      await storage.removeGroupMember(id, req.user.userId);
-
-      // Update member count
-      await storage.updateGroup(id, {
-        currentMembers: Math.max(1, group.currentMembers - 1),
-      });
-
-      res.json({ message: "تم المغادرة من الجروب بنجاح" });
-    } catch (error) {
-      console.error("Error leaving group:", error);
-      res.status(500).json({ error: "حدث خطأ أثناء المغادرة من الجروب" });
+app.post("/api/groups/:id/leave", authMiddleware, requireRole(["freelancer"]), async (req: AuthRequest, res) => {
+  try {
+    const { id } = req.params;
+    
+    if (!req.user?.userId) {
+      return res.status(401).json({ error: "غير مصرح" });
     }
-  });
 
-  // Get group members (with details)
-  app.get("/api/groups/:id/members", async (req, res) => {
-    try {
-      const { id } = req.params;
-      
-      const group = await storage.getGroup(id);
-      if (!group) {
-        return res.status(404).json({ error: "الجروب غير موجود" });
-      }
-
-      const members = await storage.getGroupMembers(id);
-      res.json(members);
-    } catch (error) {
-      console.error("Error fetching group members:", error);
-      res.status(500).json({ error: "حدث خطأ أثناء جلب أعضاء الجروب" });
+    const group = await storage.getGroup(id);
+    if (!group) {
+      return res.status(404).json({ error: "الجروب غير موجود" });
     }
-  });
+
+    // Check if user is the leader
+    if (group.leaderId === req.user.userId) {
+      // If leader wants to leave, check if they're the only member
+      const groupMembers = await storage.getGroupMembers(id);
+      
+      if (groupMembers.length === 1 && groupMembers[0].freelancerId === req.user.userId) {
+        // Leader is the only member - delete the entire group
+        await storage.removeGroupMember(id, req.user.userId);
+        return res.json({ 
+          message: "تم حذف الجروب بنجاح حيث كنت العضو الوحيد",
+          groupDeleted: true 
+        });
+      } else {
+        return res.status(400).json({ 
+          error: "لا يمكن لقائد الجروب المغادرة. يجب عليك نقل القيادة أولاً أو حذف الجروب" 
+        });
+      }
+    }
+
+    const isMember = await storage.isGroupMember(id, req.user.userId);
+    if (!isMember) {
+      return res.status(400).json({ error: "أنت لست عضواً في هذا الجروب" });
+    }
+
+    await storage.removeGroupMember(id, req.user.userId);
+
+    // Update member count
+    await storage.updateGroup(id, {
+      currentMembers: Math.max(0, group.currentMembers - 1),
+    });
+
+    res.json({ 
+      message: "تم المغادرة من الجروب بنجاح",
+      groupDeleted: false 
+    });
+  } catch (error) {
+    console.error("Error leaving group:", error);
+    res.status(500).json({ error: "حدث خطأ أثناء المغادرة من الجروب" });
+  }
+});
+
+// Get group members with freelancer details
+app.get("/api/groups/:id/members", async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const group = await storage.getGroup(id);
+    if (!group) {
+      return res.status(404).json({ error: "الجروب غير موجود" });
+    }
+
+    const members = await storage.getGroupMembers(id);
+    
+    // Enhance members with freelancer details
+    const enhancedMembers = await Promise.all(
+      members.map(async (member) => {
+        const freelancer = await storage.getFreelancer(member.freelancerId);
+        return {
+          ...member,
+          freelancer: {
+            id: freelancer?.id,
+            fullName: freelancer?.fullName || "غير معروف",
+            username: freelancer?.username,
+            email: freelancer?.email,
+            profileImage: freelancer?.profileImage,
+            jobTitle: freelancer?.jobTitle,
+            bio: freelancer?.bio,
+            services: freelancer?.services,
+            isVerified: freelancer?.isVerified,
+            lastSeen: freelancer?.lastSeen,
+            createdAt: freelancer?.createdAt,
+          }
+        };
+      })
+    );
+
+    res.json(enhancedMembers);
+  } catch (error) {
+    console.error("Error fetching group members:", error);
+    res.status(500).json({ error: "حدث خطأ أثناء جلب أعضاء الجروب" });
+  }
+});
 
   // Remove member from group (leader only)
   app.delete("/api/groups/:groupId/members/:freelancerId", authMiddleware, requireRole(["freelancer"]), async (req: AuthRequest, res) => {
