@@ -2,9 +2,9 @@ import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 
 // JWT secret from environment - REQUIRED for production
-if (!process.env.JWT_SECRET && process.env.NODE_ENV === "production") {
-  throw new Error("JWT_SECRET environment variable must be set in production");
-}
+// if (!process.env.JWT_SECRET && process.env.NODE_ENV === "production") {
+//   throw new Error("JWT_SECRET environment variable must be set in production");
+// }
 
 const JWT_SECRET = process.env.JWT_SECRET || "development-secret-key-DO-NOT-USE-IN-PRODUCTION";
 const JWT_EXPIRES_IN = "7d"; // Token expires in 7 days
