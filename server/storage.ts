@@ -1,3 +1,4 @@
+
 import {
   type User,
   type InsertUser,
@@ -33,6 +34,10 @@ import {
   type InsertConversation,
   type ConversationMessage,
   type InsertConversationMessage,
+  type GroupJoinRequest,
+  type InsertGroupJoinRequest,
+  type GroupSpectator,
+  type InsertGroupSpectator,
   type GroupPost,
   type InsertGroupPost,
   type PostComment,
@@ -56,13 +61,16 @@ import {
   orders,
   conversations,
   conversationMessages,
+  groupJoinRequests,
   groupPosts,
+  groupSpectators,
   postComments,
   postReactions,
+  directMessages,
 } from "@shared/schema";
 import { isNotNull } from "drizzle-orm";
 import { db } from "./db";
-import { eq, and, or, desc } from "drizzle-orm";
+import { eq, and, or, desc, asc } from "drizzle-orm";
 import { randomUUID } from "crypto";
 import { sql } from "drizzle-orm";
 
@@ -109,6 +117,8 @@ export interface IStorage {
   getTask(id: string): Promise<Task | undefined>;
   getTasksByCampaign(campaignId: string): Promise<Task[]>;
   getTasksByFreelancer(freelancerId: string): Promise<Task[]>;
+  getTasksByProject(projectId: string): Promise<Task[]>;
+  getTasksByGroup(groupId: string): Promise<Task[]>;
   getAvailableTasks(): Promise<Task[]>;
   createTask(task: InsertTask): Promise<Task>;
   updateTask(id: string, updates: Partial<Task>): Promise<Task | undefined>;
@@ -156,6 +166,12 @@ export interface IStorage {
   addGroupMember(member: InsertGroupMember): Promise<GroupMember>;
   removeGroupMember(groupId: string, freelancerId: string): Promise<void>;
   isGroupMember(groupId: string, freelancerId: string): Promise<boolean>;
+
+  // Group Spectator methods (product owners who can spectate a group)
+  getGroupSpectators(groupId: string): Promise<GroupSpectator[]>;
+  addGroupSpectator(spectator: InsertGroupSpectator): Promise<GroupSpectator>;
+  removeGroupSpectator(groupId: string, productOwnerId: string): Promise<void>;
+  isGroupSpectator(groupId: string, productOwnerId: string): Promise<boolean>;
 
   // Group Join Request methods
   getJoinRequestsByGroup(groupId: string): Promise<GroupJoinRequest[]>;
@@ -217,6 +233,11 @@ export interface IStorage {
     leaderId: string
   ): Promise<Conversation>;
   getConversation(conversationId: string): Promise<Conversation | undefined>;
+  getConversationsBetweenUsers(
+    userId1: string,
+    userId2: string,
+    userType: string
+  ): Promise<Conversation[]>;
   getConversationMessages(
     conversationId: string
   ): Promise<ConversationMessage[]>;
@@ -229,6 +250,11 @@ export interface IStorage {
   getProductOwnerConversations(productOwnerId: string): Promise<Conversation[]>;
   getFreelancerConversations(freelancerId: string): Promise<Conversation[]>;
   markMessagesAsRead(conversationId: string, userId: string): Promise<void>;
+
+  // Direct Messages methods
+  getDirectMessages(userId: string, userType: string, otherUserId: string, otherUserType: string): Promise<any[]>;
+  sendDirectMessage(senderId: string, senderType: string, receiverId: string, receiverType: string, content: string): Promise<any>;
+  getDirectMessageHistory(userId: string, userType: string): Promise<any[]>;
 
   // Group Posts methods
   getPostsByGroup(groupId: string): Promise<GroupPost[]>;
@@ -393,6 +419,37 @@ export class MemStorage implements IStorage {
     return Array.from(this.productOwners.values());
   }
 
+    // Project deletion
+  async deleteProject(id: string): Promise<void> {
+    await db.delete(projects).where(eq(projects.id, id));
+  }
+
+  // Get tasks by project
+  async getTasksByProject(projectId: string): Promise<Task[]> {
+    return await db
+      .select()
+      .from(tasks)
+      .where(eq(tasks.projectId, projectId))
+      .orderBy(desc(tasks.createdAt));
+  }
+
+  // Get tasks by group
+  async getTasksByGroup(groupId: string): Promise<Task[]> {
+    return await db
+      .select()
+      .from(tasks)
+      .where(eq(tasks.groupId, groupId))
+      .orderBy(desc(tasks.createdAt));
+  }
+
+  // Get notification by id (for patch route)
+  async getNotification(id: string): Promise<Notification | undefined> {
+    const [notification] = await db
+      .select()
+      .from(notifications)
+      .where(eq(notifications.id, id));
+    return notification || undefined;
+  }
   // Stub implementations for new methods (not used since we're using DatabaseStorage)
   async getCampaign(): Promise<Campaign | undefined> {
     throw new Error("Not implemented in MemStorage");
@@ -1027,6 +1084,47 @@ export class DatabaseStorage implements IStorage {
     return !!member;
   }
 
+  // Group Spectator methods
+  async getGroupSpectators(groupId: string): Promise<GroupSpectator[]> {
+    return await db
+      .select()
+      .from(groupSpectators)
+      .where(eq(groupSpectators.groupId, groupId))
+      .orderBy(desc(groupSpectators.joinedAt));
+  }
+
+  async addGroupSpectator(spectator: InsertGroupSpectator): Promise<GroupSpectator> {
+    const [newSpectator] = await db
+      .insert(groupSpectators)
+      .values(spectator)
+      .returning();
+    return newSpectator;
+  }
+
+  async removeGroupSpectator(groupId: string, productOwnerId: string): Promise<void> {
+    await db
+      .delete(groupSpectators)
+      .where(
+        and(
+          eq(groupSpectators.groupId, groupId),
+          eq(groupSpectators.productOwnerId, productOwnerId)
+        )
+      );
+  }
+
+  async isGroupSpectator(groupId: string, productOwnerId: string): Promise<boolean> {
+    const [spect] = await db
+      .select()
+      .from(groupSpectators)
+      .where(
+        and(
+          eq(groupSpectators.groupId, groupId),
+          eq(groupSpectators.productOwnerId, productOwnerId)
+        )
+      );
+    return !!spect;
+  }
+
   // Group Join Request methods
   async getJoinRequestsByGroup(groupId: string): Promise<GroupJoinRequest[]> {
     return await db
@@ -1444,6 +1542,30 @@ export class DatabaseStorage implements IStorage {
     return conversation || undefined;
   }
 
+  async getConversationsBetweenUsers(
+    userId1: string,
+    userId2: string,
+    userType: string
+  ): Promise<Conversation[]> {
+    if (userType === "product_owner") {
+      // userId1 is product owner, userId2 is leader
+      return await db
+        .select()
+        .from(conversations)
+        .where(
+          sql`${conversations.productOwnerId} = ${userId1} AND ${conversations.leaderId} = ${userId2}`
+        );
+    } else {
+      // userId1 is leader, userId2 is product owner
+      return await db
+        .select()
+        .from(conversations)
+        .where(
+          sql`${conversations.leaderId} = ${userId1} AND ${conversations.productOwnerId} = ${userId2}`
+        );
+    }
+  }
+
   async getConversationMessages(
     conversationId: string
   ): Promise<ConversationMessage[]> {
@@ -1514,6 +1636,108 @@ export class DatabaseStorage implements IStorage {
           eq(conversationMessages.isRead, false)
         )
       );
+  }
+
+  // Direct Messages methods
+  async getDirectMessages(
+    userId: string,
+    userType: string,
+    otherUserId: string,
+    otherUserType: string
+  ): Promise<any[]> {
+    return await db
+      .select()
+      .from(directMessages)
+      .where(
+        or(
+          and(
+            eq(directMessages.senderId, userId),
+            eq(directMessages.senderType, userType),
+            eq(directMessages.receiverId, otherUserId),
+            eq(directMessages.receiverType, otherUserType)
+          ),
+          and(
+            eq(directMessages.senderId, otherUserId),
+            eq(directMessages.senderType, otherUserType),
+            eq(directMessages.receiverId, userId),
+            eq(directMessages.receiverType, userType)
+          )
+        )
+      )
+      .orderBy(asc(directMessages.createdAt));
+  }
+
+  async sendDirectMessage(
+    senderId: string,
+    senderType: string,
+    receiverId: string,
+    receiverType: string,
+    content: string
+  ): Promise<any> {
+    const [message] = await db
+      .insert(directMessages)
+      .values({
+        senderId,
+        senderType,
+        receiverId,
+        receiverType,
+        content,
+        isRead: false,
+      })
+      .returning();
+    return message;
+  }
+
+  async getDirectMessageHistory(
+    userId: string,
+    userType: string
+  ): Promise<any[]> {
+    // Get all unique conversations for this user
+    const sent = await db
+      .select({
+        otherUserId: directMessages.receiverId,
+        otherUserType: directMessages.receiverType,
+        lastMessage: directMessages.content,
+        lastMessageAt: directMessages.createdAt,
+      })
+      .from(directMessages)
+      .where(
+        and(
+          eq(directMessages.senderId, userId),
+          eq(directMessages.senderType, userType)
+        )
+      )
+      .orderBy(desc(directMessages.createdAt));
+
+    const received = await db
+      .select({
+        otherUserId: directMessages.senderId,
+        otherUserType: directMessages.senderType,
+        lastMessage: directMessages.content,
+        lastMessageAt: directMessages.createdAt,
+      })
+      .from(directMessages)
+      .where(
+        and(
+          eq(directMessages.receiverId, userId),
+          eq(directMessages.receiverType, userType)
+        )
+      )
+      .orderBy(desc(directMessages.createdAt));
+
+    // Combine and deduplicate
+    const allConversations = [...sent, ...received];
+    const uniqueMap = new Map();
+    
+    allConversations.forEach((conv) => {
+      const key = `${conv.otherUserId}-${conv.otherUserType}`;
+      if (!uniqueMap.has(key) || 
+          new Date(conv.lastMessageAt) > new Date(uniqueMap.get(key).lastMessageAt)) {
+        uniqueMap.set(key, conv);
+      }
+    });
+
+    return Array.from(uniqueMap.values());
   }
 
   // Group Posts methods

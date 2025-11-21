@@ -1,0 +1,479 @@
+﻿import { Link } from "wouter";
+import { Navbar } from "@/components/Navbar";
+import { Footer } from "@/components/Footer";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { motion, useInView } from "framer-motion";
+import { useRef } from "react";
+import { 
+  UserPlus, 
+  BarChart3, 
+  Users, 
+  TrendingUp,
+  Star,
+  CheckCircle2,
+  Sparkles,
+  Shield,
+  Zap,
+  Target,
+  Award,
+  Clock,
+  MessageSquare,
+  MapPin,
+  Share2,
+  Palette,
+  Globe,
+  Rocket,
+  ChevronRight,
+  Play,
+  ArrowRight,
+  type LucideIcon
+} from "lucide-react";
+
+// Animated section wrapper
+function FadeInSection({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, margin: "-100px" });
+
+  return (
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0, y: 50 }}
+      animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 50 }}
+      transition={{ duration: 0.6, delay }}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+export default function Home() {
+  const features = [
+    {
+      icon: Star,
+      title: "ØªÙ‚ÙŠÙŠÙ…Ø§Øª Ø­Ù‚ÙŠÙ‚ÙŠØ©",
+      description: "Ø§Ø­ØµÙ„ Ø¹Ù„Ù‰ ØªÙ‚ÙŠÙŠÙ…Ø§Øª Ù…ÙˆØ«ÙˆÙ‚Ø© Ù…Ù† Ù…Ø³ØªØ®Ø¯Ù…ÙŠÙ† ÙØ¹Ù„ÙŠÙŠÙ†",
+      color: "from-yellow-500 to-orange-500"
+    },
+    {
+      icon: Shield,
+      title: "Ø£Ù…Ø§Ù† ÙˆØ¯Ù‚Ø©",
+      description: "Ù†Ø¸Ø§Ù… Ù…ØªÙ‚Ø¯Ù… Ù„Ø¶Ù…Ø§Ù† Ø¬ÙˆØ¯Ø© Ø§Ù„Ø®Ø¯Ù…Ø§Øª",
+      color: "from-blue-500 to-cyan-500"
+    },
+    {
+      icon: Zap,
+      title: "Ø³Ø±Ø¹Ø© ÙÙŠ Ø§Ù„Ø¥Ù†Ø¬Ø§Ø²",
+      description: "Ù†ØªØ§Ø¦Ø¬ Ø³Ø±ÙŠØ¹Ø© ÙˆÙØ¹Ø§Ù„Ø© Ù„Ù…Ø´Ø±ÙˆØ¹Ùƒ",
+      color: "from-purple-500 to-pink-500"
+    },
+    {
+      icon: Users,
+      title: "Ù…Ø¬ØªÙ…Ø¹ Ù†Ø´Ø·",
+      description: "Ø¢Ù„Ø§Ù Ø§Ù„Ù…Ø³ØªÙ‚Ù„ÙŠÙ† Ø§Ù„Ù…Ø­ØªØ±ÙÙŠÙ†",
+      color: "from-green-500 to-emerald-500"
+    }
+  ];
+
+  const services = [
+    {
+      icon: Star,
+      title: "ØªÙ‚ÙŠÙŠÙ…Ø§Øª Ø§Ù„ØªØ·Ø¨ÙŠÙ‚Ø§Øª",
+      description: "ØªØ­Ø³ÙŠÙ† ØªØµÙ†ÙŠÙ ØªØ·Ø¨ÙŠÙ‚Ùƒ Ø¹Ù„Ù‰ Google Play Ùˆ App Store Ù…Ù† Ø®Ù„Ø§Ù„ ØªÙ‚ÙŠÙŠÙ…Ø§Øª Ø­Ù‚ÙŠÙ‚ÙŠØ©",
+      stats: "2,500+ ØªÙ‚ÙŠÙŠÙ…",
+      image: "ðŸ“±"
+    },
+    {
+      icon: MapPin,
+      title: "Google Maps",
+      description: "ØªÙ‚ÙŠÙŠÙ…Ø§Øª Ù…ÙˆØ«ÙˆÙ‚Ø© Ù„Ù†Ø´Ø§Ø·Ùƒ Ø§Ù„ØªØ¬Ø§Ø±ÙŠ Ø¹Ù„Ù‰ Ø®Ø±Ø§Ø¦Ø· Ø¬ÙˆØ¬Ù„",
+      stats: "1,200+ Ù…ÙˆÙ‚Ø¹",
+      image: "ðŸ“"
+    },
+    {
+      icon: Share2,
+      title: "Social Media",
+      description: "Ø²ÙŠØ§Ø¯Ø© Ø§Ù„ØªÙØ§Ø¹Ù„ Ø¹Ù„Ù‰ Ù…Ù†ØµØ§Øª Ø§Ù„ØªÙˆØ§ØµÙ„ Ø§Ù„Ø§Ø¬ØªÙ…Ø§Ø¹ÙŠ",
+      stats: "2,500+ ØªÙØ§Ø¹Ù„",
+      image: "ðŸ“±"
+    },
+    {
+      icon: Palette,
+      title: "Ø§Ø®ØªØ¨Ø§Ø± UX/UI",
+      description: "ØªØ­Ù„ÙŠÙ„ Ø§Ø­ØªØ±Ø§ÙÙŠ Ù„ØªØ¬Ø±Ø¨Ø© Ø§Ù„Ù…Ø³ØªØ®Ø¯Ù… ÙˆÙˆØ§Ø¬Ù‡Ø© Ø§Ù„ØªØ·Ø¨ÙŠÙ‚",
+      stats: "950+ Ø§Ø®ØªØ¨Ø§Ø±",
+      image: "ðŸŽ¨"
+    }
+  ];
+
+  const stats = [
+    { value: "5000+", label: "مستخدم نشط" },
+    { value: "15000+", label: "مهمة منجزة" },
+    { value: "98%", label: "رضا العملاء" },
+    { value: "24/7", label: "دعم فني" }
+  ];
+
+  const testimonials = [
+    {
+      name: "Ø£Ø­Ù…Ø¯ Ù…Ø­Ù…Ø¯",
+      role: "Ù…Ø¤Ø³Ø³ ØªØ·Ø¨ÙŠÙ‚ ØªØ¬Ø§Ø±Ø© Ø¥Ù„ÙƒØªØ±ÙˆÙ†ÙŠØ©",
+      content: "Ù…Ù†ØµØ© Ø³ÙÙ…ÙÙˆÙ‘ Ø³Ø§Ø¹Ø¯ØªÙ†ÙŠ ÙÙŠ ØªØ­Ø³ÙŠÙ† ØªÙ‚ÙŠÙŠÙ…Ø§Øª ØªØ·Ø¨ÙŠÙ‚ÙŠ Ø¨Ø´ÙƒÙ„ ÙƒØ¨ÙŠØ±. Ø§Ù„Ù†ØªØ§Ø¦Ø¬ ÙƒØ§Ù†Øª Ø³Ø±ÙŠØ¹Ø© ÙˆØ§Ø­ØªØ±Ø§ÙÙŠØ© Ø¬Ø¯Ø§Ù‹!",
+      avatar: "ðŸ‘¨â€ðŸ’¼",
+      rating: 5
+    },
+    {
+      name: "ÙØ§Ø·Ù…Ø© Ø¹Ù„ÙŠ",
+      role: "Ù…Ø¯ÙŠØ±Ø© ØªØ³ÙˆÙŠÙ‚",
+      content: "Ø§Ù„Ø®Ø¯Ù…Ø§Øª Ø§Ù„Ù…Ù‚Ø¯Ù…Ø© Ù…Ù…ØªØ§Ø²Ø© ÙˆØ§Ù„ÙØ±ÙŠÙ‚ Ù…ØªØ¹Ø§ÙˆÙ† Ø¬Ø¯Ø§Ù‹. Ø­ØµÙ„Ù†Ø§ Ø¹Ù„Ù‰ Ù†ØªØ§Ø¦Ø¬ Ø±Ø§Ø¦Ø¹Ø© Ù„Ù„Ø­Ù…Ù„Ø© Ø§Ù„ØªØ³ÙˆÙŠÙ‚ÙŠØ©",
+      avatar: "ðŸ‘©â€ðŸ’¼",
+      rating: 5
+    },
+    {
+      name: "Ø®Ø§Ù„Ø¯ Ø§Ù„Ø³Ø¹ÙŠØ¯",
+      role: "Ù…Ø·ÙˆØ± ØªØ·Ø¨ÙŠÙ‚Ø§Øª",
+      content: "Ø£ÙØ¶Ù„ Ù…Ù†ØµØ© Ù„Ù„Ø­ØµÙˆÙ„ Ø¹Ù„Ù‰ ØªÙ‚ÙŠÙŠÙ…Ø§Øª Ø­Ù‚ÙŠÙ‚ÙŠØ© ÙˆØ§Ø®ØªØ¨Ø§Ø±Ø§Øª Ø´Ø§Ù…Ù„Ø© Ù„Ù„ØªØ·Ø¨ÙŠÙ‚Ø§Øª",
+      avatar: "ðŸ‘¨â€ðŸ’»",
+      rating: 5
+    }
+  ];
+
+  return (
+    <div className="min-h-screen flex flex-col bg-white">
+      <Navbar />
+
+      {/* Hero Section - Modern Design */}
+      <section className="relative overflow-hidden bg-gradient-to-br from-blue-50 via-white to-purple-50 pt-20 pb-32">
+        {/* Background Decoration */}
+        <div className="absolute top-0 left-0 w-full h-full overflow-hidden">
+          <div className="absolute top-20 left-10 w-72 h-72 bg-blue-400/10 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-20 right-10 w-96 h-96 bg-purple-400/10 rounded-full blur-3xl"></div>
+        </div>
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            {/* Left Content */}
+            <motion.div
+              initial={{ opacity: 0, x: -50 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6 }}
+              className="text-right space-y-8"
+            >
+              <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 border-0 px-4 py-2 rounded-full inline-flex items-center gap-2">
+                <Sparkles className="h-4 w-4" />
+                Ø§Ù„Ù…Ù†ØµØ© Ø§Ù„Ø£ÙˆÙ„Ù‰ ÙÙŠ Ø§Ù„Ù…Ù†Ø·Ù‚Ø©
+              </Badge>
+
+              <h1 className="text-5xl lg:text-6xl font-bold leading-tight">
+                <span className="block text-gray-900">Ù†ÙØ·ÙˆØ± Ù…Ù†ØªØ¬Ùƒ</span>
+                <span className="block text-gray-900">Ø§Ù„Ø±Ù‚Ù…ÙŠ</span>
+                <span className="block mt-2">
+                  <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                    Ù…Ø¹ Ù…Ø³ØªØ®Ø¯Ù…ÙŠÙ† Ø­Ù‚ÙŠÙ‚ÙŠÙŠÙ†
+                  </span>
+                </span>
+              </h1>
+
+              <p className="text-xl text-gray-600 leading-relaxed">
+                Ù…Ù†ØµØ© Ù…ØªØ®ØµØµØ© ØªØ±Ø¨Ø· Ø£ØµØ­Ø§Ø¨ Ø§Ù„Ù…Ù†ØªØ¬Ø§Øª Ø§Ù„Ø±Ù‚Ù…ÙŠØ© Ø¨Ø§Ù„Ù…Ø­ØªØ±ÙÙŠÙ† Ù„ØªØ­Ø³ÙŠÙ† Ø§Ù„ØªÙ‚ÙŠÙŠÙ…Ø§Øª ÙˆØ§Ø®ØªØ¨Ø§Ø± ØªØ¬Ø±Ø¨Ø© Ø§Ù„Ù…Ø³ØªØ®Ø¯Ù…
+              </p>
+
+              <div className="flex flex-col sm:flex-row gap-4">
+                <Link href="/role-selection">
+                  <Button size="lg" className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-6 rounded-2xl text-lg shadow-xl hover:shadow-2xl transition-all">
+                    Ø§Ø¨Ø¯Ø£ Ø§Ù„Ø¢Ù† Ù…Ø¬Ø§Ù†Ø§Ù‹
+                    <ArrowRight className="mr-2 h-5 w-5" />
+                  </Button>
+                </Link>
+                <Button size="lg" variant="outline" className="w-full sm:w-auto border-2 px-8 py-6 rounded-2xl text-lg hover:bg-gray-50">
+                  <Play className="mr-2 h-5 w-5" />
+                  Ø´Ø§Ù‡Ø¯ Ø§Ù„ÙÙŠØ¯ÙŠÙˆ
+                </Button>
+              </div>
+
+              {/* Stats Row */}
+              <div className="flex gap-8 pt-8">
+                <div>
+                  <div className="text-3xl font-bold text-gray-900">5000+</div>
+                  <div className="text-sm text-gray-600">Ù…Ø³ØªØ®Ø¯Ù… Ù†Ø´Ø·</div>
+                </div>
+                <div>
+                  <div className="text-3xl font-bold text-gray-900">15K+</div>
+                  <div className="text-sm text-gray-600">Ù…Ù‡Ù…Ø© Ù…Ù†Ø¬Ø²Ø©</div>
+                </div>
+                <div>
+                  <div className="text-3xl font-bold text-gray-900">98%</div>
+                  <div className="text-sm text-gray-600">Ø±Ø¶Ø§ Ø§Ù„Ø¹Ù…Ù„Ø§Ø¡</div>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Right Image/Illustration */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="relative"
+            >
+              <div className="relative bg-gradient-to-br from-blue-500 to-purple-600 rounded-3xl p-8 shadow-2xl">
+                <div className="absolute -top-6 -right-6 w-32 h-32 bg-yellow-400 rounded-full opacity-20 blur-2xl"></div>
+                <div className="absolute -bottom-6 -left-6 w-32 h-32 bg-pink-400 rounded-full opacity-20 blur-2xl"></div>
+                
+                <div className="bg-white rounded-2xl p-8 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="text-right">
+                      <div className="text-sm text-gray-600">Ø¥Ø¬Ù…Ø§Ù„ÙŠ Ø§Ù„ØªÙ‚ÙŠÙŠÙ…Ø§Øª</div>
+                      <div className="text-3xl font-bold text-gray-900">15,847</div>
+                    </div>
+                    <div className="text-5xl">â­</div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4 pt-4">
+                    <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-xl">
+                      <div className="text-2xl mb-2">ðŸ“±</div>
+                      <div className="text-sm font-semibold text-gray-900">Ø§Ù„ØªØ·Ø¨ÙŠÙ‚Ø§Øª</div>
+                      <div className="text-lg font-bold text-blue-600">2,500+</div>
+                    </div>
+                    <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-4 rounded-xl">
+                      <div className="text-2xl mb-2">ðŸ“</div>
+                      <div className="text-sm font-semibold text-gray-900">Google Maps</div>
+                      <div className="text-lg font-bold text-purple-600">1,200+</div>
+                    </div>
+                    <div className="bg-gradient-to-br from-pink-50 to-pink-100 p-4 rounded-xl">
+                      <div className="text-2xl mb-2">ðŸ“±</div>
+                      <div className="text-sm font-semibold text-gray-900">Social Media</div>
+                      <div className="text-lg font-bold text-pink-600">2,500+</div>
+                    </div>
+                    <div className="bg-gradient-to-br from-green-50 to-green-100 p-4 rounded-xl">
+                      <div className="text-2xl mb-2">ðŸŽ¨</div>
+                      <div className="text-sm font-semibold text-gray-900">UX/UI</div>
+                      <div className="text-lg font-bold text-green-600">950+</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <FadeInSection>
+            <div className="text-center mb-16">
+              <Badge className="bg-blue-100 text-blue-700 border-0 px-4 py-2 rounded-full mb-4">
+                Ù„Ù…Ø§Ø°Ø§ Ø³ÙÙ…ÙÙˆÙ‘ØŸ
+              </Badge>
+              <h2 className="text-4xl font-bold text-gray-900 mb-4">
+                Ù…Ù…ÙŠØ²Ø§Øª ØªØ¬Ø¹Ù„Ù†Ø§ Ø§Ù„Ø®ÙŠØ§Ø± Ø§Ù„Ø£ÙØ¶Ù„
+              </h2>
+              <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+                Ù†Ù‚Ø¯Ù… Ø­Ù„ÙˆÙ„Ø§Ù‹ Ù…ØªÙƒØ§Ù…Ù„Ø© Ù„ØªØ·ÙˆÙŠØ± Ù…Ù†ØªØ¬Ùƒ Ø§Ù„Ø±Ù‚Ù…ÙŠ Ù…Ø¹ Ø¶Ù…Ø§Ù† Ø§Ù„Ø¬ÙˆØ¯Ø© ÙˆØ§Ù„Ø³Ø±Ø¹Ø©
+              </p>
+            </div>
+          </FadeInSection>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {features.map((feature, index) => (
+              <FadeInSection key={index} delay={index * 0.1}>
+                <motion.div
+                  whileHover={{ y: -10 }}
+                  className="text-center p-8 rounded-3xl bg-gradient-to-br from-gray-50 to-white border border-gray-100 hover:border-gray-200 hover:shadow-xl transition-all"
+                >
+                  <div className={`inline-flex p-4 rounded-2xl bg-gradient-to-r ${feature.color} mb-6`}>
+                    <feature.icon className="h-8 w-8 text-white" />
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-3">{feature.title}</h3>
+                  <p className="text-gray-600">{feature.description}</p>
+                </motion.div>
+              </FadeInSection>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Services Section */}
+      <section className="py-20 bg-gradient-to-br from-gray-50 to-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <FadeInSection>
+            <div className="text-center mb-16">
+              <Badge className="bg-purple-100 text-purple-700 border-0 px-4 py-2 rounded-full mb-4">
+                Ø®Ø¯Ù…Ø§ØªÙ†Ø§
+              </Badge>
+              <h2 className="text-4xl font-bold text-gray-900 mb-4">
+                Ø­Ù„ÙˆÙ„ Ù…ØªÙƒØ§Ù…Ù„Ø© Ù„ÙƒÙ„ Ø§Ø­ØªÙŠØ§Ø¬Ø§ØªÙƒ
+              </h2>
+            </div>
+          </FadeInSection>
+
+          <div className="grid md:grid-cols-2 gap-8">
+            {services.map((service, index) => (
+              <FadeInSection key={index} delay={index * 0.1}>
+                <Card className="rounded-3xl border-0 shadow-lg hover:shadow-2xl transition-all overflow-hidden group">
+                  <CardContent className="p-8">
+                    <div className="flex items-start gap-6">
+                      <div className="text-6xl">{service.image}</div>
+                      <div className="flex-1 text-right">
+                        <h3 className="text-2xl font-bold text-gray-900 mb-3 group-hover:text-blue-600 transition-colors">
+                          {service.title}
+                        </h3>
+                        <p className="text-gray-600 mb-4 leading-relaxed">
+                          {service.description}
+                        </p>
+                        <div className="flex items-center justify-between pt-4 border-t">
+                          <Badge className="bg-blue-100 text-blue-700 border-0">
+                            {service.stats}
+                          </Badge>
+                          <ChevronRight className="h-5 w-5 text-blue-600 group-hover:translate-x-2 transition-transform" />
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </FadeInSection>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* How It Works Section */}
+      <section className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <FadeInSection>
+            <div className="text-center mb-16">
+              <Badge className="bg-green-100 text-green-700 border-0 px-4 py-2 rounded-full mb-4">
+                ÙƒÙŠÙ ØªØ¹Ù…Ù„ØŸ
+              </Badge>
+              <h2 className="text-4xl font-bold text-gray-900 mb-4">
+                Ø§Ø¨Ø¯Ø£ ÙÙŠ 4 Ø®Ø·ÙˆØ§Øª Ø¨Ø³ÙŠØ·Ø©
+              </h2>
+            </div>
+          </FadeInSection>
+
+          <div className="grid md:grid-cols-4 gap-8 relative">
+            {/* Connection Line */}
+            <div className="hidden md:block absolute top-20 left-0 right-0 h-1 bg-gradient-to-r from-blue-200 via-purple-200 to-pink-200"></div>
+            
+            {[
+              { num: "1", title: "Ø¥Ù†Ø´Ø§Ø¡ Ø­Ø³Ø§Ø¨", desc: "Ø³Ø¬Ù„ Ù…Ø¬Ø§Ù†Ø§Ù‹ ÙƒØµØ§Ø­Ø¨ Ù…Ù†ØªØ¬ Ø£Ùˆ Ù…Ø³ØªÙ‚Ù„", icon: UserPlus },
+              { num: "2", title: "Ø§Ø®ØªØ± Ø§Ù„Ø®Ø¯Ù…Ø©", desc: "Ø­Ø¯Ø¯ Ø§Ù„Ø®Ø¯Ù…Ø© Ø§Ù„Ù…Ù†Ø§Ø³Ø¨Ø© Ù„Ø§Ø­ØªÙŠØ§Ø¬Ùƒ", icon: Target },
+              { num: "3", title: "Ø§Ù„ØªÙ†ÙÙŠØ°", desc: "ÙŠÙ‚ÙˆÙ… ÙØ±ÙŠÙ‚ Ù…Ø­ØªØ±Ù Ø¨Ø¥Ù†Ø¬Ø§Ø² Ø§Ù„Ù…Ù‡Ù…Ø©", icon: Rocket },
+              { num: "4", title: "Ø§Ù„Ù†ØªØ§Ø¦Ø¬", desc: "Ø§Ø­ØµÙ„ Ø¹Ù„Ù‰ ØªÙ‚Ø§Ø±ÙŠØ± Ù…ÙØµÙ„Ø© ÙˆÙ†ØªØ§Ø¦Ø¬ ÙÙˆØ±ÙŠØ©", icon: Award }
+            ].map((step, index) => (
+              <FadeInSection key={index} delay={index * 0.1}>
+                <div className="relative">
+                  <div className="bg-white rounded-3xl p-8 border-2 border-gray-100 hover:border-blue-300 hover:shadow-xl transition-all text-center relative z-10">
+                    <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-2xl text-2xl font-bold mb-6">
+                      {step.num}
+                    </div>
+                    <div className="inline-flex p-3 rounded-xl bg-gradient-to-br from-blue-50 to-purple-50 mb-4">
+                      <step.icon className="h-6 w-6 text-blue-600" />
+                    </div>
+                    <h3 className="text-xl font-bold text-gray-900 mb-3">{step.title}</h3>
+                    <p className="text-gray-600">{step.desc}</p>
+                  </div>
+                </div>
+              </FadeInSection>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Testimonials Section */}
+      <section className="py-20 bg-gradient-to-br from-blue-50 to-purple-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <FadeInSection>
+            <div className="text-center mb-16">
+              <Badge className="bg-yellow-100 text-yellow-700 border-0 px-4 py-2 rounded-full mb-4">
+                Ø¢Ø±Ø§Ø¡ Ø§Ù„Ø¹Ù…Ù„Ø§Ø¡
+              </Badge>
+              <h2 className="text-4xl font-bold text-gray-900 mb-4">
+                Ù…Ø§Ø°Ø§ ÙŠÙ‚ÙˆÙ„ Ø¹Ù…Ù„Ø§Ø¤Ù†Ø§
+              </h2>
+            </div>
+          </FadeInSection>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            {testimonials.map((testimonial, index) => (
+              <FadeInSection key={index} delay={index * 0.1}>
+                <Card className="rounded-3xl border-0 shadow-lg hover:shadow-xl transition-all">
+                  <CardContent className="p-8 text-right">
+                    <div className="flex gap-1 mb-4">
+                      {[...Array(testimonial.rating)].map((_, i) => (
+                        <Star key={i} className="h-5 w-5 text-yellow-400 fill-yellow-400" />
+                      ))}
+                    </div>
+                    <p className="text-gray-700 mb-6 leading-relaxed">
+                      "{testimonial.content}"
+                    </p>
+                    <div className="flex items-center gap-4">
+                      <div className="text-4xl">{testimonial.avatar}</div>
+                      <div>
+                        <div className="font-bold text-gray-900">{testimonial.name}</div>
+                        <div className="text-sm text-gray-600">{testimonial.role}</div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </FadeInSection>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Stats Section */}
+      <section className="py-20 bg-gradient-to-r from-blue-600 to-purple-600 text-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid md:grid-cols-4 gap-8 text-center">
+            {stats.map((stat, index) => (
+              <FadeInSection key={index} delay={index * 0.1}>
+                <div>
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    whileInView={{ scale: 1 }}
+                    transition={{ duration: 0.5, delay: index * 0.1 }}
+                    className="text-5xl font-bold mb-2"
+                  >
+                    {stat.value}
+                  </motion.div>
+                  <div className="text-blue-100">{stat.label}</div>
+                </div>
+              </FadeInSection>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-20 bg-white">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <FadeInSection>
+            <div className="bg-gradient-to-br from-blue-600 to-purple-600 rounded-3xl p-12 text-white shadow-2xl">
+              <h2 className="text-4xl font-bold mb-6">
+                Ø¬Ø§Ù‡Ø² Ù„Ù„Ø¨Ø¯Ø¡ØŸ
+              </h2>
+              <p className="text-xl mb-8 text-blue-100">
+                Ø§Ù†Ø¶Ù… Ù„Ø¢Ù„Ø§Ù Ø§Ù„Ù…Ø³ØªØ®Ø¯Ù…ÙŠÙ† ÙˆØ§Ø­ØµÙ„ Ø¹Ù„Ù‰ Ù†ØªØ§Ø¦Ø¬ Ø±Ø§Ø¦Ø¹Ø© Ù„Ù…Ù†ØªØ¬Ùƒ
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Link href="/role-selection">
+                  <Button size="lg" className="bg-white text-blue-600 hover:bg-gray-100 px-8 py-6 rounded-2xl text-lg shadow-xl">
+                    Ø§Ø¨Ø¯Ø£ Ø§Ù„Ø¢Ù† Ù…Ø¬Ø§Ù†Ø§Ù‹
+                    <Rocket className="mr-2 h-5 w-5" />
+                  </Button>
+                </Link>
+                <Button size="lg" variant="outline" className="border-2 border-white text-white hover:bg-white/10 px-8 py-6 rounded-2xl text-lg">
+                  <MessageSquare className="mr-2 h-5 w-5" />
+                  ØªØ­Ø¯Ø« Ù…Ø¹Ù†Ø§
+                </Button>
+              </div>
+            </div>
+          </FadeInSection>
+        </div>
+      </section>
+
+      <Footer />
+    </div>
+  );
+}

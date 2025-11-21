@@ -78,6 +78,7 @@ export const groups = pgTable("groups", {
   maxMembers: integer("max_members").default(700).notNull(),
   currentMembers: integer("current_members").default(1).notNull(),
   status: text("status").notNull().default("active"), // active, inactive*
+  privacy: text("privacy").notNull().default("public"), // public, private
   averageRating: decimal("average_rating", { precision: 3, scale: 2 }).default("0"),
   totalRatings: integer("total_ratings").default(0),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -184,6 +185,17 @@ export const groupMembers = pgTable("group_members", {
   uniqueGroupMember: uniqueIndex("unique_group_member_idx").on(table.groupId, table.freelancerId),
 }));
 
+// Group Spectators schema - product owners who can spectate a group after payment
+export const groupSpectators = pgTable("group_spectators", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  groupId: varchar("group_id").notNull().references(() => groups.id),
+  productOwnerId: varchar("product_owner_id").notNull().references(() => productOwners.id),
+  role: text("role").notNull().default("spectator"),
+  joinedAt: timestamp("joined_at").defaultNow().notNull(),
+}, (table) => ({
+  uniqueGroupSpectator: uniqueIndex("unique_group_spectator_idx").on(table.groupId, table.productOwnerId),
+}));
+
 // Messages schema - الرسائل الداخلية
 export const messages = pgTable("messages", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -265,6 +277,18 @@ export const conversationMessages = pgTable("conversation_messages", {
   conversationId: varchar("conversation_id").notNull().references(() => conversations.id),
   senderId: varchar("sender_id").notNull(), // يمكن أن يكون product owner أو freelancer
   senderType: text("sender_type").notNull(), // product_owner, freelancer
+  content: text("content").notNull(),
+  isRead: boolean("is_read").default(false).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Direct Messages schema - رسائل مباشرة بين أي مستخدمين
+export const directMessages = pgTable("direct_messages", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  senderId: varchar("sender_id").notNull(),
+  senderType: text("sender_type").notNull(), // product_owner, freelancer
+  receiverId: varchar("receiver_id").notNull(),
+  receiverType: text("receiver_type").notNull(), // product_owner, freelancer
   content: text("content").notNull(),
   isRead: boolean("is_read").default(false).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -507,6 +531,11 @@ export const insertGroupJoinRequestSchema = createInsertSchema(groupJoinRequests
   createdAt: true,
 });
 
+export const insertGroupSpectatorSchema = createInsertSchema(groupSpectators).omit({
+  id: true,
+  joinedAt: true,
+});
+
 export const insertConversationSchema = createInsertSchema(conversations).omit({
   id: true,
   createdAt: true,
@@ -566,6 +595,8 @@ export type Order = typeof orders.$inferSelect;
 export type InsertOrder = z.infer<typeof insertOrderSchema>;
 export type GroupJoinRequest = typeof groupJoinRequests.$inferSelect;
 export type InsertGroupJoinRequest = z.infer<typeof insertGroupJoinRequestSchema>;
+export type GroupSpectator = typeof groupSpectators.$inferSelect;
+export type InsertGroupSpectator = z.infer<typeof insertGroupSpectatorSchema>;
 export type Conversation = typeof conversations.$inferSelect;
 export type InsertConversation = z.infer<typeof insertConversationSchema>;
 export type ConversationMessage = typeof conversationMessages.$inferSelect;

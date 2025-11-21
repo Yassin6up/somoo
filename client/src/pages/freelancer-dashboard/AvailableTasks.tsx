@@ -13,13 +13,46 @@ export default function AvailableTasks() {
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
 
+  const { data: myTasks = [], isLoading: isLoadingMyTasks } = useQuery<Task[]>({
+    queryKey: ["/api/tasks/my-tasks"],
+    queryFn: async () => {
+      console.log('[MY TASKS] Fetching my tasks...');
+      const response = await fetch('/api/tasks/my-tasks', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+      if (!response.ok) {
+        console.error('[MY TASKS] Failed to fetch:', response.status);
+        return [];
+      }
+      const data = await response.json();
+      console.log(`[MY TASKS] Received ${data.length} tasks:`, data);
+      return data;
+    },
+  });
   const { data: availableTasks = [], isLoading } = useQuery<Task[]>({
     queryKey: ["/api/tasks/available"],
+    queryFn: async () => {
+      console.log('[AVAILABLE TASKS] Fetching available tasks...');
+      const response = await fetch('/api/tasks/available', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+      if (!response.ok) {
+        console.error('[AVAILABLE TASKS] Failed to fetch:', response.status);
+        return [];
+      }
+      const data = await response.json();
+      console.log(`[AVAILABLE TASKS] Received ${data.length} tasks:`, data);
+      return data;
+    },
   });
 
   const acceptTaskMutation = useMutation({
     mutationFn: async (taskId: string) => {
-      return apiRequest(`/api/tasks/${taskId}/accept`,"POST");
+      return apiRequest(`/api/tasks/${taskId}/accept`, "POST");
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/tasks/available"] });
@@ -97,7 +130,7 @@ export default function AvailableTasks() {
                   </>
                 )}
               </div>
-              
+
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">نوع الخدمة:</span>
                 <Badge variant="outline">{task.serviceType}</Badge>

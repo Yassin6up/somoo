@@ -1,11 +1,11 @@
-import { 
-  Home, 
-  ListTodo, 
-  CheckSquare, 
-  Users, 
-  Wallet, 
-  Download, 
-  ShoppingBag, 
+import {
+  Home,
+  ListTodo,
+  CheckSquare,
+  Users,
+  Wallet,
+  Download,
+  ShoppingBag,
   Settings,
   ChevronDown,
   MessageCircle,
@@ -43,8 +43,11 @@ const menuItems = [
   },
   {
     title: "الجروبات",
-    url: "/groups",
     icon: Users,
+    items: [
+      { title: "تصفح المجموعات", url: "/groups" },
+      { title: "مجموعاتي", url: "/freelancer-dashboard/groups" },
+    ],
   },
   {
     title: "المالية",
@@ -90,7 +93,7 @@ export function FreelancerSidebar() {
             <SidebarMenu>
               {menuItems.map((item) => {
                 const isActive = location === item.url || location.startsWith(item.url + "/");
-                
+
                 if (item.items) {
                   return (
                     <Collapsible

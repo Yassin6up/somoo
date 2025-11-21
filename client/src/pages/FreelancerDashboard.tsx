@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import type { Task, Wallet, Order, Withdrawal } from "@shared/schema";
+import { motion } from "framer-motion";
 import { 
   Wallet as WalletIcon, 
   FileCheck, 
@@ -27,7 +28,14 @@ import {
   Package,
   CreditCard,
   Download,
-  Plus
+  Plus,
+  Sparkles,
+  Target,
+  Award,
+  BarChart3,
+  Zap,
+  ArrowUp,
+  DollarSign
 } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -277,80 +285,167 @@ export default function FreelancerDashboard() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-muted/20">
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-blue-50 via-white to-purple-50">
       <Navbar />
 
       <div className="flex-1">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {/* Welcome Section */}
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold mb-2" data-testid="text-welcome">
-              لوحة تحكم المستقل
-            </h1>
-            <p className="text-lg text-muted-foreground">
-              مرحباً بك! ابدأ بتصفح المهام المتاحة واختر ما يناسب مهاراتك
-            </p>
-          </div>
-
-          {/* Stats */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-            <Card className="rounded-2xl shadow-md">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">المهام النشطة</p>
-                    <p className="text-2xl font-bold mt-1" data-testid="stat-active-tasks">{activeTasks}</p>
-                  </div>
-                  <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
-                    <Clock className="h-6 w-6 text-primary" />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          {/* Welcome Section with Gradient */}
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-12 relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-600 via-purple-600 to-cyan-600 p-12 text-white shadow-2xl"
+          >
+            <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
+            <div className="absolute bottom-0 left-0 w-96 h-96 bg-white/10 rounded-full blur-3xl"></div>
+            
+            <div className="relative z-10">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-3 bg-white/20 rounded-2xl backdrop-blur-sm">
+                  <Sparkles className="h-6 w-6" />
+                </div>
+                <Badge className="bg-white/20 text-white border-white/30 rounded-full px-4 py-1">
+                  مستقل محترف
+                </Badge>
+              </div>
+              <h1 className="text-4xl font-bold mb-3" data-testid="text-welcome">
+                مرحباً بك في لوحة التحكم
+              </h1>
+              <p className="text-xl text-blue-100 max-w-2xl">
+                ابدأ بتصفح المهام المتاحة واختر ما يناسب مهاراتك لتحقيق أرباح مجزية
+              </p>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mt-8">
+                <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/20">
+                  <div className="flex items-center gap-3">
+                    <Target className="h-8 w-8" />
+                    <div>
+                      <div className="text-2xl font-bold">{activeTasks}</div>
+                      <div className="text-sm text-blue-100">مهمة نشطة</div>
+                    </div>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-
-            <Card className="rounded-2xl shadow-md">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">قيد المراجعة</p>
-                    <p className="text-2xl font-bold mt-1" data-testid="stat-pending-tasks">{pendingTasks}</p>
-                  </div>
-                  <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
-                    <AlertCircle className="h-6 w-6 text-primary" />
+                <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/20">
+                  <div className="flex items-center gap-3">
+                    <Award className="h-8 w-8" />
+                    <div>
+                      <div className="text-2xl font-bold">{completedTasks}</div>
+                      <div className="text-sm text-blue-100">مهمة مكتملة</div>
+                    </div>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-
-            <Card className="rounded-2xl shadow-md">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">المكتملة</p>
-                    <p className="text-2xl font-bold mt-1" data-testid="stat-completed-tasks">{completedTasks}</p>
-                  </div>
-                  <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
-                    <CheckCircle2 className="h-6 w-6 text-primary" />
+                <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/20">
+                  <div className="flex items-center gap-3">
+                    <TrendingUp className="h-8 w-8" />
+                    <div>
+                      <div className="text-2xl font-bold">{wallet?.balance || "0"} ر.س</div>
+                      <div className="text-sm text-blue-100">إجمالي الأرباح</div>
+                    </div>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
+          </motion.div>
 
-            <Card className="rounded-2xl shadow-md">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">الأرباح</p>
-                    <p className="text-2xl font-bold mt-1" data-testid="stat-earnings">
-                      {wallet?.balance || "0"} ر.س
-                    </p>
+          {/* Enhanced Stats Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+            >
+              <Card className="rounded-3xl shadow-lg border-0 bg-gradient-to-br from-blue-50 to-white hover:shadow-xl transition-all duration-300 group">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-1">المهام النشطة</p>
+                      <p className="text-3xl font-bold text-blue-600" data-testid="stat-active-tasks">{activeTasks}</p>
+                      <div className="flex items-center gap-1 mt-2 text-xs text-green-600">
+                        <ArrowUp className="h-3 w-3" />
+                        <span>+12% هذا الشهر</span>
+                      </div>
+                    </div>
+                    <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                      <Clock className="h-8 w-8 text-white" />
+                    </div>
                   </div>
-                  <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
-                    <WalletIcon className="h-6 w-6 text-primary" />
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+            >
+              <Card className="rounded-3xl shadow-lg border-0 bg-gradient-to-br from-purple-50 to-white hover:shadow-xl transition-all duration-300 group">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-1">قيد المراجعة</p>
+                      <p className="text-3xl font-bold text-purple-600" data-testid="stat-pending-tasks">{pendingTasks}</p>
+                      <div className="flex items-center gap-1 mt-2 text-xs text-orange-600">
+                        <Clock className="h-3 w-3" />
+                        <span>انتظار الموافقة</span>
+                      </div>
+                    </div>
+                    <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                      <AlertCircle className="h-8 w-8 text-white" />
+                    </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+            >
+              <Card className="rounded-3xl shadow-lg border-0 bg-gradient-to-br from-green-50 to-white hover:shadow-xl transition-all duration-300 group">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-1">المكتملة</p>
+                      <p className="text-3xl font-bold text-green-600" data-testid="stat-completed-tasks">{completedTasks}</p>
+                      <div className="flex items-center gap-1 mt-2 text-xs text-green-600">
+                        <Zap className="h-3 w-3" />
+                        <span>معدل إنجاز 98%</span>
+                      </div>
+                    </div>
+                    <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-500 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                      <CheckCircle2 className="h-8 w-8 text-white" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+            >
+              <Card className="rounded-3xl shadow-lg border-0 bg-gradient-to-br from-cyan-50 to-white hover:shadow-xl transition-all duration-300 group">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-1">الأرباح</p>
+                      <p className="text-3xl font-bold text-cyan-600" data-testid="stat-earnings">
+                        {wallet?.balance || "0"} ر.س
+                      </p>
+                      <div className="flex items-center gap-1 mt-2 text-xs text-green-600">
+                        <TrendingUp className="h-3 w-3" />
+                        <span>+{wallet?.totalEarned || "0"} ر.س</span>
+                      </div>
+                    </div>
+                    <div className="w-16 h-16 bg-gradient-to-br from-cyan-500 to-blue-500 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                      <WalletIcon className="h-8 w-8 text-white" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
           </div>
 
           {/* Tabs for Available Tasks, My Tasks, Orders, and Withdrawals */}

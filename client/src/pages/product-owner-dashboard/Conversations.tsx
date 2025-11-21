@@ -1,16 +1,12 @@
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { MessageCircle, Send, Users } from "lucide-react";
-import { queryClient, apiRequest } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
-import type { Conversation, ConversationMessage } from "@shared/schema";
+import { MessageCircle, Users } from "lucide-react";
+import type { Conversation } from "@shared/schema";
+import { ConversationChat } from "@/components/ConversationChat";
 
 type ConversationWithDetails = Conversation & {
   group?: {
@@ -29,10 +25,13 @@ type ConversationWithDetails = Conversation & {
 };
 
 export default function Conversations() {
-  const { toast } = useToast();
   const [location] = useLocation();
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
-  const [messageText, setMessageText] = useState("");
+
+  // Get current user from localStorage
+  const currentUser = localStorage.getItem("user")
+    ? JSON.parse(localStorage.getItem("user")!)
+    : null;
 
   // Extract conversationId from query params
   useEffect(() => {
@@ -47,41 +46,6 @@ export default function Conversations() {
   const { data: conversations = [], isLoading: loadingConversations } = useQuery<ConversationWithDetails[]>({
     queryKey: ["/api/conversations"],
   });
-
-  // Fetch messages for selected conversation
-  const { data: messages = [], isLoading: loadingMessages } = useQuery<ConversationMessage[]>({
-    queryKey: ["/api/conversations", selectedConversation, "messages"],
-    enabled: !!selectedConversation,
-  });
-
-  // Send message mutation
-  const sendMessageMutation = useMutation({
-    mutationFn: async (content: string) => {
-      return await apiRequest(
-        
-        `/api/conversations/${selectedConversation}/messages`,
-        "POST",
-        { content }
-      );
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/conversations", selectedConversation, "messages"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/conversations"] });
-      setMessageText("");
-    },
-    onError: () => {
-      toast({
-        title: "خطأ",
-        description: "حدث خطأ أثناء إرسال الرسالة",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const handleSendMessage = () => {
-    if (!messageText.trim() || !selectedConversation) return;
-    sendMessageMutation.mutate(messageText);
-  };
 
   const selectedConvData = conversations.find((c) => c.id === selectedConversation);
 
@@ -154,87 +118,13 @@ export default function Conversations() {
         {/* Chat Area */}
         <Card className="lg:col-span-2">
           {selectedConversation && selectedConvData ? (
-            <>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <MessageCircle className="h-5 w-5" />
-                  {selectedConvData.group?.name || "جروب غير معروف"}
-                </CardTitle>
-                <div className="text-sm text-muted-foreground">
-                  محادثة مع: {selectedConvData.leader?.fullName || "قائد غير معروف"}
-                </div>
-              </CardHeader>
-              <Separator />
-              <CardContent className="p-0 flex flex-col h-[calc(100vh-20rem)]">
-                {/* Messages */}
-                <ScrollArea className="flex-1 p-4">
-                  {loadingMessages ? (
-                    <div className="text-center text-muted-foreground">
-                      جاري تحميل الرسائل...
-                    </div>
-                  ) : messages.length === 0 ? (
-                    <div className="text-center text-muted-foreground">
-                      لا توجد رسائل بعد. ابدأ المحادثة!
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {messages.map((msg) => {
-                        const isOwn = msg.senderType === "product_owner";
-                        return (
-                          <div
-                            key={msg.id}
-                            className={`flex ${isOwn ? "justify-end" : "justify-start"}`}
-                            data-testid={`message-${msg.id}`}
-                          >
-                            <div
-                              className={`max-w-[70%] rounded-lg p-3 ${
-                                isOwn
-                                  ? "bg-primary text-primary-foreground"
-                                  : "bg-muted"
-                              }`}
-                            >
-                              <div className="text-sm break-words">{msg.content}</div>
-                              <div className={`text-xs mt-1 ${isOwn ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
-                                {new Date(msg.createdAt).toLocaleTimeString("ar-EG", {
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                })}
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </ScrollArea>
-
-                {/* Message Input */}
-                <div className="p-4 border-t">
-                  <div className="flex gap-2">
-                    <Input
-                      placeholder="اكتب رسالتك..."
-                      value={messageText}
-                      onChange={(e) => setMessageText(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" && !e.shiftKey) {
-                          e.preventDefault();
-                          handleSendMessage();
-                        }
-                      }}
-                      data-testid="input-message"
-                      className="flex-1"
-                    />
-                    <Button
-                      onClick={handleSendMessage}
-                      disabled={!messageText.trim() || sendMessageMutation.isPending}
-                      data-testid="button-send-message"
-                    >
-                      <Send className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </>
+            <ConversationChat
+              conversationId={selectedConversation}
+              currentUserId={currentUser?.id || ''}
+              currentUserType="product_owner"
+              recipientName={selectedConvData.leader?.fullName || "قائد غير معروف"}
+              groupName={selectedConvData.group?.name}
+            />
           ) : (
             <CardContent className="flex items-center justify-center h-full">
               <div className="text-center text-muted-foreground">

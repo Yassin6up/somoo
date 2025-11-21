@@ -1,273 +1,182 @@
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { useState, useEffect, useRef } from "react";
-import { useLocation } from "wouter";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { Card } from "@/components/ui/card";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { MessageCircle, Send, Building2 } from "lucide-react";
-import { queryClient, apiRequest } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
-import { format } from "date-fns";
-import { ar } from "date-fns/locale";
-import type { Conversation, ConversationMessage } from "@shared/schema";
-
-type ConversationWithDetails = Conversation & {
-  group?: {
-    id: string;
-    name: string;
-    leaderId: string;
-  };
-  productOwner?: {
-    id: string;
-    fullName: string;
-  };
-};
+import { Search, MessageSquare, Loader2 } from "lucide-react";
+import { DirectMessageChat } from "@/components/DirectMessageChat";
 
 export default function FreelancerConversations() {
-  const { toast } = useToast();
-  const [location] = useLocation();
-  const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
-  const [messageText, setMessageText] = useState("");
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedConversation, setSelectedConversation] = useState<any>(null);
 
-  // Extract conversationId from query params
-  useEffect(() => {
-    const params = new URLSearchParams(location.split('?')[1] || '');
-    const conversationId = params.get('conversationId');
-    if (conversationId) {
-      setSelectedConversation(conversationId);
-    }
-  }, [location]);
+  const currentUser = localStorage.getItem("user")
+    ? JSON.parse(localStorage.getItem("user")!)
+    : null;
 
-  // Fetch all conversations
-  const { data: conversations = [], isLoading: loadingConversations } = useQuery<ConversationWithDetails[]>({
-    queryKey: ["/api/conversations"],
-  });
-
-  // Fetch messages for selected conversation
-  const { data: messages = [], isLoading: loadingMessages } = useQuery<ConversationMessage[]>({
-    queryKey: ["/api/conversations", selectedConversation, "messages"],
-    enabled: !!selectedConversation,
-  });
-
-  // Auto-scroll to bottom when messages change
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
-
-  // Send message mutation
-  const sendMessageMutation = useMutation({
-    mutationFn: async (content: string) => {
-      return await apiRequest(
-       
-        `/api/conversations/${selectedConversation}/messages`,
-         "POST",
-        { content }
-      );
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/conversations", selectedConversation, "messages"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/conversations"] });
-      setMessageText("");
-    },
-    onError: () => {
-      toast({
-        title: "خطأ",
-        description: "حدث خطأ أثناء إرسال الرسالة",
-        variant: "destructive",
+  // Fetch conversation history
+  const { data: conversations, isLoading } = useQuery({
+    queryKey: ["/api/direct-messages"],
+    queryFn: async () => {
+      const response = await fetch("/api/direct-messages", {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
       });
+
+      if (!response.ok) {
+        return [];
+      }
+
+      return response.json();
     },
   });
 
-  const handleSendMessage = () => {
-    if (messageText.trim() && selectedConversation) {
-      sendMessageMutation.mutate(messageText);
-    }
-  };
+  // Fetch user details for each conversation
+  const { data: conversationsWithDetails } = useQuery({
+    queryKey: ["/api/direct-messages", "with-details", conversations],
+    queryFn: async () => {
+      if (!conversations || conversations.length === 0) return [];
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSendMessage();
-    }
-  };
+      const details = await Promise.all(
+        conversations.map(async (conv: any) => {
+          const response = await fetch(`/api/freelancers/${conv.otherUserId}`, {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          });
 
-  const selectedConvData = conversations.find((c) => c.id === selectedConversation);
+          if (!response.ok) return conv;
 
-  if (loadingConversations) {
+          const userDetails = await response.json();
+          return {
+            ...conv,
+            userDetails,
+          };
+        })
+      );
+
+      return details;
+    },
+    enabled: !!conversations && conversations.length > 0,
+  });
+
+  const filteredConversations = conversationsWithDetails?.filter((conv: any) =>
+    conv.userDetails?.fullName?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">جاري التحميل...</p>
-        </div>
+      <div className="flex items-center justify-center h-screen">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-6" dir="rtl">
-      <div className="flex items-center gap-2">
-        <MessageCircle className="h-6 w-6 text-primary" />
-        <h1 className="text-2xl font-bold">المحادثات</h1>
+    <div className="h-[calc(100vh-80px)] flex flex-col p-6" dir="rtl">
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+          <MessageSquare className="h-8 w-8 text-blue-600" />
+          المحادثات
+        </h1>
+        <p className="text-gray-600 mt-2">تواصل مع أعضاء المجموعات</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 h-[calc(100vh-12rem)]">
+      <div className="flex-1 flex gap-6 overflow-hidden">
         {/* Conversations List */}
-        <Card className="lg:col-span-1 rounded-2xl">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Building2 className="h-5 w-5" />
-              قائمة المحادثات
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            <ScrollArea className="h-[calc(100vh-18rem)]">
-              {conversations.length === 0 ? (
-                <div className="p-4 text-center text-muted-foreground">
-                  لا توجد محادثات حالياً
+        <Card className="w-96 flex flex-col overflow-hidden shadow-xl">
+          <div className="p-4 border-b bg-white">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+              <Input
+                placeholder="ابحث عن محادثة..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 rounded-full"
+              />
+            </div>
+          </div>
+
+          <div className="flex-1 overflow-y-auto">
+            {!conversationsWithDetails || conversationsWithDetails.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full p-6 text-center">
+                <div className="bg-gray-100 rounded-full p-6 mb-4">
+                  <MessageSquare className="h-12 w-12 text-gray-400" />
                 </div>
-              ) : (
-                <div className="space-y-1 p-2">
-                  {conversations.map((conv) => (
-                    <div
-                      key={conv.id}
-                      onClick={() => setSelectedConversation(conv.id)}
-                      className={`p-3 rounded-lg cursor-pointer transition-colors hover-elevate active-elevate-2 ${
-                        selectedConversation === conv.id
-                          ? "bg-accent"
-                          : ""
-                      }`}
-                      data-testid={`conversation-item-${conv.id}`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <Avatar>
-                          <AvatarFallback>
-                            {conv.productOwner?.fullName?.charAt(0) || "?"}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 min-w-0">
-                          <div className="font-semibold truncate">
-                            {conv.productOwner?.fullName || "صاحب منتج"}
-                          </div>
-                          <div className="text-sm text-muted-foreground truncate">
-                            {conv.group?.name || "جروب غير معروف"}
-                          </div>
+                <p className="text-gray-500 font-semibold">لا توجد محادثات</p>
+                <p className="text-gray-400 text-sm mt-2">
+                  ابدأ محادثة جديدة من صفحة المجموعات
+                </p>
+              </div>
+            ) : (
+              <div className="divide-y">
+                {filteredConversations?.map((conv: any) => (
+                  <div
+                    key={conv.otherUserId}
+                    onClick={() => setSelectedConversation(conv)}
+                    className={`p-4 cursor-pointer transition-all hover:bg-blue-50 ${
+                      selectedConversation?.otherUserId === conv.otherUserId
+                        ? "bg-blue-50 border-r-4 border-blue-600"
+                        : ""
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <Avatar className="h-12 w-12 border-2 border-gray-200">
+                        <AvatarImage src={conv.userDetails?.profileImage} />
+                        <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-500 text-white font-bold">
+                          {conv.userDetails?.fullName?.substring(0, 2) || "U"}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between mb-1">
+                          <h3 className="font-semibold text-gray-900 truncate">
+                            {conv.userDetails?.fullName || "مستخدم"}
+                          </h3>
+                          <span className="text-xs text-gray-500">
+                            {new Date(conv.lastMessageAt).toLocaleDateString("ar-EG", {
+                              month: "short",
+                              day: "numeric",
+                            })}
+                          </span>
                         </div>
+                        <p className="text-sm text-gray-600 truncate">
+                          {conv.lastMessage}
+                        </p>
                       </div>
                     </div>
-                  ))}
-                </div>
-              )}
-            </ScrollArea>
-          </CardContent>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </Card>
 
         {/* Chat Area */}
-        <Card className="lg:col-span-2 rounded-2xl flex flex-col">
-          {selectedConversation && selectedConvData ? (
-            <>
-              <CardHeader className="border-b">
-                <div className="flex items-center gap-3">
-                  <Avatar>
-                    <AvatarFallback>
-                      {selectedConvData.productOwner?.fullName?.charAt(0) || "?"}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <CardTitle className="text-lg">
-                      {selectedConvData.productOwner?.fullName || "صاحب منتج"}
-                    </CardTitle>
-                    <p className="text-sm text-muted-foreground">
-                      {selectedConvData.group?.name || "جروب غير معروف"}
-                    </p>
-                  </div>
-                </div>
-              </CardHeader>
-
-              <CardContent className="flex-1 flex flex-col p-0">
-                {/* Messages Area */}
-                <ScrollArea className="flex-1 p-4">
-                  {loadingMessages ? (
-                    <div className="flex items-center justify-center py-8">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                    </div>
-                  ) : messages.length === 0 ? (
-                    <div className="flex items-center justify-center py-8 text-muted-foreground">
-                      لا توجد رسائل بعد. ابدأ المحادثة الآن!
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {messages.map((message) => {
-                        const isOwn = message.senderType === "freelancer";
-                        return (
-                          <div
-                            key={message.id}
-                            className={`flex ${isOwn ? "justify-start" : "justify-end"}`}
-                            data-testid={`message-${message.id}`}
-                          >
-                            <div
-                              className={`max-w-[70%] rounded-2xl px-4 py-3 ${
-                                isOwn
-                                  ? "bg-primary text-primary-foreground"
-                                  : "bg-muted"
-                              }`}
-                            >
-                              <p className="text-sm whitespace-pre-wrap break-words">
-                                {message.content}
-                              </p>
-                              <p
-                                className={`text-xs mt-1 ${
-                                  isOwn
-                                    ? "text-primary-foreground/70"
-                                    : "text-muted-foreground"
-                                }`}
-                              >
-                                {format(new Date(message.createdAt), "h:mm a", { locale: ar })}
-                              </p>
-                            </div>
-                          </div>
-                        );
-                      })}
-                      <div ref={messagesEndRef} />
-                    </div>
-                  )}
-                </ScrollArea>
-
-                {/* Message Input */}
-                <div className="border-t p-4">
-                  <div className="flex gap-2">
-                    <Input
-                      value={messageText}
-                      onChange={(e) => setMessageText(e.target.value)}
-                      onKeyPress={handleKeyPress}
-                      placeholder="اكتب رسالتك هنا..."
-                      disabled={sendMessageMutation.isPending}
-                      data-testid="input-message"
-                    />
-                    <Button
-                      onClick={handleSendMessage}
-                      disabled={!messageText.trim() || sendMessageMutation.isPending}
-                      size="icon"
-                      data-testid="button-send"
-                    >
-                      <Send className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </>
+        <div className="flex-1 overflow-hidden">
+          {selectedConversation ? (
+            <DirectMessageChat
+              roomId={[currentUser?.id, selectedConversation.otherUserId].sort().join('-')}
+              receiverId={selectedConversation.otherUserId}
+              receiverType={selectedConversation.otherUserType}
+              receiverInfo={selectedConversation.userDetails}
+            />
           ) : (
-            <CardContent className="flex items-center justify-center h-full">
-              <div className="text-center text-muted-foreground">
-                <MessageCircle className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                <p>اختر محادثة لعرضها</p>
+            <Card className="h-full flex items-center justify-center shadow-xl">
+              <div className="text-center p-6">
+                <div className="bg-gradient-to-br from-blue-100 to-purple-100 rounded-full p-8 mb-4 inline-block">
+                  <MessageSquare className="h-16 w-16 text-blue-600" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">
+                  اختر محادثة للبدء
+                </h3>
+                <p className="text-gray-600">
+                  اختر محادثة من القائمة لعرض الرسائل
+                </p>
               </div>
-            </CardContent>
+            </Card>
           )}
-        </Card>
+        </div>
       </div>
     </div>
   );

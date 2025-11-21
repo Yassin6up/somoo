@@ -3,6 +3,8 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { useEffect } from "react";
+import { initializeSocket, disconnectSocket } from "@/lib/socket";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/Home";
 import RoleSelection from "@/pages/RoleSelection";
@@ -25,8 +27,10 @@ import ProjectDetails from "@/pages/ProjectDetails";
 import CreateProject from "@/pages/CreateProject";
 import MyTasks from "@/pages/MyTasks";
 import PurchaseService from "@/pages/PurchaseService";
+import GroupLeaderDashboard from "@/pages/GroupLeaderDashboard";
 import { FreelancerDashboardLayout } from "@/components/FreelancerDashboardLayout";
 import FreelancerOverview from "@/pages/freelancer-dashboard/Overview";
+import FreelancerGroups from "@/pages/freelancer-dashboard/Groups";
 import AvailableTasks from "@/pages/freelancer-dashboard/AvailableTasks";
 import MyTasksPage from "@/pages/freelancer-dashboard/MyTasks";
 import WalletPage from "@/pages/freelancer-dashboard/Wallet";
@@ -52,6 +56,8 @@ import TermsConditions from "@/pages/TermsConditions";
 import PrivacyPolicy from "@/pages/PrivacyPolicy";
 import RefundPolicy from "@/pages/RefundPolicy";
 import AdminLogin from "@/pages/AdminLogin";
+import GroupChatPage from "@/pages/GroupChatPage";
+import DirectChat from "@/pages/DirectChat";
 import { AdminDashboardLayout } from "@/components/AdminDashboardLayout";
 import AdminDashboard from "@/pages/admin/Dashboard";
 import AdminUsers from "@/pages/admin/Users";
@@ -77,7 +83,7 @@ function Router() {
       <Route path="/product-owner-signup" component={ProductOwnerSignup} />
       <Route path="/product-owner-instructions" component={ProductOwnerInstructions} />
       <Route path="/dashboard" component={Dashboard} />
-      
+
       {/* Freelancer Dashboard with Sidebar */}
       <Route path="/freelancer-dashboard">
         {() => (
@@ -97,6 +103,13 @@ function Router() {
         {() => (
           <FreelancerDashboardLayout>
             <MyTasksPage />
+          </FreelancerDashboardLayout>
+        )}
+      </Route>
+      <Route path="/freelancer-dashboard/groups">
+        {() => (
+          <FreelancerDashboardLayout>
+            <FreelancerGroups />
           </FreelancerDashboardLayout>
         )}
       </Route>
@@ -213,14 +226,16 @@ function Router() {
       <Route path="/groups" component={Groups} />
       <Route path="/groups/create" component={CreateGroup} />
       <Route path="/groups/:id/community" component={GroupCommunity} />
-      <Route path="/groups/:id/chat" component={ChatWithLeader} />
+      <Route path="/groups/:id/chat" component={GroupChatPage} />
+      <Route path="/chat/:userId" component={DirectChat} />
       <Route path="/groups/:id" component={GroupDetails} />
+      <Route path="/groups/:id/dashboard" component={GroupLeaderDashboard} />
       <Route path="/purchase/:groupId" component={PurchaseService} />
       <Route path="/projects" component={Projects} />
       <Route path="/projects/create" component={CreateProject} />
       <Route path="/projects/:id" component={ProjectDetails} />
       <Route path="/my-tasks" component={MyTasks} />
-      
+
       {/* Admin Dashboard Routes */}
       <Route path="/admin/login" component={AdminLogin} />
       <Route path="/admin">
@@ -286,6 +301,18 @@ function Router() {
 }
 
 function App() {
+  // Initialize socket connection when user is logged in
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      const socket = initializeSocket(token);
+      
+      return () => {
+        disconnectSocket();
+      };
+    }
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
