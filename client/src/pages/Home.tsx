@@ -20,8 +20,10 @@ import {
   Target,
   Award,
   Clock,
-  Quote
+  Quote,
+  Rocket
 } from "lucide-react";
+import LightRays from '../components/Ballpit';
 
 export default function Home() {
   const features = [
@@ -133,94 +135,144 @@ export default function Home() {
     <div className="min-h-screen bg-white">
       <Navbar />
 
-      {/* Full Screen Hero Section with Fixed Background */}
-      <section className="relative h-screen flex items-center justify-center overflow-hidden">
-        {/* Fixed Background */}
-        <div 
-          className="fixed inset-0 bg-cover bg-center bg-no-repeat z-0"
-          style={{
-            backgroundImage: "linear-gradient(rgba(255,255,255,0.9), rgba(255,255,255,0.95)), url('/pattern.svg')",
-            backgroundAttachment: 'fixed'
-          }}
-        >
-          {/* Animated Background Elements */}
-          <div className="absolute inset-0 overflow-hidden">
-            <div className="absolute top-1/4 left-1/4 w-72 h-72 bg-blue-100 rounded-full blur-3xl opacity-30 animate-pulse"></div>
-            <div className="absolute bottom-1/3 right-1/3 w-96 h-96 bg-purple-100 rounded-full blur-3xl opacity-30 animate-pulse delay-1000"></div>
-            <div className="absolute top-2/3 left-2/3 w-64 h-64 bg-cyan-100 rounded-full blur-3xl opacity-30 animate-pulse delay-500"></div>
-          </div>
-        </div>
+      {/* Full Screen Hero Section with LightRays Background */}
+{/* Full Screen Hero Section with LightRays on White Background */}
+{/* Full Screen Hero Section with Multiple Visible LightRays */}
+<section className="relative h-screen flex items-center justify-center overflow-hidden bg-white">
+  {/* Multiple LightRays Background with Strong Colors */}
+  {/* Ultra Visible LightRays */}
+<div className="absolute inset-0 z-0">
+  {/* Strong Blue Rays */}
+  <LightRays
+    raysOrigin="top-left"
+    raysColor="#1D4ED8"
+    raysSpeed={1.0}
+    lightSpread={0.3}
+    rayLength={2.5}
+    followMouse={true}
+    mouseInfluence={0.12}
+    noiseAmount={0.05}
+    distortion={0.03}
+    pulsating={true}
+    fadeDistance={0.8}
+    saturation={1.5}
+    className="w-full h-full opacity-90"
+  />
+  {/* Strong Purple Rays */}
+  <LightRays
+    raysOrigin="top-right"
+    raysColor="#6D28D9"
+    raysSpeed={1.5}
+    lightSpread={0.25}
+    rayLength={2.8}
+    followMouse={true}
+    mouseInfluence={0.18}
+    noiseAmount={0.03}
+    distortion={0.025}
+    pulsating={true}
+    fadeDistance={0.7}
+    saturation={1.6}
+    className="w-full h-full opacity-85"
+  />
+  {/* Strong Cyan Rays */}
+  <LightRays
+    raysOrigin="bottom-center"
+    raysColor="#0E7490"
+    raysSpeed={0.7}
+    lightSpread={0.4}
+    rayLength={2.2}
+    followMouse={true}
+    mouseInfluence={0.08}
+    noiseAmount={0.06}
+    distortion={0.015}
+    pulsating={true}
+    fadeDistance={1.0}
+    saturation={1.4}
+    className="w-full h-full opacity-75"
+  />
+</div>
 
-        {/* Hero Content */}
-        <div className="relative z-10 max-w-6xl mx-auto px-6 text-center">
+{/* Stronger Color Overlay */}
+<div className="absolute inset-0 bg-gradient-to-br from-blue-200/50 via-white/80 to-purple-200/40 z-1"></div>
+  {/* Enhanced Background Elements */}
+  <div className="absolute inset-0 overflow-hidden">
+    <div className="absolute top-1/4 left-1/4 w-80 h-80 bg-blue-200/30 rounded-full blur-3xl animate-pulse"></div>
+    <div className="absolute bottom-1/3 right-1/3 w-96 h-96 bg-purple-200/30 rounded-full blur-3xl animate-pulse delay-1000"></div>
+    <div className="absolute top-2/3 left-1/3 w-72 h-72 bg-cyan-200/25 rounded-full blur-3xl animate-pulse delay-500"></div>
+  </div>
+
+  {/* Hero Content */}
+  <div className="relative z-10 max-w-6xl mx-auto px-6 text-center">
+    <motion.div
+      initial={{ opacity: 0, y: 30 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.8 }}
+    >
+      <Badge className="bg-white/90 text-blue-600 border border-blue-200 backdrop-blur-lg mb-6 px-6 py-3 text-lg font-medium shadow-lg">
+        <Star className="w-5 h-5 ml-2" />
+        المنصة الرائدة للتقييمات والاختبارات
+      </Badge>
+      
+      <h1 className="text-5xl lg:text-7xl font-bold text-gray-900 mb-8 leading-tight">
+        <span className="block">ارتقِ بتقييماتك</span>
+        <span className="block bg-gradient-to-r from-blue-600 via-purple-600 to-cyan-600 bg-clip-text text-transparent mt-4">
+          الرقمية
+        </span>
+      </h1>
+      
+      <p className="text-xl text-gray-700 mb-12 max-w-3xl mx-auto leading-relaxed backdrop-blur-lg bg-white/80 rounded-2xl p-8 border border-white shadow-xl">
+        نوفر لك تقييمات حقيقية واختبارات احترافية لتعزيز وجودك الرقمي على 
+        خرائط جوجل، متاجر التطبيقات، ومنصات التواصل الاجتماعي
+      </p>
+      
+      <div className="flex flex-col sm:flex-row gap-6 justify-center items-center mb-16">
+        <Link href="/role-selection">
+          <Button size="lg" className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-12 py-6 text-xl rounded-2xl shadow-2xl hover:shadow-3xl transition-all duration-300 transform hover:-translate-y-1">
+            ابدأ رحلتك الآن
+            <Rocket className="mr-3 h-6 w-6" />
+          </Button>
+        </Link>
+        <Button size="lg" variant="outline" className="border-2 border-gray-300 text-gray-700 hover:border-blue-500 hover:text-blue-600 px-12 py-6 text-xl rounded-2xl backdrop-blur-lg bg-white/90 shadow-lg hover:shadow-xl transition-all duration-300">
+          <Play className="mr-3 h-6 w-6" />
+          شاهد التجارب
+        </Button>
+      </div>
+
+      {/* Stats Preview */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 max-w-2xl mx-auto">
+        {stats.map((stat, index) => (
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
+            key={index}
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5, delay: index * 0.1 + 0.5 }}
+            className="text-center backdrop-blur-lg bg-white/90 rounded-2xl p-6 border border-white shadow-lg hover:shadow-xl transition-all duration-300"
           >
-            <Badge className="bg-blue-100 text-blue-600 border-0 mb-6 px-6 py-3 text-lg font-medium">
-              <Star className="w-5 h-5 ml-2" />
-              المنصة الرائدة للتقييمات والاختبارات
-            </Badge>
-            
-            <h1 className="text-5xl lg:text-7xl font-bold text-gray-900 mb-8 leading-tight">
-              <span className="block">ارتقِ بتقييماتك</span>
-              <span className="block text-blue-600 mt-4">الرقمية</span>
-            </h1>
-            
-            <p className="text-2xl text-gray-600 mb-12 max-w-3xl mx-auto leading-relaxed">
-              نوفر لك تقييمات حقيقية واختبارات احترافية لتعزيز وجودك الرقمي على 
-              خرائط جوجل، متاجر التطبيقات، ومنصات التواصل الاجتماعي
-            </p>
-            
-            <div className="flex flex-col sm:flex-row gap-6 justify-center items-center mb-16">
-              <Link href="/role-selection">
-                <Button size="lg" className="bg-blue-600 hover:bg-blue-700 text-white px-12 py-6 text-xl rounded-2xl shadow-2xl hover:shadow-3xl transition-all duration-300">
-                  ابدأ رحلتك الآن
-                  <ArrowRight className="mr-3 h-6 w-6" />
-                </Button>
-              </Link>
-              <Button size="lg" variant="outline" className="border-2 border-gray-300 text-gray-700 hover:border-blue-500 px-12 py-6 text-xl rounded-2xl backdrop-blur-sm bg-white/80">
-                <Play className="mr-3 h-6 w-6" />
-                شاهد التجارب
-              </Button>
+            <div className="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
+              {stat.number}
             </div>
-
-            {/* Stats Preview */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 max-w-2xl mx-auto">
-              {stats.map((stat, index) => (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.5, delay: index * 0.1 + 0.5 }}
-                  className="text-center"
-                >
-                  <div className="text-2xl lg:text-3xl font-bold text-blue-600 mb-2">
-                    {stat.number}
-                  </div>
-                  <div className="text-gray-600 font-medium">{stat.label}</div>
-                </motion.div>
-              ))}
-            </div>
+            <div className="text-gray-600 font-medium">{stat.label}</div>
           </motion.div>
-        </div>
+        ))}
+      </div>
+    </motion.div>
+  </div>
 
-        {/* Scroll Indicator */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 1, delay: 1.5 }}
-          className="absolute bottom-8 left-1/2 transform -translate-x-1/2"
-        >
-          <div className="animate-bounce">
-            <div className="w-6 h-10 border-2 border-gray-400 rounded-full flex justify-center">
-              <div className="w-1 h-3 bg-gray-400 rounded-full mt-2"></div>
-            </div>
-          </div>
-        </motion.div>
-      </section>
-
+  {/* Scroll Indicator */}
+  <motion.div
+    initial={{ opacity: 0 }}
+    animate={{ opacity: 1 }}
+    transition={{ duration: 1, delay: 1.5 }}
+    className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-10"
+  >
+    <div className="animate-bounce">
+      <div className="w-6 h-10 border-2 border-blue-400 rounded-full flex justify-center shadow-lg">
+        <div className="w-1 h-3 bg-blue-500 rounded-full mt-2"></div>
+      </div>
+    </div>
+  </motion.div>
+</section>
+      {/* Rest of your sections remain the same */}
       {/* Features Section */}
       <section className="py-24 bg-white relative">
         <div className="max-w-6xl mx-auto px-6">
