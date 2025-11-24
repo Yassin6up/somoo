@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { Send, Loader2, ArrowLeft, CheckCircle2, XCircle, Clock } from 'lucide-react';
+import { Send, Loader2, ArrowLeft, CheckCircle2, XCircle, Clock, MoreVertical, Flag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -12,6 +12,12 @@ import { apiRequest, queryClient } from '@/lib/queryClient';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import { Link } from 'wouter';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 interface Message {
   id: string;
@@ -66,9 +72,32 @@ export default function ConversationChat({
   const [newMessage, setNewMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
+  const [isOnline, setIsOnline] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout>();
   const { toast } = useToast();
+
+  // Report chat mutation
+  const reportChatMutation = useMutation({
+    mutationFn: async () => {
+      return await apiRequest(`/api/conversations/${conversationId}/report`, 'POST', {
+        reason: 'inappropriate_content'
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: 'تم',
+        description: 'تم تقرير المحادثة بنجاح',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'خطأ',
+        description: error.message || 'حدث خطأ أثناء تقرير المحادثة',
+        variant: 'destructive',
+      });
+    },
+  });
 
   // Fetch initial messages
   const { data: initialMessages, isLoading } = useQuery<Message[]>({
@@ -220,23 +249,63 @@ export default function ConversationChat({
   return (
     <Card className="flex flex-col h-[calc(100vh-12rem)]">
       {/* Chat header */}
-      <div className="border-b px-6 py-4 flex items-center gap-4">
+      <div className="border-b px-6 py-4 flex items-center justify-between gap-4 bg-gradient-to-r from-blue-50 to-purple-50">
         <Link href={currentUserType === 'product_owner' ? '/product-owner-dashboard/conversations' : '/freelancer-dashboard/conversations'}>
           <Button variant="ghost" size="icon" data-testid="button-back">
             <ArrowLeft className="h-5 w-5" />
           </Button>
         </Link>
-        <Avatar>
-          <AvatarImage src={recipientImage} />
-          <AvatarFallback>{recipientName?.charAt(0) || '؟'}</AvatarFallback>
-        </Avatar>
-        <div className="flex-1">
-          <h3 className="font-semibold">{recipientName}</h3>
-          {groupName && <p className="text-sm text-muted-foreground">{groupName}</p>}
+        
+        <div className="flex items-center gap-3 flex-1">
+          <div className="relative">
+            <Avatar className="h-12 w-12">
+              <AvatarImage src={recipientImage} />
+              <AvatarFallback>{recipientName?.charAt(0) || '؟'}</AvatarFallback>
+            </Avatar>
+            {/* Online/Offline status indicator */}
+            <div className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white ${
+              isOnline ? 'bg-green-500' : 'bg-gray-400'
+            }`} />
+          </div>
+          
+          <div className="flex-1">
+            <h3 className="font-semibold text-gray-900">{recipientName}</h3>
+            <div className="flex items-center gap-2">
+              {groupName && <p className="text-sm text-muted-foreground">{groupName}</p>}
+              <p className="text-xs font-medium">
+                {isOnline ? (
+                  <span className="text-green-600">متصل الآن</span>
+                ) : (
+                  <span className="text-gray-500">غير متصل</span>
+                )}
+              </p>
+            </div>
+          </div>
         </div>
+
         {!isConnected && (
           <div className="text-sm text-yellow-600">جارٍ الاتصال...</div>
         )}
+
+        {/* Report menu */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" data-testid="button-menu-options">
+              <MoreVertical className="h-5 w-5" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem
+              onClick={() => reportChatMutation.mutate()}
+              disabled={reportChatMutation.isPending}
+              className="text-red-600"
+              data-testid="menu-report-chat"
+            >
+              <Flag className="h-4 w-4 ml-2" />
+              تقرير هذه المحادثة
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {/* Messages container */}
