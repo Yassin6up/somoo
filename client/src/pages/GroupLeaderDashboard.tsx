@@ -263,6 +263,14 @@ export default function GroupLeaderDashboard() {
                                     نظرة عامة
                                 </Button>
                                 <Button
+                                    variant={activeTab === "campaigns" ? "default" : "ghost"}
+                                    className={`w-full justify-start gap-3 ${activeTab === "campaigns" ? "bg-blue-600 hover:bg-blue-700" : "hover:bg-blue-50"}`}
+                                    onClick={() => setActiveTab("campaigns")}
+                                >
+                                    <FileText className="w-4 h-4" />
+                                    الحملات
+                                </Button>
+                                <Button
                                     variant={activeTab === "settings" ? "default" : "ghost"}
                                     className={`w-full justify-start gap-3 ${activeTab === "settings" ? "bg-blue-600 hover:bg-blue-700" : "hover:bg-blue-50"}`}
                                     onClick={() => setActiveTab("settings")}
@@ -402,6 +410,10 @@ export default function GroupLeaderDashboard() {
                                             </CardContent>
                                         </Card>
                                     </div>
+                                )}
+
+                                {activeTab === "campaigns" && (
+                                    <CampaignsTab groupId={groupId!} />
                                 )}
 
                                 {activeTab === "settings" && (
