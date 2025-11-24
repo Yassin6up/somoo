@@ -1,270 +1,140 @@
-import { useState, useEffect, useRef } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { Send, Loader2, ArrowLeft } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Card } from '@/components/ui/card';
-import { useToast } from '@/hooks/use-toast';
-import { getSocket, joinConversation, leaveConversation, sendConversationMessage, startTyping, stopTyping } from '@/lib/socket';
-import { format } from 'date-fns';
-import { ar } from 'date-fns/locale';
-import { Link } from 'wouter';
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Navbar } from "@/components/Navbar";
+import { Link } from "wouter";
+import { Search, Users, Star, MapPin, Briefcase } from "lucide-react";
 
-interface Message {
+interface Group {
   id: string;
-  conversationId: string;
-  senderId: string;
-  senderType: string;
-  content: string;
-  isRead: boolean;
-  createdAt: Date;
-  sender?: {
-    id: string;
-    fullName: string;
-    profileImage?: string;
-    type: string;
-  };
+  name: string;
+  description?: string;
+  category?: string;
+  membersCount?: number;
+  leaderName?: string;
+  leaderImage?: string;
+  location?: string;
+  rating?: number;
 }
 
-interface ConversationChatProps {
-  conversationId: string;
-  currentUserId: string;
-  currentUserType: 'product_owner' | 'freelancer';
-  recipientName?: string;
-  recipientImage?: string;
-  groupName?: string;
-}
-
-export function ConversationChat({
-  conversationId,
-  currentUserId,
-  currentUserType,
-  recipientName,
-  recipientImage,
-  groupName,
-}: ConversationChatProps) {
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [newMessage, setNewMessage] = useState('');
-  const [isTyping, setIsTyping] = useState(false);
-  const [isConnected, setIsConnected] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const typingTimeoutRef = useRef<NodeJS.Timeout>();
-  const { toast } = useToast();
-
-  // Fetch initial messages
-  const { data: initialMessages, isLoading } = useQuery<Message[]>({
-    queryKey: [`/api/conversations/${conversationId}/messages`],
+export default function GroupDiscovery() {
+  const [searchQuery, setSearchQuery] = useState("");
+  const { data: groups = [], isLoading } = useQuery<Group[]>({
+    queryKey: ["/api/groups"],
   });
 
-  // Initialize socket and join conversation
-  useEffect(() => {
-    const socket = getSocket();
-    if (!socket) return;
-
-    setIsConnected(socket.connected);
-
-    // Join conversation room
-    joinConversation(conversationId);
-
-    // Handle connection events
-    const handleConnect = () => {
-      setIsConnected(true);
-      joinConversation(conversationId);
-    };
-
-    const handleDisconnect = () => {
-      setIsConnected(false);
-    };
-
-    // Handle incoming messages
-    const handleConversationMessage = (message: Message) => {
-      setMessages((prev) => [...prev, message]);
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    };
-
-    // Handle typing indicators
-    const handleTypingStart = ({ userId }: { userId: string }) => {
-      if (userId !== currentUserId) {
-        setIsTyping(true);
-      }
-    };
-
-    const handleTypingStop = ({ userId }: { userId: string }) => {
-      if (userId !== currentUserId) {
-        setIsTyping(false);
-      }
-    };
-
-    // Handle errors
-    const handleError = ({ message }: { message: string }) => {
-      toast({
-        variant: 'destructive',
-        title: 'خطأ',
-        description: message,
-      });
-    };
-
-    socket.on('connect', handleConnect);
-    socket.on('disconnect', handleDisconnect);
-    socket.on('conversation:message', handleConversationMessage);
-    socket.on('typing:start', handleTypingStart);
-    socket.on('typing:stop', handleTypingStop);
-    socket.on('error', handleError);
-
-    // Load initial messages
-    if (initialMessages) {
-      setMessages(initialMessages);
-      setTimeout(() => messagesEndRef.current?.scrollIntoView(), 100);
-    }
-
-    return () => {
-      socket.off('connect', handleConnect);
-      socket.off('disconnect', handleDisconnect);
-      socket.off('conversation:message', handleConversationMessage);
-      socket.off('typing:start', handleTypingStart);
-      socket.off('typing:stop', handleTypingStop);
-      socket.off('error', handleError);
-      leaveConversation(conversationId);
-    };
-  }, [conversationId, currentUserId, initialMessages, toast]);
-
-  // Handle sending message
-  const handleSendMessage = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newMessage.trim() || !isConnected) return;
-
-    sendConversationMessage(conversationId, newMessage.trim());
-    setNewMessage('');
-    stopTyping('conversation', conversationId);
-  };
-
-  // Handle typing
-  const handleTyping = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setNewMessage(e.target.value);
-
-    if (!typingTimeoutRef.current) {
-      startTyping('conversation', conversationId);
-    }
-
-    clearTimeout(typingTimeoutRef.current);
-    typingTimeoutRef.current = setTimeout(() => {
-      stopTyping('conversation', conversationId);
-      typingTimeoutRef.current = undefined;
-    }, 1000);
-  };
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
+  const filteredGroups = groups.filter((group) =>
+    group.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    group.description?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
-    <Card className="flex flex-col h-[calc(100vh-12rem)]">
-      {/* Chat header */}
-      <div className="border-b px-6 py-4 flex items-center gap-4">
-        <Link href={currentUserType === 'product_owner' ? '/product-owner-dashboard/conversations' : '/freelancer-dashboard/conversations'}>
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-        </Link>
-        <Avatar>
-          <AvatarImage src={recipientImage} />
-          <AvatarFallback>{recipientName?.charAt(0) || '؟'}</AvatarFallback>
-        </Avatar>
-        <div className="flex-1">
-          <h3 className="font-semibold">{recipientName}</h3>
-          {groupName && <p className="text-sm text-muted-foreground">{groupName}</p>}
-        </div>
-        {!isConnected && (
-          <div className="text-sm text-yellow-600">جارٍ الاتصال...</div>
-        )}
-      </div>
+    <div className="min-h-screen bg-background">
+      <Navbar />
+      <div className="container mx-auto py-8 px-4">
+        <div className="max-w-4xl mx-auto">
+          <h1 className="text-3xl font-bold mb-2">اكتشف الجروبات</h1>
+          <p className="text-muted-foreground mb-8">
+            اختر من أفضل الجروبات للتعاون مع قادتها المتخصصين
+          </p>
 
-      {/* Messages container */}
-      <div className="flex-1 overflow-y-auto p-6 space-y-4">
-        {messages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground">
-            <p className="text-lg font-medium">لا توجد رسائل بعد</p>
-            <p className="text-sm">ابدأ المحادثة الآن!</p>
-          </div>
-        ) : (
-          <>
-            {messages.map((message) => {
-              const isOwnMessage = message.senderId === currentUserId;
-              return (
-                <div
-                  key={message.id}
-                  className={`flex gap-3 ${isOwnMessage ? 'flex-row-reverse' : 'flex-row'}`}
-                >
-                  <Avatar className="h-10 w-10">
-                    <AvatarImage src={message.sender?.profileImage} />
-                    <AvatarFallback>
-                      {message.sender?.fullName?.charAt(0) || '؟'}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className={`flex flex-col ${isOwnMessage ? 'items-end' : 'items-start'} max-w-[70%]`}>
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-sm font-medium">
-                        {isOwnMessage ? 'أنت' : message.sender?.fullName}
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        {format(new Date(message.createdAt), 'p', { locale: ar })}
-                      </span>
-                    </div>
-                    <div
-                      className={`rounded-2xl px-4 py-3 ${
-                        isOwnMessage
-                          ? 'bg-primary text-primary-foreground'
-                          : 'bg-muted'
-                      }`}
-                    >
-                      <p className="text-sm whitespace-pre-wrap break-words">{message.content}</p>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-            <div ref={messagesEndRef} />
-          </>
-        )}
-
-        {/* Typing indicator */}
-        {isTyping && (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground px-4">
-            <div className="flex gap-1">
-              <span className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-              <span className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-              <span className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+          {/* Search Bar */}
+          <div className="mb-8">
+            <div className="flex gap-2">
+              <div className="flex-1 relative">
+                <Search className="absolute right-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="ابحث عن جروبات أو قادة..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-4 pr-10"
+                  dir="rtl"
+                />
+              </div>
             </div>
-            <span>جارٍ الكتابة...</span>
           </div>
-        )}
-      </div>
 
-      {/* Message input */}
-      <form onSubmit={handleSendMessage} className="border-t p-6">
-        <div className="flex gap-3">
-          <Input
-            value={newMessage}
-            onChange={handleTyping}
-            placeholder="اكتب رسالتك..."
-            className="flex-1"
-            disabled={!isConnected}
-            dir="rtl"
-          />
-          <Button
-            type="submit"
-            disabled={!newMessage.trim() || !isConnected}
-          >
-            <Send className="h-4 w-4 ml-2" />
-            إرسال
-          </Button>
+          {/* Groups Grid */}
+          {isLoading ? (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground">جارٍ التحميل...</p>
+            </div>
+          ) : filteredGroups.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground">لم نجد جروبات مطابقة</p>
+            </div>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2">
+              {filteredGroups.map((group) => (
+                <Card key={group.id} className="hover-elevate">
+                  <CardHeader>
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1">
+                        <CardTitle className="text-lg">{group.name}</CardTitle>
+                        <CardDescription className="line-clamp-2 mt-1">
+                          {group.description}
+                        </CardDescription>
+                      </div>
+                      {group.category && (
+                        <Badge variant="outline">{group.category}</Badge>
+                      )}
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {/* Leader Info */}
+                    <div className="flex items-center gap-3">
+                      <Avatar className="h-10 w-10">
+                        <AvatarImage src={group.leaderImage} />
+                        <AvatarFallback>
+                          {group.leaderName?.charAt(0) || "?"}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <p className="text-sm font-medium">{group.leaderName}</p>
+                        <p className="text-xs text-muted-foreground">قائد الجروب</p>
+                      </div>
+                    </div>
+
+                    {/* Stats */}
+                    <div className="flex flex-wrap gap-3 text-sm">
+                      {group.membersCount && (
+                        <div className="flex items-center gap-1 text-muted-foreground">
+                          <Users className="h-4 w-4" />
+                          <span>{group.membersCount} أعضاء</span>
+                        </div>
+                      )}
+                      {group.rating && (
+                        <div className="flex items-center gap-1 text-muted-foreground">
+                          <Star className="h-4 w-4" />
+                          <span>{group.rating}</span>
+                        </div>
+                      )}
+                      {group.location && (
+                        <div className="flex items-center gap-1 text-muted-foreground">
+                          <MapPin className="h-4 w-4" />
+                          <span>{group.location}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Action Button */}
+                    <Link href={`/chat-with-leader/${group.id}`}>
+                      <Button className="w-full" variant="default">
+                        <Briefcase className="h-4 w-4 ml-2" />
+                        تصفح المشاريع
+                      </Button>
+                    </Link>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
         </div>
-      </form>
-    </Card>
+      </div>
+    </div>
   );
 }

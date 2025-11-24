@@ -5292,6 +5292,105 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Complete a project (group leader marks done)
+  app.post("/api/proposals/:id/complete", authMiddleware, async (req: AuthRequest, res) => {
+    try {
+      const { id } = req.params;
+      const userId = req.userId;
+      const userType = req.userType;
+
+      if (userType !== "freelancer") {
+        return res.status(403).json({ error: "فقط قائد الجروب يمكنه إكمال المشروع" });
+      }
+
+      const proposal = await storage.getProjectProposal(id);
+      if (!proposal) {
+        return res.status(404).json({ error: "المقترح غير موجود" });
+      }
+
+      if (proposal.leaderId !== userId) {
+        return res.status(403).json({ error: "فقط قائد الجروب يمكنه إكمال المشروع" });
+      }
+
+      if (proposal.status !== "accepted") {
+        return res.status(400).json({ error: "المشروع لم يتم قبوله بعد" });
+      }
+
+      const completedProposal = await storage.completeProjectProposal(id);
+      
+      await storage.sendMessage(
+        proposal.conversationId,
+        userId!,
+        "freelancer",
+        `تم إكمال المشروع: ${proposal.title}. في انتظار تأكيد صاحب المنتج`
+      );
+
+      res.json({
+        proposal: completedProposal,
+        message: "تم تحديد المشروع كمكتمل",
+      });
+    } catch (error) {
+      console.error("Error completing project:", error);
+      res.status(500).json({ error: "حدث خطأ في إكمال المشروع" });
+    }
+  });
+
+  // Confirm completion and distribute earnings
+  app.post("/api/proposals/:id/confirm-complete", authMiddleware, async (req: AuthRequest, res) => {
+    try {
+      const { id } = req.params;
+      const userId = req.userId;
+      const userType = req.userType;
+
+      if (userType !== "product_owner") {
+        return res.status(403).json({ error: "فقط صاحب المنتج يمكنه تأكيد الإكمال" });
+      }
+
+      const proposal = await storage.getProjectProposal(id);
+      if (!proposal) {
+        return res.status(404).json({ error: "المقترح غير موجود" });
+      }
+
+      if (proposal.productOwnerId !== userId) {
+        return res.status(403).json({ error: "ليس لديك صلاحية لتأكيد هذا المشروع" });
+      }
+
+      if (proposal.status !== "completed") {
+        return res.status(400).json({ error: "المشروع لم يتم إكماله بعد" });
+      }
+
+      await storage.distributeProjectEarnings(id);
+      const finalProposal = await storage.getProjectProposal(id);
+
+      await storage.sendMessage(
+        proposal.conversationId,
+        userId!,
+        "product_owner",
+        `تم تأكيد إكمال المشروع وتم توزيع الأرباح على الفريق`
+      );
+
+      res.json({
+        proposal: finalProposal,
+        message: "تم توزيع الأرباح بنجاح",
+      });
+    } catch (error) {
+      console.error("Error confirming completion:", error);
+      res.status(500).json({ error: "حدث خطأ في تأكيد الإكمال" });
+    }
+  });
+
+  // Get accepted projects for a group
+  app.get("/api/groups/:groupId/accepted-projects", authMiddleware, async (req: AuthRequest, res) => {
+    try {
+      const { groupId } = req.params;
+      const projects = await storage.getAcceptedProposalsByGroup(groupId);
+      res.json(projects);
+    } catch (error) {
+      console.error("Error fetching accepted projects:", error);
+      res.status(500).json({ error: "حدث خطأ في جلب المشاريع المقبولة" });
+    }
+  });
+
   // ============================================
   // HEALTH CHECK
   // ============================================

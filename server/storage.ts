@@ -2044,6 +2044,79 @@ export class DatabaseStorage implements IStorage {
       .returning();
     return updated || undefined;
   }
+
+  async completeProjectProposal(id: string): Promise<ProjectProposal | undefined> {
+    const [updated] = await db
+      .update(projectProposals)
+      .set({
+        status: "completed",
+        completedAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(projectProposals.id, id))
+      .returning();
+    return updated || undefined;
+  }
+
+  async distributeProjectEarnings(proposalId: string): Promise<void> {
+    const proposal = await this.getProjectProposal(proposalId);
+    if (!proposal || proposal.status !== "completed") return;
+
+    const groupWallet = await this.getGroupWallet(proposal.groupId);
+    if (!groupWallet) return;
+
+    // Get group members
+    const members = await db
+      .select()
+      .from(groupMembers)
+      .where(eq(groupMembers.groupId, proposal.groupId));
+
+    const leaderEarnings = parseFloat(proposal.leaderEarnings || "0");
+    const memberEarnings = parseFloat(proposal.memberEarnings || "0");
+    const memberSharePerPerson = members.length > 0 ? memberEarnings / members.length : 0;
+
+    // Update leader wallet
+    const leader = await this.getFreelancer(proposal.leaderId);
+    if (leader) {
+      const currentLeaderWallet = await this.getWallet(leader.id);
+      await this.updateWallet(currentLeaderWallet?.id || "", {
+        availableBalance: (parseFloat(currentLeaderWallet?.availableBalance || "0") + leaderEarnings).toString(),
+      });
+    }
+
+    // Update member wallets
+    for (const member of members) {
+      const memberWallet = await this.getWallet(member.freelancerId);
+      if (memberWallet) {
+        await this.updateWallet(memberWallet.id, {
+          availableBalance: (parseFloat(memberWallet.availableBalance || "0") + memberSharePerPerson).toString(),
+        });
+      }
+    }
+
+    // Reduce escrow balance
+    const newEscrowBalance = parseFloat(groupWallet.escrowBalance) - parseFloat(proposal.memberEarnings || "0") - leaderEarnings;
+    await this.updateGroupWallet(groupWallet.id, {
+      escrowBalance: Math.max(0, newEscrowBalance).toFixed(2),
+    });
+
+    // Mark as paid out
+    await this.updateProjectProposal(proposalId, {
+      status: "paid_out",
+      paidOutAt: new Date(),
+    });
+  }
+
+  async getAcceptedProposalsByGroup(groupId: string): Promise<ProjectProposal[]> {
+    return await db
+      .select()
+      .from(projectProposals)
+      .where(and(
+        eq(projectProposals.groupId, groupId),
+        eq(projectProposals.status, "accepted")
+      ))
+      .orderBy(desc(projectProposals.acceptedAt));
+  }
 }
 
 export const storage = new DatabaseStorage();
