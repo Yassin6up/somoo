@@ -972,7 +972,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // TASK ROUTES
   // ============================================
 
-  // Create task from campaign (group leaders)
+  // Create task from campaign or order (group leaders)
   app.post("/api/tasks", authMiddleware, requireRole(["freelancer"]), async (req: AuthRequest, res) => {
     try {
       const { 
@@ -980,9 +980,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         description, 
         serviceType, 
         reward, 
-        campaignId, 
-        groupId,
-        postToGroup
+        campaignId,
+        orderId,
+        groupId
       } = req.body;
       const userId = req.user?.userId;
 
@@ -1007,14 +1007,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "المجموعة لا تحتوي على أعضاء" });
       }
 
-      const platformFee = (parseFloat(reward) * 0.1).toFixed(2);
-      const netReward = (parseFloat(reward) - parseFloat(platformFee)).toFixed(2);
+      // Calculate fees
+      const rewardValue = parseFloat(reward);
+      const platformFee = (rewardValue * 0.1).toFixed(2); // 10%
+      const leaderCommission = (rewardValue * 0.03).toFixed(2); // 3%
+      const netReward = (rewardValue - parseFloat(platformFee) - parseFloat(leaderCommission)).toFixed(2);
 
-      // Create a post in the group community first
+      // Create a post in the group community
+      let postContent = `📋 **مهمة جديدة: ${title}**\n\n${description}\n\n`;
+      postContent += `💰 **توزيع الأموال:**\n`;
+      postContent += `- إجمالي المكافأة: $${reward}\n`;
+      postContent += `- رسوم المنصة (10%): -$${platformFee}\n`;
+      postContent += `- عمولة القائد (3%): +$${leaderCommission}\n`;
+      postContent += `- صافي لكل عضو: $${netReward}`;
+
       const newPost = await storage.createPost({
         groupId,
         authorId: userId,
-        content: `📋 **مهمة جديدة: ${title}**\n\n${description}\n\n💰 المكافأة: $${reward}`,
+        content: postContent,
         imageUrl: null,
       });
 
@@ -1045,9 +1055,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
           userId: member.freelancerId,
           userType: "freelancer",
           title: "مهمة جديدة",
-          message: `تم إنشاء مهمة جديدة لك: ${title}`,
+          message: `تم إنشاء مهمة جديدة لك: ${title} - المكافأة: $${netReward}`,
           type: "task_assigned",
         });
+      }
+
+      // Update order status if orderId is provided
+      if (orderId) {
+        try {
+          await storage.updateOrder(orderId, { status: "in_progress" });
+        } catch (err) {
+          console.warn("Could not update order status:", err);
+        }
       }
 
       res.status(201).json({
@@ -1736,6 +1755,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error leaving group:", error);
       res.status(500).json({ error: "حدث خطأ أثناء المغادرة من الجروب" });
+    }
+  });
+
+  // Get group's orders (for group leaders to select from when creating tasks)
+  app.get("/api/groups/:groupId/orders", authMiddleware, async (req: AuthRequest, res) => {
+    try {
+      const { groupId } = req.params;
+      const userId = req.user?.userId;
+
+      if (!userId) {
+        return res.status(401).json({ error: "غير مصرح" });
+      }
+
+      // Verify user is group leader
+      const group = await storage.getGroup(groupId);
+      if (!group) {
+        return res.status(404).json({ error: "المجموعة غير موجودة" });
+      }
+
+      if (group.leaderId !== userId) {
+        return res.status(403).json({ error: "فقط قائد المجموعة يمكنه عرض الطلبات" });
+      }
+
+      // Get orders for this group leader
+      const orders = await storage.getOrdersByGroupLeader(userId);
+      
+      // Filter to only pending orders for this group
+      const groupOrders = orders.filter((o: any) => o.status === "pending");
+
+      // Enhance with product owner details
+      const enhancedOrders = await Promise.all(
+        groupOrders.map(async (order: any) => {
+          const productOwner = await storage.getProductOwner(order.productOwnerId);
+          return {
+            ...order,
+            productOwner: {
+              fullName: productOwner?.fullName,
+              companyName: productOwner?.companyName,
+              profileImage: productOwner?.profileImage,
+            }
+          };
+        })
+      );
+
+      res.json(enhancedOrders);
+    } catch (error) {
+      console.error("Error fetching group orders:", error);
+      res.status(500).json({ error: "حدث خطأ أثناء جلب الطلبات" });
     }
   });
 

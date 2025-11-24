@@ -158,7 +158,7 @@ export default function CampaignsTab({ groupId }: { groupId: string }) {
 
       return await apiRequest("/api/tasks", "POST", payload);
     },
-    onSuccess: (data) => {
+    onSuccess: (data: any) => {
       toast({
         title: "تم الإنشاء",
         description: `تم إنشاء المهمة ونشرها لـ ${data.tasksCreated} أعضاء`,
