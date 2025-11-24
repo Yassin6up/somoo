@@ -1455,8 +1455,6 @@ function EnhancedPostCard({
                       )}
                       <div className="flex items-center gap-4 mt-2 text-xs text-gray-500 px-2">
                         <span>{formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true, locale: ar })}</span>
-                        <button className="font-semibold hover:underline hover:text-blue-600">أعجبني</button>
-                        <button className="font-semibold hover:underline hover:text-blue-600">رد</button>
                       </div>
                     </div>
                   </motion.div>
