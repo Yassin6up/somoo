@@ -26,10 +26,18 @@ export default function Projects() {
     return userData ? JSON.parse(userData) : null;
   });
 
-  // Fetch pending projects (for freelancers) or user's projects (for product owners)
-  const { data: projects = [], isLoading: projectsLoading } = useQuery<Project[]>({
-    queryKey: user?.userType === "product_owner" ? ["/api/projects/my"] : ["/api/projects/pending"],
+  // Fetch all projects for everyone
+  const { data: projects = [], isLoading: projectsLoading, error: projectsError } = useQuery<Project[]>({
+    queryKey: ["/api/projects/all"],
   });
+
+  // Log projects fetched
+  if (projects.length > 0) {
+    console.log(`[DEBUG] Fetched ${projects.length} projects for user type: ${user?.userType}`);
+  }
+  if (projectsError) {
+    console.error("[DEBUG] Error fetching projects:", projectsError);
+  }
 
   // Fetch campaigns
   const { data: campaigns = [], isLoading: campaignsLoading } = useQuery<Campaign[]>({

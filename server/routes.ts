@@ -2193,10 +2193,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get all projects (visible to everyone)
+  app.get("/api/projects/all", authMiddleware, async (req: AuthRequest, res) => {
+    try {
+      console.log(`[DEBUG] Fetching all projects for user: ${req.user?.userId}, role: ${req.user?.userType}`);
+      
+      // Get both pending projects and owner projects
+      const pendingProjects = await storage.getPendingProjects();
+      const myProjects = req.user?.userId 
+        ? await storage.getProjectsByOwner(req.user.userId)
+        : [];
+      
+      // Combine and deduplicate
+      const allProjectsMap = new Map();
+      [...pendingProjects, ...myProjects].forEach(p => {
+        allProjectsMap.set(p.id, p);
+      });
+      
+      const allProjects = Array.from(allProjectsMap.values());
+      console.log(`[DEBUG] Returning ${allProjects.length} total projects`);
+      
+      res.json(allProjects);
+    } catch (error) {
+      console.error("Error fetching all projects:", error);
+      res.status(500).json({ error: "حدث خطأ أثناء جلب المشاريع" });
+    }
+  });
+
   // Get all pending projects (for group leaders to browse)
   app.get("/api/projects/pending", authMiddleware, requireRole(["freelancer"]), async (req: AuthRequest, res) => {
     try {
+      console.log(`[DEBUG] Fetching pending projects for user: ${req.user?.userId}`);
       const projects = await storage.getPendingProjects();
+      console.log(`[DEBUG] Found ${projects.length} pending projects`);
       res.json(projects);
     } catch (error) {
       console.error("Error fetching pending projects:", error);
@@ -2208,10 +2237,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/projects/my", authMiddleware, requireRole(["product_owner"]), async (req: AuthRequest, res) => {
     try {
       if (!req.user?.userId) {
+        console.log("[DEBUG] No userId found in request");
         return res.status(401).json({ error: "غير مصرح" });
       }
 
+      console.log(`[DEBUG] Fetching projects for owner: ${req.user.userId}`);
       const projects = await storage.getProjectsByOwner(req.user.userId);
+      console.log(`[DEBUG] Found ${projects.length} projects for owner`);
       res.json(projects);
     } catch (error) {
       console.error("Error fetching owner projects:", error);
