@@ -58,6 +58,7 @@ import RefundPolicy from "@/pages/RefundPolicy";
 import AdminLogin from "@/pages/AdminLogin";
 import GroupChatPage from "@/pages/GroupChatPage";
 import DirectChat from "@/pages/DirectChat";
+import GroupDiscovery from "@/pages/GroupDiscovery";
 import { AdminDashboardLayout } from "@/components/AdminDashboardLayout";
 import AdminDashboard from "@/pages/admin/Dashboard";
 import AdminUsers from "@/pages/admin/Users";
@@ -224,6 +225,7 @@ function Router() {
       <Route path="/campaigns" component={Campaigns} />
       <Route path="/freelancers" component={Freelancers} />
       <Route path="/groups" component={Groups} />
+      <Route path="/groups/discover" component={GroupDiscovery} />
       <Route path="/groups/create" component={CreateGroup} />
       <Route path="/groups/:id/community" component={GroupCommunity} />
       <Route path="/groups/:id/chat" component={GroupChatPage} />

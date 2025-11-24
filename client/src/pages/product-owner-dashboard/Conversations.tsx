@@ -6,7 +6,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { MessageCircle, Users } from "lucide-react";
 import type { Conversation } from "@shared/schema";
-import { ConversationChat } from "@/components/ConversationChat";
+import ConversationChat from "@/components/ConversationChat";
 
 type ConversationWithDetails = Conversation & {
   group?: {
