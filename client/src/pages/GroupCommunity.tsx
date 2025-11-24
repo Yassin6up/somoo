@@ -1429,8 +1429,22 @@ function EnhancedPostCard({
                     </Avatar>
                     <div className="flex-1">
                       <div className="bg-white rounded-2xl px-5 py-3 inline-block shadow-sm border border-gray-100">
-                        <p className="font-bold text-sm text-gray-900">{commentAuthor?.fullName}</p>
+                        <div className="flex items-center gap-2 mb-2">
+                          <p className="font-bold text-sm text-gray-900">{commentAuthor?.fullName}</p>
+                          {comment.isTaskCompleted && (
+                            <Badge className="bg-green-100 text-green-700 px-2 py-1 text-xs font-semibold flex items-center gap-1">
+                              <Award className="w-3 h-3" />
+                              تم إكمال المهمة
+                            </Badge>
+                          )}
+                        </div>
                         <p className="text-sm text-gray-800 mt-1">{comment.content}</p>
+                        {comment.taskCompletionReward && (
+                          <div className="mt-3 bg-green-50 px-3 py-2 rounded-lg flex items-center gap-2 w-fit">
+                            <DollarSign className="w-4 h-4 text-green-600" />
+                            <span className="text-sm font-bold text-green-700">كسبت: ${comment.taskCompletionReward}</span>
+                          </div>
+                        )}
                       </div>
                       {comment.imageUrl && (
                         <img
@@ -1463,7 +1477,7 @@ function EnhancedPostCard({
               <form onSubmit={handleCommentSubmit} className="relative">
                 <Input
                   id={`comment-input-${post.id}`}
-                  placeholder="اكتب تعليقاً وأرفق صورة (مطلوب)..."
+                  placeholder={hasTask ? "أرفق صورة لإثبات المهمة والحصول على المكافأة..." : "اكتب تعليقاً..."}
                   value={commentInputs[post.id] || ""}
                   onChange={(e) => setCommentInputs((prev: Record<string, string>) => ({ ...prev, [post.id]: e.target.value }))}
                   className="bg-white border-gray-200 rounded-full pr-4 pl-24 py-6 focus-visible:ring-2 focus-visible:ring-blue-500 shadow-sm"

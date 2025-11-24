@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Wallet as WalletIcon, TrendingUp, DollarSign } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Wallet as WalletIcon, TrendingUp, DollarSign, Clock, AlertCircle } from "lucide-react";
 import type { Wallet } from "@shared/schema";
 
 export default function WalletPage() {
@@ -13,6 +14,7 @@ export default function WalletPage() {
   }
 
   const balance = parseFloat(wallet?.balance || "0");
+  const pendingBalance = parseFloat(wallet?.pendingBalance || "0");
   const totalEarned = parseFloat(wallet?.totalEarned || "0");
   const totalWithdrawn = parseFloat(wallet?.totalWithdrawn || "0");
 
@@ -25,7 +27,7 @@ export default function WalletPage() {
         </p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-4">
         <Card className="rounded-2xl hover-elevate bg-gradient-to-br from-primary/10 to-primary/5">
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -40,6 +42,31 @@ export default function WalletPage() {
             <p className="text-xs text-muted-foreground mt-1">
               متاح للسحب
             </p>
+          </CardContent>
+        </Card>
+
+        <Card className={`rounded-2xl hover-elevate ${pendingBalance > 0 ? 'bg-gradient-to-br from-amber-50 to-orange-50 border-2 border-amber-200' : ''}`}>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm font-medium">
+                الأرباح المعلقة
+              </CardTitle>
+              <Clock className="h-5 w-5 text-amber-600" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className={`text-3xl font-bold ${pendingBalance > 0 ? 'text-amber-700' : 'text-muted-foreground'}`}>
+              {pendingBalance.toFixed(2)} ر.س
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              {pendingBalance > 0 ? 'في انتظار موافقة قائد المجموعة' : 'لا توجد أرباح معلقة'}
+            </p>
+            {pendingBalance > 0 && (
+              <Badge className="mt-2 bg-amber-100 text-amber-800 text-xs">
+                <AlertCircle className="w-3 h-3 ml-1" />
+                قيد المراجعة
+              </Badge>
+            )}
           </CardContent>
         </Card>
 
