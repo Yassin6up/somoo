@@ -334,6 +334,32 @@ export const postReactions = pgTable("post_reactions", {
   uniqueReaction: uniqueIndex("unique_reaction_idx").on(table.postId, table.userId),
 }));
 
+// Post Reports schema - تقارير المنشورات
+export const postReports = pgTable("post_reports", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  postId: varchar("post_id").notNull().references(() => groupPosts.id),
+  reportedBy: varchar("reported_by").notNull().references(() => freelancers.id),
+  reason: text("reason").notNull(), // spam, inappropriate, harassment, etc.
+  description: text("description"),
+  status: text("status").notNull().default("pending"), // pending, reviewed, action_taken, dismissed
+  adminNotes: text("admin_notes"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  reviewedAt: timestamp("reviewed_at"),
+});
+
+// Profile Reports schema - تقارير الملفات الشخصية
+export const profileReports = pgTable("profile_reports", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  profileId: varchar("profile_id").notNull().references(() => freelancers.id),
+  reportedBy: varchar("reported_by").notNull().references(() => freelancers.id),
+  reason: text("reason").notNull(), // spam, inappropriate, harassment, fake account, etc.
+  description: text("description"),
+  status: text("status").notNull().default("pending"), // pending, reviewed, action_taken, dismissed
+  adminNotes: text("admin_notes"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  reviewedAt: timestamp("reviewed_at"),
+});
+
 // Relations
 export const freelancersRelations = relations(freelancers, ({ one, many }) => ({
   wallet: one(wallets, { fields: [freelancers.id], references: [wallets.freelancerId] }),
@@ -571,6 +597,22 @@ export const insertPostCommentSchema = createInsertSchema(postComments).omit({
 export const insertPostReactionSchema = createInsertSchema(postReactions).omit({
   id: true,
   createdAt: true,
+});
+
+export const insertPostReportSchema = createInsertSchema(postReports).omit({
+  id: true,
+  createdAt: true,
+  reviewedAt: true,
+  status: true,
+  adminNotes: true,
+});
+
+export const insertProfileReportSchema = createInsertSchema(profileReports).omit({
+  id: true,
+  createdAt: true,
+  reviewedAt: true,
+  status: true,
+  adminNotes: true,
 });
 
 // TypeScript types
