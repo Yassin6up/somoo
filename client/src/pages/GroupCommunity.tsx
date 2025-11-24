@@ -66,8 +66,7 @@ import {
   Clock,
   Award,
   DollarSign,
-  Lock,
-  Bookmark
+  Lock
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
