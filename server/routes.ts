@@ -3515,6 +3515,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Start conversation with group leader
+  app.post("/api/conversations/with-leader/:groupId", authMiddleware, async (req: AuthRequest, res) => {
+    try {
+      const { groupId } = req.params;
+      const currentUserId = req.user!.userId;
+      const currentUserType = req.user!.userType;
+
+      // Only product owners can start conversations with leaders
+      if (currentUserType !== "product_owner") {
+        return res.status(403).json({ error: "فقط أصحاب المشاريع يمكنهم بدء محادثات" });
+      }
+
+      // Get the group to find the leader
+      const group = await storage.getGroup(groupId);
+      if (!group) {
+        return res.status(404).json({ error: "المجموعة غير موجودة" });
+      }
+
+      const leaderId = group.leaderId;
+      if (!leaderId) {
+        return res.status(400).json({ error: "المجموعة لا تحتوي على قائد" });
+      }
+
+      // Check if conversation already exists
+      const existing = await storage.getConversationsBetweenUsers(
+        currentUserId,
+        leaderId,
+        currentUserType
+      );
+
+      if (existing && existing.length > 0) {
+        return res.json(existing[0]);
+      }
+
+      // Create new conversation
+      const conversation = await storage.getOrCreateConversation(
+        currentUserId,
+        groupId,
+        leaderId
+      );
+      res.json(conversation);
+    } catch (error) {
+      console.error("Error creating conversation with leader:", error);
+      res.status(500).json({ error: "حدث خطأ أثناء بدء المحادثة" });
+    }
+  });
+
   // Get conversation messages
   app.get("/api/conversations/:id/messages", authMiddleware, async (req: AuthRequest, res) => {
     try {
