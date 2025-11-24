@@ -3634,7 +3634,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/groups/:groupId/posts", authMiddleware, async (req: AuthRequest, res) => {
     try {
       const { groupId } = req.params;
-      const { content, imageUrl, createTask, taskReward, taskTitle } = req.body;
+      const { content, imageUrl, createTask, taskReward, taskTitle, orderId } = req.body;
       const userId = req.user!.userId;
 
       // Validate content
@@ -3660,6 +3660,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         authorId: userId,
         content: content.trim(),
         imageUrl: imageUrl || null,
+        taskTitle: taskTitle || null,
+        taskReward: taskReward || null,
+        orderId: orderId || null,
       });
 
       // If the author is the group leader AND they requested task creation

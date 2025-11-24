@@ -1253,12 +1253,10 @@ function EnhancedPostCard({
     });
   };
 
-  // Check if post has task information
-  const hasTask = post.content.includes("📋") && post.content.includes("مهمة جديدة");
-  const taskTitleMatch = post.content.match(/📋 \*\*مهمة جديدة: ([^\*]+)\*\*/);
-  const taskTitle = taskTitleMatch ? taskTitleMatch[1] : null;
-  const rewardMatch = post.content.match(/إجمالي المكافأة: \$([0-9.]+)/);
-  const taskReward = rewardMatch ? rewardMatch[1] : null;
+  // Check if post has task information (from database fields)
+  const hasTask = !!(post.taskTitle && post.taskReward);
+  const taskTitle = post.taskTitle;
+  const taskReward = post.taskReward;
 
   return (
     <Card className={`border-0 shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden ${
@@ -1335,10 +1333,7 @@ function EnhancedPostCard({
         {/* Enhanced Post Content */}
         <div className={`${hasTask ? "px-6 pb-2" : "px-6 pb-3"}`}>
           <p className={`${hasTask ? "text-purple-900 text-sm" : "text-gray-800"} whitespace-pre-wrap leading-relaxed text-base`}>
-            {hasTask 
-              ? post.content.split("💰")[0].replace(/📋 \*\*مهمة جديدة:[^\*]+\*\*/, "").trim()
-              : detectUrls(post.content)
-            }
+            {detectUrls(post.content)}
           </p>
         </div>
 
