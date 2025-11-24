@@ -318,6 +318,8 @@ export const postComments = pgTable("post_comments", {
   authorId: varchar("author_id").notNull().references(() => freelancers.id),
   content: text("content").notNull(),
   imageUrl: text("image_url"), // صورة التعليق (اختيارية)
+  isTaskCompleted: boolean("is_task_completed").default(false).notNull(), // Whether this comment marks the task as done
+  taskCompletionReward: text("task_completion_reward"), // Amount earned from task completion
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
