@@ -65,7 +65,9 @@ import {
   Shield,
   Clock,
   Award,
-  DollarSign
+  DollarSign,
+  Lock,
+  Bookmark
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
@@ -729,6 +731,38 @@ export default function GroupCommunity() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Enhanced Left Sidebar */}
           <aside className="lg:col-span-3 space-y-6">
+            {/* Pinned Posts Section */}
+            {posts.filter(p => p.isPinned).length > 0 && (
+              <FadeInSection delay={0.05}>
+                <Card className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl shadow-lg border-2 border-amber-200 overflow-hidden">
+                  <CardContent className="p-6">
+                    <div className="flex items-center gap-3 mb-5">
+                      <div className="w-10 h-10 bg-gradient-to-r from-amber-500 to-orange-500 rounded-xl flex items-center justify-center">
+                        <Bookmark className="w-5 h-5 text-white" />
+                      </div>
+                      <h3 className="font-bold text-gray-900 text-lg">المنشورات المثبتة</h3>
+                    </div>
+                    <div className="space-y-3">
+                      {posts.filter(p => p.isPinned).map((pinnedPost) => (
+                        <motion.div
+                          key={pinnedPost.id}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="p-3 bg-white rounded-xl border border-amber-200 hover:shadow-md transition-all cursor-pointer hover:bg-amber-50"
+                          onClick={() => window.scrollTo({ top: document.getElementById(`post-${pinnedPost.id}`)?.offsetTop, behavior: 'smooth' })}
+                        >
+                          <p className="text-sm font-semibold text-gray-900 line-clamp-2">{pinnedPost.content}</p>
+                          <p className="text-xs text-gray-500 mt-2">
+                            {formatDistanceToNow(new Date(pinnedPost.createdAt), { addSuffix: true, locale: ar })}
+                          </p>
+                        </motion.div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </FadeInSection>
+            )}
+
             {/* Enhanced Group Info Card */}
             <FadeInSection delay={0.1}>
               <Card className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 overflow-hidden">
@@ -850,6 +884,24 @@ export default function GroupCommunity() {
           {/* Enhanced Main Feed */}
           <main className="lg:col-span-6 space-y-6">
             {/* Enhanced Create Post - Only for Leader */}
+            {!isLeader && isMember && (
+              <FadeInSection delay={0.05}>
+                <Card className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl shadow-lg border-2 border-blue-200 overflow-hidden">
+                  <CardContent className="p-6">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
+                        <Lock className="w-6 h-6 text-white" />
+                      </div>
+                      <div>
+                        <p className="font-bold text-gray-900">فقط قائد المجموعة</p>
+                        <p className="text-sm text-gray-600">يمكن لقائد المجموعة فقط نشر المنشورات والمهام في هذه المجموعة</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </FadeInSection>
+            )}
+
             {isLeader && (
               <FadeInSection delay={0.1}>
                 <Card className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 overflow-hidden">
@@ -1314,29 +1366,6 @@ function EnhancedPostCard({
       });
       setShowReportDialog(false);
       setReportReason("");
-    } catch (err) {
-      toast({
-        title: "خطأ",
-        description: "فشل إرسال التقرير",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleReportPost = async () => {
-    const reason = prompt("اختر سبب التقرير:\n1. محتوى غير مناسب\n2. إساءة\n3. إزعاج\n4. غير ذي صلة\n5. أخرى");
-    if (!reason) return;
-
-    const description = prompt("اكتب وصف التقرير (اختياري):");
-    try {
-      await apiRequest(`/api/posts/${post.id}/report`, "POST", {
-        reason,
-        description: description || null,
-      });
-      toast({
-        title: "تم الإبلاغ",
-        description: "شكراً لك - تم إرسال التقرير إلى الفريق",
-      });
     } catch (err) {
       toast({
         title: "خطأ",
