@@ -1275,6 +1275,19 @@ function EnhancedPostCard({
       const newExpanded = new Set(expandedPosts);
       newExpanded.add(post.id);
       setExpandedPosts(newExpanded);
+
+      toast({
+        title: "تم بنجاح",
+        description: "تم إرسال تعليقك بنجاح وإضافة المكافأة إلى أرباحك المعلقة",
+      });
+    },
+    onError: (error: any) => {
+      const errorMessage = error?.message || "حدث خطأ أثناء إرسال التعليق";
+      toast({
+        title: "خطأ",
+        description: errorMessage,
+        variant: "destructive",
+      });
     },
   });
 
