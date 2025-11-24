@@ -3827,6 +3827,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Pin post
+  app.post("/api/posts/:postId/pin", authMiddleware, async (req: AuthRequest, res) => {
+    try {
+      const { postId } = req.params;
+      const userId = req.user!.userId;
+
+      const post = await storage.getPost(postId);
+      if (!post) {
+        return res.status(404).json({ error: "المنشور غير موجود" });
+      }
+
+      const group = await storage.getGroup(post.groupId);
+      if (!group || group.leaderId !== userId) {
+        return res.status(403).json({ error: "فقط قائد المجموعة يمكنه تثبيت المنشورات" });
+      }
+
+      const updated = await db.update(groupPosts).set({
+        isPinned: !post.isPinned,
+        pinnedAt: !post.isPinned ? new Date() : null,
+        updatedAt: new Date(),
+      }).where(eq(groupPosts.id, postId)).returning();
+
+      res.json({ message: post.isPinned ? "تم إلغاء التثبيت" : "تم تثبيت المنشور", post: updated[0] });
+    } catch (error) {
+      console.error("Error pinning post:", error);
+      res.status(500).json({ error: "حدث خطأ أثناء تثبيت المنشور" });
+    }
+  });
+
   // Get comments for a post
   app.get("/api/posts/:postId/comments", authMiddleware, async (req: AuthRequest, res) => {
     try {

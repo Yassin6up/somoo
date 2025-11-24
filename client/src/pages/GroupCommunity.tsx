@@ -12,6 +12,12 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   Users,
   MessageSquare,
   ThumbsUp,
@@ -1272,6 +1278,51 @@ function EnhancedPostCard({
     }
   };
 
+  const handlePinPost = async () => {
+    try {
+      await apiRequest(`/api/posts/${post.id}/pin`, "POST");
+      toast({
+        title: post.isPinned ? "تم إلغاء التثبيت" : "تم تثبيت المنشور",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/groups', groupId, 'posts'] });
+    } catch (err) {
+      toast({
+        title: "خطأ",
+        description: "فشل تثبيت المنشور",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const [showReportDialog, setShowReportDialog] = useState(false);
+  const [reportReason, setReportReason] = useState("");
+
+  const handleReportPost = async () => {
+    if (!reportReason.trim()) {
+      toast({
+        title: "خطأ",
+        description: "يجب إدخال سبب التقرير",
+        variant: "destructive",
+      });
+      return;
+    }
+    try {
+      await apiRequest(`/api/posts/${post.id}/report`, "POST", { reason: reportReason });
+      toast({
+        title: "تم إرسال التقرير",
+        description: "شكراً لمساعدتك في الحفاظ على سلامة المجموعة",
+      });
+      setShowReportDialog(false);
+      setReportReason("");
+    } catch (err) {
+      toast({
+        title: "خطأ",
+        description: "فشل إرسال التقرير",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleReportPost = async () => {
     const reason = prompt("اختر سبب التقرير:\n1. محتوى غير مناسب\n2. إساءة\n3. إزعاج\n4. غير ذي صلة\n5. أخرى");
     if (!reason) return;
@@ -1343,9 +1394,33 @@ function EnhancedPostCard({
             </div>
           </div>
 
-          <Button variant="ghost" size="icon" className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full">
-            <MoreHorizontal className="w-5 h-5" />
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full">
+                <MoreHorizontal className="w-5 h-5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              {isAuthorLeader && (
+                <>
+                  <DropdownMenuItem onClick={handlePinPost} className="cursor-pointer">
+                    <Bookmark className="w-4 h-4 mr-2" />
+                    {post.isPinned ? "إلغاء التثبيت" : "تثبيت المنشور"}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleDeletePost} className="cursor-pointer text-red-600">
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    حذف المنشور
+                  </DropdownMenuItem>
+                </>
+              )}
+              {currentUserId !== post.authorId && (
+                <DropdownMenuItem onClick={() => setShowReportDialog(true)} className="cursor-pointer text-orange-600">
+                  <Flag className="w-4 h-4 mr-2" />
+                  الإبلاغ عن المنشور
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         {/* Task Info Card - Show if post has task */}
@@ -1447,27 +1522,39 @@ function EnhancedPostCard({
             <Share className="w-5 h-5" />
             <span className="font-semibold">مشاركة</span>
           </Button>
-          {isAuthorLeader && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="text-red-500 hover:bg-red-50 hover:text-red-600"
-              onClick={handleDeletePost}
-              title="حذف المنشور"
-            >
-              <Trash2 className="w-5 h-5" />
-            </Button>
-          )}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="text-orange-500 hover:bg-orange-50 hover:text-orange-600"
-            onClick={handleReportPost}
-            title="الإبلاغ عن المنشور"
-          >
-            <Flag className="w-5 h-5" />
-          </Button>
         </div>
+
+        {/* Report Dialog */}
+        {showReportDialog && (
+          <div className="px-6 py-4 bg-red-50 border-t border-red-200 space-y-3">
+            <h4 className="font-bold text-red-900">الإبلاغ عن المنشور</h4>
+            <Textarea
+              placeholder="اشرح سبب الإبلاغ..."
+              value={reportReason}
+              onChange={(e) => setReportReason(e.target.value)}
+              className="text-sm"
+            />
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                className="bg-red-600 hover:bg-red-700"
+                onClick={handleReportPost}
+              >
+                إرسال التقرير
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  setShowReportDialog(false);
+                  setReportReason("");
+                }}
+              >
+                إلغاء
+              </Button>
+            </div>
+          </div>
+        )}
 
         {/* Enhanced Comments Section */}
         <div className="bg-gradient-to-br from-gray-50 to-blue-50/30 p-6 space-y-5">

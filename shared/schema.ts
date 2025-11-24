@@ -307,6 +307,8 @@ export const groupPosts = pgTable("group_posts", {
   taskTitle: text("task_title"), // Title of the task
   taskReward: text("task_reward"), // Reward amount
   orderId: varchar("order_id").references(() => orders.id), // Link to order
+  isPinned: boolean("is_pinned").default(false).notNull(), // Whether post is pinned
+  pinnedAt: timestamp("pinned_at"), // When post was pinned
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
