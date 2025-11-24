@@ -102,6 +102,21 @@ export const projects = pgTable("projects", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+// Project Applications schema - طلبات الجروبات للمشاريع
+export const projectApplications = pgTable("project_applications", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  projectId: varchar("project_id").notNull().references(() => projects.id),
+  groupId: varchar("group_id").notNull().references(() => groups.id),
+  groupName: text("group_name").notNull(),
+  leaderName: text("leader_name").notNull(),
+  status: text("status").notNull().default("pending"), // pending, accepted, rejected
+  rejectionReason: text("rejection_reason"),
+  appliedAt: timestamp("applied_at").defaultNow().notNull(),
+  respondedAt: timestamp("responded_at"),
+}, (table) => ({
+  uniqueApplication: uniqueIndex("unique_project_application_idx").on(table.projectId, table.groupId),
+}));
+
 // Tasks schema (individual testing tasks assigned to freelancers)
 export const tasks = pgTable("tasks", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
