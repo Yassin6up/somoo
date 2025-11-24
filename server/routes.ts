@@ -991,6 +991,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "جميع الحقول المطلوبة يجب ملؤها" });
       }
 
+      // CRITICAL: Check if orderId is provided - tasks can ONLY be created from active orders
+      if (!orderId) {
+        return res.status(400).json({ 
+          error: "❌ لا توجد طلبات نشطة - تحتاج إلى طلب نشط من صاحب مشروع لإنشاء مهام. تواصل مع أصحاب المشاريع لإرسال طلب لفريقك." 
+        });
+      }
+
       // Verify user is group leader
       const group = await storage.getGroup(groupId);
       if (!group) {
@@ -999,6 +1006,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       if (group.leaderId !== userId) {
         return res.status(403).json({ error: "فقط قائد المجموعة يمكنه إنشاء مهام" });
+      }
+
+      // Verify the order exists and is pending
+      const order = await storage.getOrder(orderId);
+      if (!order) {
+        return res.status(404).json({ error: "الطلب غير موجود" });
+      }
+
+      if (order.status !== "pending") {
+        return res.status(400).json({ error: "الطلب ليس في حالة معلقة - يجب أن تكون الحالة 'معلق'" });
       }
 
       // Get group members
