@@ -137,26 +137,34 @@ const LightRays: React.FC<LightRaysProps> = ({
     }
 
     const initializeWebGL = async () => {
-      if (!containerRef.current) return;
+      try {
+        const container = containerRef.current;
+        if (!container) return;
 
-      await new Promise(resolve => setTimeout(resolve, 10));
+        await new Promise(resolve => setTimeout(resolve, 10));
 
-      if (!containerRef.current) return;
+        if (!containerRef.current) return;
 
-      const renderer = new Renderer({
-        dpr: Math.min(window.devicePixelRatio, 2),
-        alpha: true
-      });
-      rendererRef.current = renderer;
+        const renderer = new Renderer({
+          dpr: Math.min(window.devicePixelRatio, 2),
+          alpha: true
+        });
+        rendererRef.current = renderer;
 
       const gl = renderer.gl;
       gl.canvas.style.width = '100%';
       gl.canvas.style.height = '100%';
 
-      while (containerRef.current.firstChild) {
-        containerRef.current.removeChild(containerRef.current.firstChild);
+      const currentContainer = containerRef.current;
+      if (!currentContainer) {
+        renderer.gl.getExtension('WEBGL_lose_context')?.loseContext();
+        return;
       }
-      containerRef.current.appendChild(gl.canvas);
+
+      while (currentContainer.firstChild) {
+        currentContainer.removeChild(currentContainer.firstChild);
+      }
+      currentContainer.appendChild(gl.canvas);
 
       const vert = `
 attribute vec2 position;
@@ -366,6 +374,9 @@ void main() {
         uniformsRef.current = null;
         meshRef.current = null;
       };
+      } catch (error) {
+        console.warn('WebGL initialization error:', error);
+      }
     };
 
     initializeWebGL();
