@@ -24,9 +24,9 @@ export default function Projects() {
     return userData ? JSON.parse(userData) : null;
   });
 
-  // Fetch pending projects
+  // Fetch pending projects (for freelancers) or user's projects (for product owners)
   const { data: projects = [], isLoading: projectsLoading } = useQuery<Project[]>({
-    queryKey: ["/api/projects/pending"],
+    queryKey: user?.userType === "product_owner" ? ["/api/projects/my"] : ["/api/projects/pending"],
   });
 
   // Fetch user's groups where they are leader
@@ -93,10 +93,10 @@ export default function Projects() {
           <div className="flex items-center justify-between mb-4">
             <div>
               <h1 className="text-3xl font-bold mb-2" style={{ fontFamily: "Tajawal, sans-serif" }}>
-                المشاريع المتاحة
+                {user?.userType === "product_owner" ? "مشاريعي" : "المشاريع المتاحة"}
               </h1>
               <p className="text-muted-foreground">
-                تصفح واقبل المشاريع المتاحة لجروبك
+                {user?.userType === "product_owner" ? "إدارة مشاريعك وعرض الطلبات من الجروبات" : "تصفح واقبل المشاريع المتاحة لجروبك"}
               </p>
             </div>
 
