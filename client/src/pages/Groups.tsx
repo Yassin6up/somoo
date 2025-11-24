@@ -638,11 +638,11 @@ export default function Groups() {
                                 className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-2xl py-6 font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  navigate(`/purchase/${group.id}`);
+                                  navigate(`/chat-with-leader/${group.id}`);
                                 }}
                                 data-testid={`button-purchase-service-${group.id}`}
                               >
-                                <ShoppingCart className="ml-3 h-5 w-5" />
+                                <MessageCircle className="ml-3 h-5 w-5" />
                                 طلب خدمة
                                 <ArrowUpRight className="mr-2 h-5 w-5" />
                               </Button>
@@ -651,7 +651,7 @@ export default function Groups() {
                                 className="border-2 border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 rounded-2xl px-4 shadow-sm"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  // startConversationMutation.mutate(group.id);
+                                  navigate(`/chat-with-leader/${group.id}`);
                                 }}
                                 data-testid={`button-contact-leader-${group.id}`}
                               >
