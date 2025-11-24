@@ -730,38 +730,6 @@ export default function GroupCommunity() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Enhanced Left Sidebar */}
           <aside className="lg:col-span-3 space-y-6">
-            {/* Pinned Posts Section */}
-            {posts.filter(p => p.isPinned).length > 0 && (
-              <FadeInSection delay={0.05}>
-                <Card className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl shadow-lg border-2 border-amber-200 overflow-hidden">
-                  <CardContent className="p-6">
-                    <div className="flex items-center gap-3 mb-5">
-                      <div className="w-10 h-10 bg-gradient-to-r from-amber-500 to-orange-500 rounded-xl flex items-center justify-center">
-                        <Bookmark className="w-5 h-5 text-white" />
-                      </div>
-                      <h3 className="font-bold text-gray-900 text-lg">المنشورات المثبتة</h3>
-                    </div>
-                    <div className="space-y-3">
-                      {posts.filter(p => p.isPinned).map((pinnedPost) => (
-                        <motion.div
-                          key={pinnedPost.id}
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          className="p-3 bg-white rounded-xl border border-amber-200 hover:shadow-md transition-all cursor-pointer hover:bg-amber-50"
-                          onClick={() => window.scrollTo({ top: document.getElementById(`post-${pinnedPost.id}`)?.offsetTop, behavior: 'smooth' })}
-                        >
-                          <p className="text-sm font-semibold text-gray-900 line-clamp-2">{pinnedPost.content}</p>
-                          <p className="text-xs text-gray-500 mt-2">
-                            {formatDistanceToNow(new Date(pinnedPost.createdAt), { addSuffix: true, locale: ar })}
-                          </p>
-                        </motion.div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              </FadeInSection>
-            )}
-
             {/* Enhanced Group Info Card */}
             <FadeInSection delay={0.1}>
               <Card className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 overflow-hidden">
@@ -1095,6 +1063,42 @@ export default function GroupCommunity() {
 
           {/* Enhanced Right Sidebar */}
           <aside className="lg:col-span-3 space-y-6">
+            {/* Pinned Posts Section */}
+            {posts.filter(p => p.isPinned).length > 0 && (
+              <FadeInSection delay={0.05}>
+                <Card className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl shadow-lg border-2 border-amber-300 overflow-hidden">
+                  <CardContent className="p-6">
+                    <div className="flex items-center gap-3 mb-5">
+                      <div className="w-10 h-10 bg-gradient-to-r from-amber-500 to-orange-500 rounded-xl flex items-center justify-center shadow-lg">
+                        <Bookmark className="w-5 h-5 text-white" />
+                      </div>
+                      <h3 className="font-bold text-gray-900 text-lg">المنشورات المثبتة</h3>
+                    </div>
+                    <div className="space-y-3">
+                      {posts.filter(p => p.isPinned).map((pinnedPost) => (
+                        <motion.div
+                          key={pinnedPost.id}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="p-4 bg-white rounded-xl border-2 border-amber-200 hover:shadow-md transition-all cursor-pointer hover:bg-amber-50"
+                          onClick={() => document.getElementById(`post-${pinnedPost.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                        >
+                          <div className="flex items-center gap-2 mb-2">
+                            <Bookmark className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
+                            <span className="text-xs font-bold text-amber-700 bg-amber-100 px-2 py-1 rounded-full">مثبت</span>
+                          </div>
+                          <p className="text-sm font-semibold text-gray-900 line-clamp-2">{pinnedPost.content}</p>
+                          <p className="text-xs text-gray-500 mt-2">
+                            {formatDistanceToNow(new Date(pinnedPost.createdAt), { addSuffix: true, locale: ar })}
+                          </p>
+                        </motion.div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </FadeInSection>
+            )}
+
             {/* Enhanced Upcoming Events */}
             {upcomingEvents.length > 0 && (
               <FadeInSection delay={0.1}>
@@ -1380,12 +1384,24 @@ function EnhancedPostCard({
   const taskReward = post.taskReward;
 
   return (
-    <Card className={`border-0 shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden ${
-      hasTask 
-        ? "bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 border-2 border-purple-300 shadow-purple-200/50" 
-        : "bg-white/80 backdrop-blur-sm"
-    }`}>
+    <Card 
+      id={`post-${post.id}`}
+      className={`border-0 shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden ${
+        hasTask 
+          ? "bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 border-2 border-purple-300 shadow-purple-200/50" 
+          : "bg-white/80 backdrop-blur-sm"
+      }`}>
       <CardContent className="p-0">
+        {/* Pinned Badge - Show if post is pinned */}
+        {post.isPinned && (
+          <div className="px-6 pt-4 pb-2">
+            <Badge className="bg-gradient-to-r from-amber-500 to-orange-500 text-white px-4 py-2 rounded-full shadow-lg shadow-amber-500/30 flex items-center gap-2 w-fit">
+              <Bookmark className="h-4 w-4 fill-white" />
+              مثبت
+            </Badge>
+          </div>
+        )}
+
         {/* Task Badge - Show if post has task */}
         {hasTask && (
           <div className="px-6 pt-4 pb-2">
