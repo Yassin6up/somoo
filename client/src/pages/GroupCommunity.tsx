@@ -58,7 +58,8 @@ import {
   Palette,
   Shield,
   Clock,
-  Award
+  Award,
+  DollarSign
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
@@ -154,6 +155,9 @@ interface GroupPost {
   createdAt: Date;
   updatedAt: Date;
   isPinned: boolean;
+  taskTitle?: string;
+  taskReward?: string;
+  hasTask?: boolean;
 }
 
 interface PostComment {
@@ -1249,23 +1253,44 @@ function EnhancedPostCard({
     });
   };
 
+  // Check if post has task information
+  const hasTask = post.content.includes("📋") && post.content.includes("مهمة جديدة");
+  const taskTitleMatch = post.content.match(/📋 \*\*مهمة جديدة: ([^\*]+)\*\*/);
+  const taskTitle = taskTitleMatch ? taskTitleMatch[1] : null;
+  const rewardMatch = post.content.match(/إجمالي المكافأة: \$([0-9.]+)/);
+  const taskReward = rewardMatch ? rewardMatch[1] : null;
+
   return (
-    <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden bg-white/80 backdrop-blur-sm">
+    <Card className={`border-0 shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden ${
+      hasTask 
+        ? "bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 border-2 border-purple-300 shadow-purple-200/50" 
+        : "bg-white/80 backdrop-blur-sm"
+    }`}>
       <CardContent className="p-0">
+        {/* Task Badge - Show if post has task */}
+        {hasTask && (
+          <div className="px-6 pt-4 pb-2">
+            <Badge className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-4 py-2 rounded-full shadow-lg shadow-purple-500/30 flex items-center gap-2 w-fit">
+              <Briefcase className="h-4 w-4" />
+              مهمة تفاعلية
+            </Badge>
+          </div>
+        )}
+
         {/* Enhanced Post Header */}
-        <div className="p-6 flex items-start justify-between">
+        <div className={`${hasTask ? "px-6 py-3" : "p-6"} flex items-start justify-between`}>
           <div className="flex items-center gap-4">
-            <Avatar className="w-14 h-14 border-2 border-white shadow-lg ring-2 ring-blue-100">
+            <Avatar className={`${hasTask ? "w-12 h-12" : "w-14 h-14"} border-2 border-white shadow-lg ring-2 ${hasTask ? "ring-purple-200" : "ring-blue-100"}`}>
               <AvatarImage src={author?.profileImage} />
-              <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-bold">
+              <AvatarFallback className={`${hasTask ? "bg-gradient-to-br from-purple-500 to-pink-600" : "bg-gradient-to-br from-blue-500 to-purple-600"} text-white font-bold`}>
                 {author?.fullName?.substring(0, 2)}
               </AvatarFallback>
             </Avatar>
             <div>
               <div className="flex items-center gap-2">
-                <span className="font-bold text-gray-900 text-lg">{author?.fullName}</span>
+                <span className={`font-bold ${hasTask ? "text-purple-900" : "text-gray-900"} text-lg`}>{author?.fullName}</span>
                 {isAuthorLeader && (
-                  <Badge className="bg-gradient-to-r from-blue-500 to-purple-600 text-white text-xs px-3 py-1 rounded-full shadow-md">
+                  <Badge className={`${hasTask ? "bg-gradient-to-r from-purple-600 to-pink-600" : "bg-gradient-to-r from-blue-500 to-purple-600"} text-white text-xs px-3 py-1 rounded-full shadow-md`}>
                     قائد
                   </Badge>
                 )}
@@ -1283,10 +1308,37 @@ function EnhancedPostCard({
           </Button>
         </div>
 
+        {/* Task Info Card - Show if post has task */}
+        {hasTask && taskTitle && (
+          <div className="px-6 py-3">
+            <div className="bg-white/80 backdrop-blur-sm rounded-xl p-4 border-l-4 border-purple-600 shadow-md">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1">
+                  <h4 className="font-bold text-purple-900 text-lg flex items-center gap-2 mb-2">
+                    <Zap className="w-5 h-5 text-purple-600" />
+                    {taskTitle}
+                  </h4>
+                  {taskReward && (
+                    <div className="flex items-center gap-2 bg-gradient-to-r from-green-50 to-emerald-50 px-4 py-2 rounded-lg w-fit">
+                      <DollarSign className="w-5 h-5 text-green-600" />
+                      <span className="font-bold text-green-700">
+                        المكافأة: ${taskReward}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Enhanced Post Content */}
-        <div className="px-6 pb-3">
-          <p className="text-gray-800 whitespace-pre-wrap leading-relaxed text-base">
-            {detectUrls(post.content)}
+        <div className={`${hasTask ? "px-6 pb-2" : "px-6 pb-3"}`}>
+          <p className={`${hasTask ? "text-purple-900 text-sm" : "text-gray-800"} whitespace-pre-wrap leading-relaxed text-base`}>
+            {hasTask 
+              ? post.content.split("💰")[0].replace(/📋 \*\*مهمة جديدة:[^\*]+\*\*/, "").trim()
+              : detectUrls(post.content)
+            }
           </p>
         </div>
 
