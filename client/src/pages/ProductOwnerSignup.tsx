@@ -19,7 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 
 const steps = [
   { id: 1, title: "المعلومات الأساسية" },
-  { id: 2, title: "اختيار الخدمة" },
+  { id: 2, title: "اختيار الخدمة (اختياري)" },
   { id: 3, title: "التأكيد" },
 ];
 
@@ -41,8 +41,9 @@ const step1Schema = z.object({
 });
 
 const step2Schema = z.object({
-  serviceType: z.string().min(1, "اختر نوع الخدمة"),
-  reviewsCount: z.number().min(1, "عدد التقييمات يجب أن يكون 1 على الأقل").max(1000, "الحد الأقصى 1000 تقييم"),
+  serviceType: z.string().optional(),
+  reviewsCount: z.number().optional(),
+  skipOrder: z.boolean().default(false),
 });
 
 const step3Schema = z.object({
@@ -59,6 +60,7 @@ export default function ProductOwnerSignup() {
   const { toast } = useToast();
   const [formData, setFormData] = useState<Partial<FormData>>({
     reviewsCount: 50,
+    skipOrder: false,
   });
 
   const createOwnerMutation = useMutation({
@@ -70,7 +72,7 @@ export default function ProductOwnerSignup() {
           fullName: data.fullName,
           email: data.email,
           password: data.password,
-          services: [data.serviceType],
+          services: data.skipOrder ? [] : (data.serviceType ? [data.serviceType] : []),
         }),
       });
       
@@ -138,6 +140,20 @@ export default function ProductOwnerSignup() {
   const totalCost = reviewsCount * pricePerReview;
 
   const handleNext = async () => {
+    // For Step 2, if user wants to skip order, allow skipping validation
+    if (currentStep === 2) {
+      const currentValues = form.getValues();
+      const updatedFormData = { ...formData, ...currentValues };
+      setFormData(updatedFormData);
+      
+      // If skipping order, go directly to step 3
+      if (currentValues.skipOrder) {
+        setCurrentStep(currentStep + 1);
+        form.clearErrors();
+        return;
+      }
+    }
+    
     const isValid = await form.trigger();
     if (isValid) {
       const currentValues = form.getValues();
@@ -253,109 +269,147 @@ export default function ProductOwnerSignup() {
                     </div>
                   )}
 
-                  {/* Step 2: Service Selection */}
+                  {/* Step 2: Service Selection (Optional) */}
                   {currentStep === 2 && (
                     <div className="space-y-6">
                       <FormField
                         control={form.control}
-                        name="serviceType"
+                        name="skipOrder"
                         render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>اختر نوع الخدمة *</FormLabel>
-                            <Select 
-                              onValueChange={(value) => {
-                                field.onChange(value);
-                                setFormData({ ...formData, serviceType: value });
-                              }} 
-                              defaultValue={field.value}
-                            >
-                              <FormControl>
-                                <SelectTrigger className="rounded-xl" data-testid="select-service-type">
-                                  <SelectValue placeholder="اختر الخدمة المطلوبة" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {servicesList.map((service) => (
-                                  <SelectItem key={service.id} value={service.id}>
-                                    {service.name}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
+                          <FormItem className="flex items-center gap-3 space-y-0 p-4 bg-blue-50 border border-blue-200 rounded-2xl">
+                            <FormControl>
+                              <Checkbox
+                                checked={field.value}
+                                onCheckedChange={(checked) => {
+                                  field.onChange(checked);
+                                  setFormData({ ...formData, skipOrder: !!checked });
+                                }}
+                                data-testid="checkbox-skip-order"
+                              />
+                            </FormControl>
+                            <div className="flex-1">
+                              <FormLabel className="text-base font-semibold cursor-pointer">
+                                أتجاهل إنشاء طلب الآن وأنشئ حسابي فقط
+                              </FormLabel>
+                              <FormDescription className="mt-1">
+                                يمكنك إضافة طلب لاحقاً من لوحة تحكمك
+                              </FormDescription>
+                            </div>
                           </FormItem>
                         )}
                       />
 
-                      {formData.serviceType && (
+                      {!formData.skipOrder && (
                         <>
                           <FormField
                             control={form.control}
-                            name="reviewsCount"
+                            name="serviceType"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>أدخل عدد التقييمات المطلوبة *</FormLabel>
-                                <FormControl>
-                                  <Input 
-                                    {...field} 
-                                    type="number"
-                                    min="1"
-                                    max="1000"
-                                    placeholder="50" 
-                                    className="rounded-xl" 
-                                    data-testid="input-reviews-count"
-                                    onChange={(e) => {
-                                      const value = parseInt(e.target.value) || 0;
-                                      field.onChange(value);
-                                      setFormData({ ...formData, reviewsCount: value });
-                                    }}
-                                  />
-                                </FormControl>
-                                <FormDescription>
-                                  أدخل عدد التقييمات التي تحتاجها (من 1 إلى 1000)
-                                </FormDescription>
+                                <FormLabel>اختر نوع الخدمة</FormLabel>
+                                <Select 
+                                  onValueChange={(value) => {
+                                    field.onChange(value);
+                                    setFormData({ ...formData, serviceType: value });
+                                  }} 
+                                  defaultValue={field.value}
+                                >
+                                  <FormControl>
+                                    <SelectTrigger className="rounded-xl" data-testid="select-service-type">
+                                      <SelectValue placeholder="اختر الخدمة المطلوبة" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    {servicesList.map((service) => (
+                                      <SelectItem key={service.id} value={service.id}>
+                                        {service.name}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
                                 <FormMessage />
                               </FormItem>
                             )}
                           />
 
-                          {/* عرض ملخص التكلفة */}
-                          <div className="bg-primary/5 border border-primary/20 p-6 rounded-2xl space-y-4">
-                            <div className="flex items-center gap-2 mb-4">
-                              <DollarSign className="h-5 w-5 text-primary" />
-                              <h3 className="font-bold text-lg">ملخص التكلفة</h3>
-                            </div>
-                            
-                            <div className="space-y-3">
-                              <div className="flex justify-between items-center">
-                                <span className="text-muted-foreground">نوع الخدمة:</span>
-                                <span className="font-medium">{selectedService?.name}</span>
+                          {formData.serviceType && (
+                            <>
+                              <FormField
+                                control={form.control}
+                                name="reviewsCount"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>أدخل عدد التقييمات المطلوبة</FormLabel>
+                                    <FormControl>
+                                      <Input 
+                                        {...field} 
+                                        type="number"
+                                        min="1"
+                                        max="1000"
+                                        placeholder="50" 
+                                        className="rounded-xl" 
+                                        data-testid="input-reviews-count"
+                                        onChange={(e) => {
+                                          const value = parseInt(e.target.value) || 0;
+                                          field.onChange(value);
+                                          setFormData({ ...formData, reviewsCount: value });
+                                        }}
+                                      />
+                                    </FormControl>
+                                    <FormDescription>
+                                      أدخل عدد التقييمات التي تحتاجها (من 1 إلى 1000)
+                                    </FormDescription>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+
+                              {/* عرض ملخص التكلفة */}
+                              <div className="bg-primary/5 border border-primary/20 p-6 rounded-2xl space-y-4">
+                                <div className="flex items-center gap-2 mb-4">
+                                  <DollarSign className="h-5 w-5 text-primary" />
+                                  <h3 className="font-bold text-lg">ملخص التكلفة</h3>
+                                </div>
+                                
+                                <div className="space-y-3">
+                                  <div className="flex justify-between items-center">
+                                    <span className="text-muted-foreground">نوع الخدمة:</span>
+                                    <span className="font-medium">{selectedService?.name}</span>
+                                  </div>
+                                  
+                                  <div className="flex justify-between items-center">
+                                    <span className="text-muted-foreground">عدد التقييمات:</span>
+                                    <span className="font-medium flex items-center gap-1">
+                                      <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+                                      {reviewsCount} تقييم
+                                    </span>
+                                  </div>
+                                  
+                                  <div className="flex justify-between items-center">
+                                    <span className="text-muted-foreground">سعر التقييم الواحد:</span>
+                                    <span className="font-medium">{pricePerReview} دولار</span>
+                                  </div>
+                                  
+                                  <div className="h-px bg-border my-3"></div>
+                                  
+                                  <div className="flex justify-between items-center">
+                                    <span className="font-bold text-lg">التكلفة الإجمالية:</span>
+                                    <span className="font-bold text-2xl text-primary">
+                                      ${totalCost}
+                                    </span>
+                                  </div>
+                                </div>
                               </div>
-                              
-                              <div className="flex justify-between items-center">
-                                <span className="text-muted-foreground">عدد التقييمات:</span>
-                                <span className="font-medium flex items-center gap-1">
-                                  <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
-                                  {reviewsCount} تقييم
-                                </span>
-                              </div>
-                              
-                              <div className="flex justify-between items-center">
-                                <span className="text-muted-foreground">سعر التقييم الواحد:</span>
-                                <span className="font-medium">{pricePerReview} دولار</span>
-                              </div>
-                              
-                              <div className="h-px bg-border my-3"></div>
-                              
-                              <div className="flex justify-between items-center">
-                                <span className="font-bold text-lg">التكلفة الإجمالية:</span>
-                                <span className="font-bold text-2xl text-primary">
-                                  ${totalCost}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
+                            </>
+                          )}
                         </>
+                      )}
+
+                      {formData.skipOrder && (
+                        <div className="bg-green-50 border border-green-200 p-6 rounded-2xl text-center space-y-3">
+                          <p className="font-semibold text-green-900">سيتم إنشاء حسابك بدون طلب</p>
+                          <p className="text-sm text-green-800">يمكنك إضافة طلب جديد من لوحة التحكم في أي وقت</p>
+                        </div>
                       )}
                     </div>
                   )}
@@ -364,7 +418,7 @@ export default function ProductOwnerSignup() {
                   {currentStep === 3 && (
                     <div className="space-y-6">
                       <div className="bg-accent/10 p-6 rounded-2xl space-y-4">
-                        <h3 className="font-semibold text-lg">ملخص الطلب</h3>
+                        <h3 className="font-semibold text-lg">ملخص الحساب</h3>
                         <div className="space-y-3 text-sm">
                           <div className="flex justify-between">
                             <span className="text-muted-foreground">الاسم:</span>
@@ -374,19 +428,36 @@ export default function ProductOwnerSignup() {
                             <span className="text-muted-foreground">البريد الإلكتروني:</span>
                             <span className="font-medium">{formData.email}</span>
                           </div>
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">الخدمة:</span>
-                            <span className="font-medium">{selectedService?.name}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">عدد التقييمات:</span>
-                            <span className="font-medium">{reviewsCount} تقييم</span>
-                          </div>
-                          <div className="h-px bg-border my-2"></div>
-                          <div className="flex justify-between">
-                            <span className="font-bold">التكلفة الإجمالية:</span>
-                            <span className="font-bold text-primary text-lg">${totalCost}</span>
-                          </div>
+                          
+                          {!formData.skipOrder && (
+                            <>
+                              <div className="h-px bg-border my-2"></div>
+                              <h4 className="font-semibold text-base">تفاصيل الطلب:</h4>
+                              <div className="flex justify-between">
+                                <span className="text-muted-foreground">الخدمة:</span>
+                                <span className="font-medium">{selectedService?.name}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-muted-foreground">عدد التقييمات:</span>
+                                <span className="font-medium">{reviewsCount} تقييم</span>
+                              </div>
+                              <div className="h-px bg-border my-2"></div>
+                              <div className="flex justify-between">
+                                <span className="font-bold">التكلفة الإجمالية:</span>
+                                <span className="font-bold text-primary text-lg">${totalCost}</span>
+                              </div>
+                            </>
+                          )}
+                          
+                          {formData.skipOrder && (
+                            <>
+                              <div className="h-px bg-border my-2"></div>
+                              <div className="bg-green-50 p-3 rounded-lg text-center">
+                                <p className="text-green-800 font-medium">بدون طلب</p>
+                                <p className="text-xs text-green-700">يمكنك إنشاء طلب لاحقاً</p>
+                              </div>
+                            </>
+                          )}
                         </div>
                       </div>
 
