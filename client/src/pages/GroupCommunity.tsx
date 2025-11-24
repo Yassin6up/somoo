@@ -40,7 +40,6 @@ import {
   Share,
   Camera,
   File,
-  Flag,
   Search,
   Bell,
   Menu,
