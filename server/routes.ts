@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { Server as SocketIOServer } from "socket.io";
 import { storage } from "./storage";
-import { insertFreelancerSchema, insertProductOwnerSchema, insertCampaignSchema, insertOrderSchema, type Campaign, postComments, postReports, profileReports } from "@shared/schema";
+import { insertFreelancerSchema, insertProductOwnerSchema, insertCampaignSchema, insertOrderSchema, type Campaign, postComments, postReports, profileReports, groupPosts } from "@shared/schema";
 import { z } from "zod";
 import { verifyToken, type AuthPayload } from "./middleware/auth";
 // import OpenAI from "openai";
