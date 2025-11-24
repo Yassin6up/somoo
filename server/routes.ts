@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { Server as SocketIOServer } from "socket.io";
 import { storage } from "./storage";
-import { insertFreelancerSchema, insertProductOwnerSchema, insertCampaignSchema, insertOrderSchema, type Campaign, postComments } from "@shared/schema";
+import { insertFreelancerSchema, insertProductOwnerSchema, insertCampaignSchema, insertOrderSchema, type Campaign, postComments, postReports, profileReports } from "@shared/schema";
 import { z } from "zod";
 import { verifyToken, type AuthPayload } from "./middleware/auth";
 // import OpenAI from "openai";
@@ -3744,6 +3744,86 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting post:", error);
       res.status(500).json({ error: "حدث خطأ أثناء حذف المنشور" });
+    }
+  });
+
+  // Report post
+  app.post("/api/posts/:postId/report", authMiddleware, async (req: AuthRequest, res) => {
+    try {
+      const { postId } = req.params;
+      const { reason, description } = req.body;
+      const userId = req.user!.userId;
+
+      if (!reason || reason.trim() === "") {
+        return res.status(400).json({ error: "سبب التقرير مطلوب" });
+      }
+
+      const post = await storage.getPost(postId);
+      if (!post) {
+        return res.status(404).json({ error: "المنشور غير موجود" });
+      }
+
+      // Check if already reported by this user
+      const existing = await db.select().from(postReports).where(
+        eq(postReports.postId, postId) && eq(postReports.reportedBy, userId)
+      );
+      if (existing.length > 0) {
+        return res.status(400).json({ error: "لقد قمت بالإبلاغ عن هذا المنشور بالفعل" });
+      }
+
+      const report = await db.insert(postReports).values({
+        postId,
+        reportedBy: userId,
+        reason,
+        description: description || null,
+      }).returning();
+
+      res.status(201).json({ message: "تم إرسال التقرير بنجاح", report: report[0] });
+    } catch (error) {
+      console.error("Error reporting post:", error);
+      res.status(500).json({ error: "حدث خطأ أثناء إرسال التقرير" });
+    }
+  });
+
+  // Report profile
+  app.post("/api/profiles/:freelancerId/report", authMiddleware, async (req: AuthRequest, res) => {
+    try {
+      const { freelancerId } = req.params;
+      const { reason, description } = req.body;
+      const userId = req.user!.userId;
+
+      if (!reason || reason.trim() === "") {
+        return res.status(400).json({ error: "سبب التقرير مطلوب" });
+      }
+
+      if (userId === freelancerId) {
+        return res.status(400).json({ error: "لا يمكنك الإبلاغ عن ملفك الشخصي" });
+      }
+
+      const profile = await storage.getFreelancer(freelancerId);
+      if (!profile) {
+        return res.status(404).json({ error: "الملف الشخصي غير موجود" });
+      }
+
+      // Check if already reported by this user
+      const existing = await db.select().from(profileReports).where(
+        eq(profileReports.profileId, freelancerId) && eq(profileReports.reportedBy, userId)
+      );
+      if (existing.length > 0) {
+        return res.status(400).json({ error: "لقد قمت بالإبلاغ عن هذا الملف بالفعل" });
+      }
+
+      const report = await db.insert(profileReports).values({
+        profileId: freelancerId,
+        reportedBy: userId,
+        reason,
+        description: description || null,
+      }).returning();
+
+      res.status(201).json({ message: "تم إرسال التقرير بنجاح", report: report[0] });
+    } catch (error) {
+      console.error("Error reporting profile:", error);
+      res.status(500).json({ error: "حدث خطأ أثناء إرسال التقرير" });
     }
   });
 

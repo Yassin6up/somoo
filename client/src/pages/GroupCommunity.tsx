@@ -18,6 +18,7 @@ import {
   Send,
   Image as ImageIcon,
   Trash2,
+  Flag,
   ArrowRight,
   Star,
   MapPin,
@@ -1253,6 +1254,48 @@ function EnhancedPostCard({
     });
   };
 
+  const handleDeletePost = async () => {
+    if (confirm("هل أنت متأكد من حذف هذا المنشور؟")) {
+      try {
+        await apiRequest(`/api/posts/${post.id}`, "DELETE");
+        toast({
+          title: "تم الحذف",
+          description: "تم حذف المنشور بنجاح",
+        });
+        queryClient.invalidateQueries({ queryKey: ['/api/groups', groupId, 'posts'] });
+      } catch (err) {
+        toast({
+          title: "خطأ",
+          description: "فشل حذف المنشور",
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
+  const handleReportPost = async () => {
+    const reason = prompt("اختر سبب التقرير:\n1. محتوى غير مناسب\n2. إساءة\n3. إزعاج\n4. غير ذي صلة\n5. أخرى");
+    if (!reason) return;
+
+    const description = prompt("اكتب وصف التقرير (اختياري):");
+    try {
+      await apiRequest(`/api/posts/${post.id}/report`, "POST", {
+        reason,
+        description: description || null,
+      });
+      toast({
+        title: "تم الإبلاغ",
+        description: "شكراً لك - تم إرسال التقرير إلى الفريق",
+      });
+    } catch (err) {
+      toast({
+        title: "خطأ",
+        description: "فشل إرسال التقرير",
+        variant: "destructive",
+      });
+    }
+  };
+
   // Check if post has task information (from database fields)
   const hasTask = !!(post.taskTitle && post.taskReward);
   const taskTitle = post.taskTitle;
@@ -1404,6 +1447,26 @@ function EnhancedPostCard({
           >
             <Share className="w-5 h-5" />
             <span className="font-semibold">مشاركة</span>
+          </Button>
+          {isAuthorLeader && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-red-500 hover:bg-red-50 hover:text-red-600"
+              onClick={handleDeletePost}
+              title="حذف المنشور"
+            >
+              <Trash2 className="w-5 h-5" />
+            </Button>
+          )}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-orange-500 hover:bg-orange-50 hover:text-orange-600"
+            onClick={handleReportPost}
+            title="الإبلاغ عن المنشور"
+          >
+            <Flag className="w-5 h-5" />
           </Button>
         </div>
 
