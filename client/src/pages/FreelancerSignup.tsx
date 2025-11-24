@@ -41,7 +41,6 @@ const step1Schema = z.object({
 const step2Schema = z.object({
   bio: z.string().min(20, "الوصف يجب أن يحتوي على 20 حرفًا على الأقل"),
   jobTitle: z.string().min(3, "المسمى المهني مطلوب"),
-  teamSize: z.string(),
   services: z.array(z.string()).min(1, "اختر خدمة واحدة على الأقل"),
   aboutMe: z.string().min(50, "الوصف التفصيلي يجب أن يحتوي على 50 حرفًا على الأقل"),
 });
@@ -351,26 +350,6 @@ export default function FreelancerSignup() {
                                 <FormControl>
                                   <Input {...field} placeholder="مثال: مختبر تطبيقات - مسوّق تقييمات - مدير فريق مراجعين" className="rounded-xl" data-testid="input-job-title" />
                                 </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-
-                          <FormField
-                            control={form.control}
-                            name="teamSize"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel className="flex items-center gap-2">
-                                  <UsersIcon className="h-4 w-4" />
-                                  عدد أعضاء الفريق *
-                                </FormLabel>
-                                <FormControl>
-                                  <Input {...field} type="number" min="1" className="rounded-xl" data-testid="input-team-size" />
-                                </FormControl>
-                                <FormDescription className="text-xs">
-                                  أدخل عدد الأشخاص الذين يعملون معك في تنفيذ المهام
-                                </FormDescription>
                                 <FormMessage />
                               </FormItem>
                             )}
