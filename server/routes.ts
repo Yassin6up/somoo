@@ -3800,49 +3800,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ error: "يجب أن تكون عضواً في المجموعة" });
       }
 
+      // Check if post has task reward
+      const hasTaskReward = !!(post.taskTitle && post.taskReward);
+      let isTaskCompleted = false;
+      let taskCompletionReward = null;
+
+      // If post has task reward and comment has image, mark task as complete and add to pending balance
+      if (hasTaskReward && imageUrl) {
+        isTaskCompleted = true;
+        taskCompletionReward = post.taskReward;
+
+        // Add reward to pending balance
+        try {
+          const wallet = await storage.getWalletByFreelancer(userId);
+          if (wallet) {
+            const rewardAmount = parseFloat(post.taskReward) || 0;
+            const newPendingBalance = (parseFloat(wallet.pendingBalance?.toString() || "0")) + rewardAmount;
+            await storage.updateWallet(wallet.id, {
+              pendingBalance: newPendingBalance.toString() as any,
+            });
+            console.log(`[TASK COMPLETION] Added ${rewardAmount} to pending balance for user ${userId}`);
+          }
+        } catch (err) {
+          console.error("Error updating wallet pending balance:", err);
+        }
+
+        // Notify leader about task completion
+        try {
+          const group = await storage.getGroup(post.groupId);
+          if (group) {
+            await storage.createNotification({
+              userId: group.leaderId,
+              userType: "freelancer",
+              title: "تم إكمال مهمة التفاعل",
+              message: `أكمل عضو المهمة "${post.taskTitle}" برمكافأة ${post.taskReward} وهي الآن قيد المراجعة`,
+              type: "task_submitted",
+            });
+          }
+        } catch (err) {
+          console.error("Error creating notification:", err);
+        }
+      }
+
       const newComment = await storage.createComment({
         postId,
         authorId: userId,
         content: content.trim(),
         imageUrl: imageUrl || null,
+        isTaskCompleted,
+        taskCompletionReward,
       });
-
-      // Auto-complete task if comment has image
-      if (imageUrl) {
-        try {
-          // Find assigned tasks for this user related to this post
-          // We look for tasks where taskUrl contains the postId
-          const userTasks = await storage.getTasksByFreelancer(userId);
-          const relatedTask = userTasks.find(t =>
-            t.status === 'assigned' &&
-            t.taskUrl &&
-            (t.taskUrl.includes(`postId=${postId}`) || t.taskUrl.includes(`/posts/${postId}`))
-          );
-
-          if (relatedTask) {
-            await storage.updateTask(relatedTask.id, {
-              status: "submitted",
-              proofImage: imageUrl,
-              report: content.trim(),
-              submittedAt: new Date(),
-            });
-
-            // Notify leader
-            const group = await storage.getGroup(post.groupId);
-            if (group) {
-              await storage.createNotification({
-                userId: group.leaderId,
-                userType: "freelancer",
-                title: "تم تسليم مهمة (عبر التعليق)",
-                message: `تم تسليم مهمة "${relatedTask.title}" تلقائياً عبر تعليق من ${req.user?.username || 'عضو'}`,
-                type: "task_submitted",
-              });
-            }
-          }
-        } catch (err) {
-          console.error("Error auto-completing task from comment:", err);
-        }
-      }
 
       res.status(201).json(newComment);
     } catch (error) {

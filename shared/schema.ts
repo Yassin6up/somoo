@@ -563,6 +563,9 @@ export const insertGroupPostSchema = createInsertSchema(groupPosts).omit({
 export const insertPostCommentSchema = createInsertSchema(postComments).omit({
   id: true,
   createdAt: true,
+}).extend({
+  isTaskCompleted: z.boolean().optional(),
+  taskCompletionReward: z.string().optional(),
 });
 
 export const insertPostReactionSchema = createInsertSchema(postReactions).omit({
