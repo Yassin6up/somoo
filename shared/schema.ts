@@ -153,6 +153,28 @@ export const wallets = pgTable("wallets", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+// Product Owner Wallets schema
+export const productOwnerWallets = pgTable("product_owner_wallets", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  productOwnerId: varchar("product_owner_id").notNull().unique().references(() => productOwners.id),
+  balance: decimal("balance", { precision: 10, scale: 2 }).default("0").notNull(),
+  totalSpent: decimal("total_spent", { precision: 10, scale: 2 }).default("0").notNull(),
+  totalDeposited: decimal("total_deposited", { precision: 10, scale: 2 }).default("0").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Group Wallets schema (for escrow)
+export const groupWallets = pgTable("group_wallets", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  groupId: varchar("group_id").notNull().unique().references(() => groups.id),
+  balance: decimal("balance", { precision: 10, scale: 2 }).default("0").notNull(),
+  escrowBalance: decimal("escrow_balance", { precision: 10, scale: 2 }).default("0").notNull(), // Money held in escrow
+  totalEarned: decimal("total_earned", { precision: 10, scale: 2 }).default("0").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 // Transactions schema (wallet transactions)
 export const transactions = pgTable("transactions", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -286,6 +308,32 @@ export const conversations = pgTable("conversations", {
   uniqueConversation: uniqueIndex("unique_conversation_idx").on(table.productOwnerId, table.groupId),
 }));
 
+// Project Proposals schema - مقترحات المشاريع من قادة الجروبات (MOVED BEFORE conversationMessages)
+export const projectProposals = pgTable("project_proposals", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  conversationId: varchar("conversation_id").notNull().references(() => conversations.id),
+  groupId: varchar("group_id").notNull().references(() => groups.id),
+  leaderId: varchar("leader_id").notNull().references(() => freelancers.id),
+  productOwnerId: varchar("product_owner_id").notNull().references(() => productOwners.id),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  projectType: text("project_type").notNull(), // app_review, social_media, testing, etc.
+  price: decimal("price", { precision: 10, scale: 2 }).notNull(),
+  tasksCount: integer("tasks_count").notNull().default(1),
+  estimatedDays: integer("estimated_days"),
+  requirements: text("requirements"),
+  status: text("status").notNull().default("pending"), // pending, accepted, rejected, in_progress, completed, paid_out
+  rejectionReason: text("rejection_reason"),
+  acceptedAt: timestamp("accepted_at"),
+  completedAt: timestamp("completed_at"),
+  paidOutAt: timestamp("paid_out_at"),
+  leaderEarnings: decimal("leader_earnings", { precision: 10, scale: 2 }), // 3% of price
+  platformFee: decimal("platform_fee", { precision: 10, scale: 2 }), // 10% of price
+  memberEarnings: decimal("member_earnings", { precision: 10, scale: 2 }), // 87% of price
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 // Conversation Messages schema - رسائل المحادثة المباشرة
 export const conversationMessages = pgTable("conversation_messages", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -293,6 +341,8 @@ export const conversationMessages = pgTable("conversation_messages", {
   senderId: varchar("sender_id").notNull(), // يمكن أن يكون product owner أو freelancer
   senderType: text("sender_type").notNull(), // product_owner, freelancer
   content: text("content").notNull(),
+  messageType: text("message_type").notNull().default("text"), // text, project_proposal, project_completion
+  projectProposalId: varchar("project_proposal_id").references(() => projectProposals.id),
   isRead: boolean("is_read").default(false).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
@@ -389,12 +439,18 @@ export const freelancersRelations = relations(freelancers, ({ one, many }) => ({
   groupJoinRequests: many(groupJoinRequests),
 }));
 
-export const productOwnersRelations = relations(productOwners, ({ many }) => ({
+export const productOwnersRelations = relations(productOwners, ({ one, many }) => ({
   campaigns: many(campaigns),
   payments: many(payments),
   projects: many(projects),
   orders: many(orders),
   conversations: many(conversations),
+  wallet: one(productOwnerWallets, { fields: [productOwners.id], references: [productOwnerWallets.productOwnerId] }),
+  projectProposals: many(projectProposals),
+}));
+
+export const productOwnerWalletsRelations = relations(productOwnerWallets, ({ one }) => ({
+  productOwner: one(productOwners, { fields: [productOwnerWallets.productOwnerId], references: [productOwners.id] }),
 }));
 
 export const campaignsRelations = relations(campaigns, ({ one, many }) => ({
@@ -432,6 +488,8 @@ export const groupsRelations = relations(groups, ({ one, many }) => ({
   tasks: many(tasks),
   messages: many(messages),
   posts: many(groupPosts),
+  wallet: one(groupWallets, { fields: [groups.id], references: [groupWallets.groupId] }),
+  projectProposals: many(projectProposals),
   acceptedProjects: many(projects),
   orders: many(orders),
   joinRequests: many(groupJoinRequests),
@@ -441,6 +499,10 @@ export const groupsRelations = relations(groups, ({ one, many }) => ({
 export const groupMembersRelations = relations(groupMembers, ({ one }) => ({
   group: one(groups, { fields: [groupMembers.groupId], references: [groups.id] }),
   freelancer: one(freelancers, { fields: [groupMembers.freelancerId], references: [freelancers.id] }),
+}));
+
+export const groupWalletsRelations = relations(groupWallets, ({ one }) => ({
+  group: one(groups, { fields: [groupWallets.groupId], references: [groups.id] }),
 }));
 
 export const projectsRelations = relations(projects, ({ one, many }) => ({
@@ -475,10 +537,19 @@ export const conversationsRelations = relations(conversations, ({ one, many }) =
   group: one(groups, { fields: [conversations.groupId], references: [groups.id] }),
   leader: one(freelancers, { fields: [conversations.leaderId], references: [freelancers.id] }),
   messages: many(conversationMessages),
+  projectProposals: many(projectProposals),
 }));
 
 export const conversationMessagesRelations = relations(conversationMessages, ({ one }) => ({
   conversation: one(conversations, { fields: [conversationMessages.conversationId], references: [conversations.id] }),
+  projectProposal: one(projectProposals, { fields: [conversationMessages.projectProposalId], references: [projectProposals.id] }),
+}));
+
+export const projectProposalsRelations = relations(projectProposals, ({ one }) => ({
+  conversation: one(conversations, { fields: [projectProposals.conversationId], references: [conversations.id] }),
+  group: one(groups, { fields: [projectProposals.groupId], references: [groups.id] }),
+  leader: one(freelancers, { fields: [projectProposals.leaderId], references: [freelancers.id] }),
+  productOwner: one(productOwners, { fields: [projectProposals.productOwnerId], references: [productOwners.id] }),
 }));
 
 export const groupPostsRelations = relations(groupPosts, ({ one, many }) => ({
@@ -596,6 +667,28 @@ export const insertConversationMessageSchema = createInsertSchema(conversationMe
   createdAt: true,
 });
 
+export const insertProductOwnerWalletSchema = createInsertSchema(productOwnerWallets).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertGroupWalletSchema = createInsertSchema(groupWallets).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertProjectProposalSchema = createInsertSchema(projectProposals).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  status: true,
+  acceptedAt: true,
+  completedAt: true,
+  paidOutAt: true,
+});
+
 export const insertGroupPostSchema = createInsertSchema(groupPosts).omit({
   id: true,
   likesCount: true,
@@ -670,6 +763,12 @@ export type Conversation = typeof conversations.$inferSelect;
 export type InsertConversation = z.infer<typeof insertConversationSchema>;
 export type ConversationMessage = typeof conversationMessages.$inferSelect;
 export type InsertConversationMessage = z.infer<typeof insertConversationMessageSchema>;
+export type ProductOwnerWallet = typeof productOwnerWallets.$inferSelect;
+export type InsertProductOwnerWallet = z.infer<typeof insertProductOwnerWalletSchema>;
+export type GroupWallet = typeof groupWallets.$inferSelect;
+export type InsertGroupWallet = z.infer<typeof insertGroupWalletSchema>;
+export type ProjectProposal = typeof projectProposals.$inferSelect;
+export type InsertProjectProposal = z.infer<typeof insertProjectProposalSchema>;
 export type GroupPost = typeof groupPosts.$inferSelect;
 export type InsertGroupPost = z.infer<typeof insertGroupPostSchema>;
 export type PostComment = typeof postComments.$inferSelect;

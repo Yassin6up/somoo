@@ -5071,6 +5071,228 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // ============================================
+  // PROJECT PROPOSALS (Chat-based Project System)
+  // ============================================
+
+  // Create a new project proposal (group leader only)
+  app.post("/api/proposals", authMiddleware, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.userId;
+      const userType = req.userType;
+
+      if (userType !== "freelancer") {
+        return res.status(403).json({ error: "فقط قادة الجروبات يمكنهم إنشاء مقترحات المشاريع" });
+      }
+
+      const { conversationId, groupId } = req.body;
+
+      // Verify the conversation exists
+      const conversation = await storage.getConversation(conversationId);
+      if (!conversation) {
+        return res.status(404).json({ error: "المحادثة غير موجودة" });
+      }
+
+      // Verify the freelancer is the leader of the group in this conversation
+      if (conversation.leaderId !== userId) {
+        return res.status(403).json({ error: "فقط قائد الجروب يمكنه إنشاء مقترحات للمشاريع" });
+      }
+
+      // Verify groupId matches the conversation
+      if (conversation.groupId !== groupId) {
+        return res.status(400).json({ error: "معرف الجروب غير متطابق مع المحادثة" });
+      }
+
+      const proposal = await storage.createProjectProposal({
+        ...req.body,
+        leaderId: userId,
+        productOwnerId: conversation.productOwnerId,
+      });
+
+      // Send message notification in conversation about the proposal
+      await storage.sendMessage(
+        conversationId,
+        userId!,
+        "freelancer",
+        `تم إرسال مقترح مشروع: ${proposal.title}`
+      );
+
+      res.json(proposal);
+    } catch (error) {
+      console.error("Error creating project proposal:", error);
+      res.status(500).json({ error: "حدث خطأ في إنشاء مقترح المشروع" });
+    }
+  });
+
+  // Get proposals by conversation ID
+  app.get("/api/proposals/conversation/:conversationId", authMiddleware, async (req: AuthRequest, res) => {
+    try {
+      const { conversationId } = req.params;
+      const proposals = await storage.getProposalsByConversation(conversationId);
+      res.json(proposals);
+    } catch (error) {
+      console.error("Error fetching proposals:", error);
+      res.status(500).json({ error: "حدث خطأ في جلب مقترحات المشاريع" });
+    }
+  });
+
+  // Get all proposals for current user
+  app.get("/api/proposals", authMiddleware, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.userId;
+      const userType = req.userType;
+
+      let proposals;
+      if (userType === "product_owner") {
+        proposals = await storage.getProposalsByProductOwner(userId!);
+      } else {
+        // For freelancers, get proposals by their groups
+        const groups = await storage.getGroupsByLeader(userId!);
+        proposals = [];
+        for (const group of groups) {
+          const groupProposals = await storage.getProposalsByGroup(group.id);
+          proposals.push(...groupProposals);
+        }
+      }
+
+      res.json(proposals);
+    } catch (error) {
+      console.error("Error fetching user proposals:", error);
+      res.status(500).json({ error: "حدث خطأ في جلب المقترحات" });
+    }
+  });
+
+  // Accept a project proposal (product owner only)
+  app.post("/api/proposals/:id/accept", authMiddleware, async (req: AuthRequest, res) => {
+    try {
+      const { id } = req.params;
+      const userId = req.userId;
+      const userType = req.userType;
+
+      if (userType !== "product_owner") {
+        return res.status(403).json({ error: "فقط أصحاب المنتجات يمكنهم قبول المقترحات" });
+      }
+
+      const proposal = await storage.getProjectProposal(id);
+      if (!proposal) {
+        return res.status(404).json({ error: "المقترح غير موجود" });
+      }
+
+      // Verify the product owner owns this proposal
+      if (proposal.productOwnerId !== userId) {
+        return res.status(403).json({ error: "ليس لديك صلاحية لقبول هذا المقترح" });
+      }
+
+      // Verify the conversation belongs to this product owner
+      const conversation = await storage.getConversation(proposal.conversationId);
+      if (!conversation || conversation.productOwnerId !== userId) {
+        return res.status(403).json({ error: "هذا المقترح غير مرتبط بحسابك" });
+      }
+
+      if (proposal.status !== "pending") {
+        return res.status(400).json({ error: "هذا المقترح تم الرد عليه بالفعل" });
+      }
+
+      // Get or create wallets
+      const ownerWallet = await storage.getOrCreateProductOwnerWallet(userId!);
+      const groupWallet = await storage.getOrCreateGroupWallet(proposal.groupId);
+
+      // Check if owner has enough balance
+      const price = parseFloat(proposal.price);
+      const ownerBalance = parseFloat(ownerWallet.balance);
+
+      if (ownerBalance < price) {
+        return res.status(400).json({ error: "رصيدك غير كافي لقبول هذا المقترح" });
+      }
+
+      // Calculate distribution
+      const leaderEarnings = price * 0.03; // 3%
+      const platformFee = price * 0.10; // 10%
+      const memberEarnings = price * 0.87; // 87%
+
+      // Transfer money from owner wallet to group wallet (escrow)
+      await storage.updateProductOwnerWallet(ownerWallet.id, {
+        balance: (ownerBalance - price).toFixed(2),
+        totalSpent: (parseFloat(ownerWallet.totalSpent) + price).toFixed(2),
+      });
+
+      const groupBalance = parseFloat(groupWallet.escrowBalance);
+      await storage.updateGroupWallet(groupWallet.id, {
+        escrowBalance: (groupBalance + price).toFixed(2),
+      });
+
+      // Update proposal status
+      const acceptedProposal = await storage.updateProjectProposal(id, {
+        status: "accepted",
+        acceptedAt: new Date(),
+        leaderEarnings: leaderEarnings.toFixed(2),
+        platformFee: platformFee.toFixed(2),
+        memberEarnings: memberEarnings.toFixed(2),
+      });
+
+      // Send notification in conversation
+      await storage.sendMessage(
+        proposal.conversationId,
+        userId!,
+        "product_owner",
+        `تم قبول مقترح المشروع: ${proposal.title}! تم تحويل ${price} ريال إلى محفظة الجروب.`
+      );
+
+      res.json({
+        proposal: acceptedProposal,
+        message: "تم قبول المقترح وتحويل المبلغ إلى محفظة الجروب",
+      });
+    } catch (error) {
+      console.error("Error accepting proposal:", error);
+      res.status(500).json({ error: "حدث خطأ في قبول المقترح" });
+    }
+  });
+
+  // Reject a project proposal (product owner only)
+  app.post("/api/proposals/:id/reject", authMiddleware, async (req: AuthRequest, res) => {
+    try {
+      const { id } = req.params;
+      const { reason } = req.body;
+      const userId = req.userId;
+      const userType = req.userType;
+
+      if (userType !== "product_owner") {
+        return res.status(403).json({ error: "فقط أصحاب المنتجات يمكنهم رفض المقترحات" });
+      }
+
+      const proposal = await storage.getProjectProposal(id);
+      if (!proposal) {
+        return res.status(404).json({ error: "المقترح غير موجود" });
+      }
+
+      if (proposal.productOwnerId !== userId) {
+        return res.status(403).json({ error: "ليس لديك صلاحية لرفض هذا المقترح" });
+      }
+
+      if (proposal.status !== "pending") {
+        return res.status(400).json({ error: "هذا المقترح تم الرد عليه بالفعل" });
+      }
+
+      const rejectedProposal = await storage.rejectProjectProposal(id, reason || "تم الرفض بدون سبب");
+
+      // Send notification in conversation
+      await storage.sendMessage(
+        proposal.conversationId,
+        userId!,
+        "product_owner",
+        `تم رفض مقترح المشروع: ${proposal.title}. السبب: ${reason || "غير محدد"}`
+      );
+
+      res.json({
+        proposal: rejectedProposal,
+        message: "تم رفض المقترح",
+      });
+    } catch (error) {
+      console.error("Error rejecting proposal:", error);
+      res.status(500).json({ error: "حدث خطأ في رفض المقترح" });
+    }
+  });
+
+  // ============================================
   // HEALTH CHECK
   // ============================================
 

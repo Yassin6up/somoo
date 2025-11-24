@@ -44,6 +44,12 @@ import {
   type InsertPostComment,
   type PostReaction,
   type InsertPostReaction,
+  type ProductOwnerWallet,
+  type InsertProductOwnerWallet,
+  type GroupWallet,
+  type InsertGroupWallet,
+  type ProjectProposal,
+  type InsertProjectProposal,
   users,
   freelancers,
   productOwners,
@@ -67,6 +73,9 @@ import {
   postComments,
   postReactions,
   directMessages,
+  productOwnerWallets,
+  groupWallets,
+  projectProposals,
 } from "@shared/schema";
 import { isNotNull } from "drizzle-orm";
 import { db } from "./db";
@@ -280,6 +289,26 @@ export interface IStorage {
   ): Promise<PostReaction | undefined>;
   createReaction(reaction: InsertPostReaction): Promise<PostReaction>;
   deleteReaction(postId: string, userId: string): Promise<void>;
+
+  // Product Owner Wallet methods
+  getProductOwnerWallet(productOwnerId: string): Promise<ProductOwnerWallet | undefined>;
+  getOrCreateProductOwnerWallet(productOwnerId: string): Promise<ProductOwnerWallet>;
+  updateProductOwnerWallet(id: string, updates: Partial<ProductOwnerWallet>): Promise<ProductOwnerWallet | undefined>;
+
+  // Group Wallet methods
+  getGroupWallet(groupId: string): Promise<GroupWallet | undefined>;
+  getOrCreateGroupWallet(groupId: string): Promise<GroupWallet>;
+  updateGroupWallet(id: string, updates: Partial<GroupWallet>): Promise<GroupWallet | undefined>;
+
+  // Project Proposal methods
+  getProjectProposal(id: string): Promise<ProjectProposal | undefined>;
+  getProposalsByConversation(conversationId: string): Promise<ProjectProposal[]>;
+  getProposalsByGroup(groupId: string): Promise<ProjectProposal[]>;
+  getProposalsByProductOwner(productOwnerId: string): Promise<ProjectProposal[]>;
+  createProjectProposal(proposal: InsertProjectProposal): Promise<ProjectProposal>;
+  updateProjectProposal(id: string, updates: Partial<ProjectProposal>): Promise<ProjectProposal | undefined>;
+  acceptProjectProposal(id: string): Promise<ProjectProposal | undefined>;
+  rejectProjectProposal(id: string, reason: string): Promise<ProjectProposal | undefined>;
 }
 
 export class MemStorage implements IStorage {
@@ -1880,6 +1909,140 @@ export class DatabaseStorage implements IStorage {
     if (post && post.likesCount > 0) {
       await this.updatePostCounts(postId, post.likesCount - 1, undefined);
     }
+  }
+
+  // Product Owner Wallet methods
+  async getProductOwnerWallet(productOwnerId: string): Promise<ProductOwnerWallet | undefined> {
+    const [wallet] = await db
+      .select()
+      .from(productOwnerWallets)
+      .where(eq(productOwnerWallets.productOwnerId, productOwnerId));
+    return wallet || undefined;
+  }
+
+  async getOrCreateProductOwnerWallet(productOwnerId: string): Promise<ProductOwnerWallet> {
+    const existing = await this.getProductOwnerWallet(productOwnerId);
+    if (existing) return existing;
+
+    const [newWallet] = await db
+      .insert(productOwnerWallets)
+      .values({ productOwnerId })
+      .returning();
+    return newWallet;
+  }
+
+  async updateProductOwnerWallet(id: string, updates: Partial<ProductOwnerWallet>): Promise<ProductOwnerWallet | undefined> {
+    const [updated] = await db
+      .update(productOwnerWallets)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(productOwnerWallets.id, id))
+      .returning();
+    return updated || undefined;
+  }
+
+  // Group Wallet methods
+  async getGroupWallet(groupId: string): Promise<GroupWallet | undefined> {
+    const [wallet] = await db
+      .select()
+      .from(groupWallets)
+      .where(eq(groupWallets.groupId, groupId));
+    return wallet || undefined;
+  }
+
+  async getOrCreateGroupWallet(groupId: string): Promise<GroupWallet> {
+    const existing = await this.getGroupWallet(groupId);
+    if (existing) return existing;
+
+    const [newWallet] = await db
+      .insert(groupWallets)
+      .values({ groupId })
+      .returning();
+    return newWallet;
+  }
+
+  async updateGroupWallet(id: string, updates: Partial<GroupWallet>): Promise<GroupWallet | undefined> {
+    const [updated] = await db
+      .update(groupWallets)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(groupWallets.id, id))
+      .returning();
+    return updated || undefined;
+  }
+
+  // Project Proposal methods
+  async getProjectProposal(id: string): Promise<ProjectProposal | undefined> {
+    const [proposal] = await db
+      .select()
+      .from(projectProposals)
+      .where(eq(projectProposals.id, id));
+    return proposal || undefined;
+  }
+
+  async getProposalsByConversation(conversationId: string): Promise<ProjectProposal[]> {
+    return await db
+      .select()
+      .from(projectProposals)
+      .where(eq(projectProposals.conversationId, conversationId))
+      .orderBy(desc(projectProposals.createdAt));
+  }
+
+  async getProposalsByGroup(groupId: string): Promise<ProjectProposal[]> {
+    return await db
+      .select()
+      .from(projectProposals)
+      .where(eq(projectProposals.groupId, groupId))
+      .orderBy(desc(projectProposals.createdAt));
+  }
+
+  async getProposalsByProductOwner(productOwnerId: string): Promise<ProjectProposal[]> {
+    return await db
+      .select()
+      .from(projectProposals)
+      .where(eq(projectProposals.productOwnerId, productOwnerId))
+      .orderBy(desc(projectProposals.createdAt));
+  }
+
+  async createProjectProposal(proposal: InsertProjectProposal): Promise<ProjectProposal> {
+    const [newProposal] = await db
+      .insert(projectProposals)
+      .values(proposal)
+      .returning();
+    return newProposal;
+  }
+
+  async updateProjectProposal(id: string, updates: Partial<ProjectProposal>): Promise<ProjectProposal | undefined> {
+    const [updated] = await db
+      .update(projectProposals)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(projectProposals.id, id))
+      .returning();
+    return updated || undefined;
+  }
+
+  async acceptProjectProposal(id: string): Promise<ProjectProposal | undefined> {
+    const [updated] = await db
+      .update(projectProposals)
+      .set({
+        status: "accepted",
+        acceptedAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(projectProposals.id, id))
+      .returning();
+    return updated || undefined;
+  }
+
+  async rejectProjectProposal(id: string, reason: string): Promise<ProjectProposal | undefined> {
+    const [updated] = await db
+      .update(projectProposals)
+      .set({
+        status: "rejected",
+        rejectionReason: reason,
+        updatedAt: new Date(),
+      })
+      .where(eq(projectProposals.id, id))
+      .returning();
+    return updated || undefined;
   }
 }
 
