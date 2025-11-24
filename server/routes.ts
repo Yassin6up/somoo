@@ -921,9 +921,146 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Accept campaign (group leaders only)
+  app.post("/api/campaigns/:id/accept", authMiddleware, requireRole(["freelancer"]), async (req: AuthRequest, res) => {
+    try {
+      const { id } = req.params;
+      const { groupId } = req.body;
+      const userId = req.user?.userId;
+
+      if (!userId || !groupId) {
+        return res.status(400).json({ error: "معرف المستخدم ومعرف المجموعة مطلوبان" });
+      }
+
+      // Verify campaign exists
+      const campaign = await storage.getCampaign(id);
+      if (!campaign) {
+        return res.status(404).json({ error: "الحملة غير موجودة" });
+      }
+
+      // Verify user is group leader
+      const group = await storage.getGroup(groupId);
+      if (!group) {
+        return res.status(404).json({ error: "المجموعة غير موجودة" });
+      }
+
+      if (group.leaderId !== userId) {
+        return res.status(403).json({ error: "فقط قائد المجموعة يمكنه قبول الحملات" });
+      }
+
+      // Create a notification for the product owner that the campaign was accepted
+      await storage.createNotification({
+        userId: campaign.productOwnerId,
+        userType: "product_owner",
+        title: "تم قبول الحملة",
+        message: `قبل الفريق "${group.name}" حملتك "${campaign.title}"`,
+        type: "campaign_accepted",
+      });
+
+      res.json({ 
+        message: "تم قبول الحملة بنجاح",
+        campaign,
+        group
+      });
+    } catch (error) {
+      console.error("Error accepting campaign:", error);
+      res.status(500).json({ error: "حدث خطأ أثناء قبول الحملة" });
+    }
+  });
+
   // ============================================
   // TASK ROUTES
   // ============================================
+
+  // Create task from campaign (group leaders)
+  app.post("/api/tasks", authMiddleware, requireRole(["freelancer"]), async (req: AuthRequest, res) => {
+    try {
+      const { 
+        title, 
+        description, 
+        serviceType, 
+        reward, 
+        campaignId, 
+        groupId,
+        postToGroup
+      } = req.body;
+      const userId = req.user?.userId;
+
+      // Validate required fields
+      if (!title || !description || !serviceType || !reward || !groupId) {
+        return res.status(400).json({ error: "جميع الحقول المطلوبة يجب ملؤها" });
+      }
+
+      // Verify user is group leader
+      const group = await storage.getGroup(groupId);
+      if (!group) {
+        return res.status(404).json({ error: "المجموعة غير موجودة" });
+      }
+
+      if (group.leaderId !== userId) {
+        return res.status(403).json({ error: "فقط قائد المجموعة يمكنه إنشاء مهام" });
+      }
+
+      // Get group members
+      const members = await storage.getGroupMembers(groupId);
+      if (members.length === 0) {
+        return res.status(400).json({ error: "المجموعة لا تحتوي على أعضاء" });
+      }
+
+      const platformFee = (parseFloat(reward) * 0.1).toFixed(2);
+      const netReward = (parseFloat(reward) - parseFloat(platformFee)).toFixed(2);
+
+      // Create a post in the group community first
+      const newPost = await storage.createPost({
+        groupId,
+        authorId: userId,
+        content: `📋 **مهمة جديدة: ${title}**\n\n${description}\n\n💰 المكافأة: $${reward}`,
+        imageUrl: null,
+      });
+
+      // Create tasks for each group member
+      let createdTaskIds: string[] = [];
+      for (const member of members) {
+        // Skip the leader themself
+        if (member.freelancerId === userId) continue;
+
+        const createdTask = await storage.createTask({
+          campaignId: campaignId || null,
+          groupId,
+          freelancerId: member.freelancerId,
+          title,
+          description,
+          taskUrl: `/groups/${groupId}/community?postId=${newPost.id}`,
+          serviceType,
+          reward: String(reward),
+          platformFee: platformFee,
+          netReward: netReward,
+          status: "assigned",
+        });
+
+        createdTaskIds.push(createdTask.id);
+
+        // Notify the member about the new task
+        await storage.createNotification({
+          userId: member.freelancerId,
+          userType: "freelancer",
+          title: "مهمة جديدة",
+          message: `تم إنشاء مهمة جديدة لك: ${title}`,
+          type: "task_assigned",
+        });
+      }
+
+      res.status(201).json({
+        message: "تم إنشاء المهمة ونشرها في المجموعة بنجاح",
+        post: newPost,
+        taskIds: createdTaskIds,
+        tasksCreated: createdTaskIds.length
+      });
+    } catch (error) {
+      console.error("Error creating task:", error);
+      res.status(500).json({ error: "حدث خطأ أثناء إنشاء المهمة" });
+    }
+  });
 
   // Get available tasks (freelancers can browse)
   app.get("/api/tasks/available", authMiddleware, requireRole(["freelancer"]), async (req: AuthRequest, res) => {
