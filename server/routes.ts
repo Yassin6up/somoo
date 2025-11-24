@@ -3856,6 +3856,84 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Approve task completion and move money from pending to available balance
+  app.post("/api/comments/:commentId/approve-task", authMiddleware, async (req: AuthRequest, res) => {
+    try {
+      const { commentId } = req.params;
+      const userId = req.user!.userId;
+
+      // Get comment from database
+      const [comment] = await db.select().from(postComments).where(eq(postComments.id, commentId));
+      if (!comment) {
+        return res.status(404).json({ error: "التعليق غير موجود" });
+      }
+
+      // Verify comment is a task completion
+      if (!comment.isTaskCompleted || !comment.taskCompletionReward) {
+        return res.status(400).json({ error: "هذا التعليق لا يحتوي على مهمة مكتملة" });
+      }
+
+      // Get the post
+      const post = await storage.getPost(comment.postId);
+      if (!post) {
+        return res.status(404).json({ error: "المنشور غير موجود" });
+      }
+
+      // Get the group
+      const group = await storage.getGroup(post.groupId);
+      if (!group) {
+        return res.status(404).json({ error: "المجموعة غير موجودة" });
+      }
+
+      // Only group leader can approve
+      if (group.leaderId !== userId) {
+        return res.status(403).json({ error: "فقط قائد المجموعة يمكنه الموافقة على المهام" });
+      }
+
+      // Update comment to mark as approved
+      await db.update(postComments).set({
+        isTaskApproved: true,
+      }).where(eq(postComments.id, commentId));
+
+      // Move money from pending balance to available balance
+      try {
+        const wallet = await storage.getWalletByFreelancer(comment.authorId);
+        if (wallet) {
+          const rewardAmount = parseFloat(comment.taskCompletionReward) || 0;
+          const newPendingBalance = (parseFloat(wallet.pendingBalance?.toString() || "0")) - rewardAmount;
+          const newAvailableBalance = (parseFloat(wallet.balance?.toString() || "0")) + rewardAmount;
+
+          await storage.updateWallet(wallet.id, {
+            pendingBalance: Math.max(0, newPendingBalance).toString() as any,
+            balance: newAvailableBalance.toString() as any,
+          });
+
+          console.log(`[TASK APPROVAL] Moved ${rewardAmount} from pending to available for user ${comment.authorId}`);
+        }
+      } catch (err) {
+        console.error("Error updating wallet on task approval:", err);
+      }
+
+      // Notify freelancer that their task was approved
+      try {
+        await storage.createNotification({
+          userId: comment.authorId,
+          userType: "freelancer",
+          title: "تمت الموافقة على مهمتك",
+          message: `تمت الموافقة على مهمتك ورصيدك ${comment.taskCompletionReward} ر.س متاح الآن في محفظتك`,
+          type: "task_approved",
+        });
+      } catch (err) {
+        console.error("Error creating approval notification:", err);
+      }
+
+      res.json({ message: "تمت الموافقة على المهمة وتحويل الرصيد بنجاح" });
+    } catch (error) {
+      console.error("Error approving task:", error);
+      res.status(500).json({ error: "حدث خطأ أثناء الموافقة على المهمة" });
+    }
+  });
+
   // Get comments for a post
   app.get("/api/posts/:postId/comments", authMiddleware, async (req: AuthRequest, res) => {
     try {
@@ -3914,40 +3992,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let isTaskCompleted = false;
       let taskCompletionReward = null;
 
-      // If post has task reward and comment has image, mark task as complete and add to pending balance
-      if (hasTaskReward && imageUrl) {
-        isTaskCompleted = true;
-        taskCompletionReward = post.taskReward;
+      // If post has task reward, prevent duplicate task submissions from same user
+      if (hasTaskReward) {
+        const existingTaskComment = await storage.getCommentsByPost(postId);
+        const userAlreadyCompletedTask = existingTaskComment.some(
+          (comment) => comment.authorId === userId && comment.isTaskCompleted
+        );
 
-        // Add reward to pending balance
-        try {
-          const wallet = await storage.getWalletByFreelancer(userId);
-          if (wallet) {
-            const rewardAmount = parseFloat(post.taskReward) || 0;
-            const newPendingBalance = (parseFloat(wallet.pendingBalance?.toString() || "0")) + rewardAmount;
-            await storage.updateWallet(wallet.id, {
-              pendingBalance: newPendingBalance.toString() as any,
-            });
-            console.log(`[TASK COMPLETION] Added ${rewardAmount} to pending balance for user ${userId}`);
-          }
-        } catch (err) {
-          console.error("Error updating wallet pending balance:", err);
+        if (userAlreadyCompletedTask) {
+          return res.status(400).json({ error: "لقد أكملت هذه المهمة مسبقاً. يمكنك فقط إكمال المهمة مرة واحدة" });
         }
 
-        // Notify leader about task completion
-        try {
-          const group = await storage.getGroup(post.groupId);
-          if (group) {
-            await storage.createNotification({
-              userId: group.leaderId,
-              userType: "freelancer",
-              title: "تم إكمال مهمة التفاعل",
-              message: `أكمل عضو المهمة "${post.taskTitle}" برمكافأة ${post.taskReward} وهي الآن قيد المراجعة`,
-              type: "task_submitted",
-            });
+        // If comment has image, mark task as complete and add to pending balance
+        if (imageUrl) {
+          isTaskCompleted = true;
+          taskCompletionReward = post.taskReward;
+
+          // Add reward to pending balance
+          try {
+            const wallet = await storage.getWalletByFreelancer(userId);
+            if (wallet) {
+              const rewardAmount = parseFloat(post.taskReward) || 0;
+              const newPendingBalance = (parseFloat(wallet.pendingBalance?.toString() || "0")) + rewardAmount;
+              await storage.updateWallet(wallet.id, {
+                pendingBalance: newPendingBalance.toString() as any,
+              });
+              console.log(`[TASK COMPLETION] Added ${rewardAmount} to pending balance for user ${userId}`);
+            }
+          } catch (err) {
+            console.error("Error updating wallet pending balance:", err);
           }
-        } catch (err) {
-          console.error("Error creating notification:", err);
+
+          // Notify leader about task completion
+          try {
+            const group = await storage.getGroup(post.groupId);
+            if (group) {
+              await storage.createNotification({
+                userId: group.leaderId,
+                userType: "freelancer",
+                title: "تم إكمال مهمة التفاعل",
+                message: `أكمل عضو المهمة "${post.taskTitle}" برمكافأة ${post.taskReward} وهي الآن قيد المراجعة`,
+                type: "task_submitted",
+              });
+            }
+          } catch (err) {
+            console.error("Error creating notification:", err);
+          }
         }
       }
 

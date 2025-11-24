@@ -322,6 +322,7 @@ export const postComments = pgTable("post_comments", {
   imageUrl: text("image_url"), // صورة التعليق (اختيارية)
   isTaskCompleted: boolean("is_task_completed").default(false).notNull(), // Whether this comment marks the task as done
   taskCompletionReward: text("task_completion_reward"), // Amount earned from task completion
+  isTaskApproved: boolean("is_task_approved").default(false).notNull(), // Whether leader approved the task (move money to available)
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
