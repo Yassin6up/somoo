@@ -169,6 +169,24 @@ export default function Groups() {
     },
   });
 
+  // Start conversation with group leader mutation
+  const startConversationMutation = useMutation({
+    mutationFn: async (groupId: string) => {
+      const response = await apiRequest(`/api/conversations/with-leader/${groupId}`, "POST");
+      return response.json();
+    },
+    onSuccess: (data) => {
+      navigate(`/chat/${data.id}`);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "خطأ",
+        description: error.message || "حدث خطأ أثناء بدء المحادثة",
+        variant: "destructive",
+      });
+    },
+  });
+
   // Render stars based on rating
   const renderStars = (rating: number) => {
     const stars = [];
@@ -648,12 +666,13 @@ export default function Groups() {
                               className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-2xl py-6 font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                navigate(`/groups/${group.id}/chat`);
+                                startConversationMutation.mutate(group.id);
                               }}
+                              disabled={startConversationMutation.isPending}
                               data-testid={`button-chat-leader-${group.id}`}
                             >
                               <MessageCircle className="ml-3 h-5 w-5" />
-                              طلب خدمة
+                              {startConversationMutation.isPending ? "جاري الفتح..." : "طلب خدمة"}
                             </Button>
                           </div>
                         ) : (
