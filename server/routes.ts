@@ -2921,8 +2921,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const { amount, paymentMethod, accountNumber } = req.body;
+      const withdrawAmount = parseFloat(amount);
 
-      if (!amount || amount <= 0) {
+      if (!amount || withdrawAmount <= 0) {
         return res.status(400).json({ error: "المبلغ غير صحيح" });
       }
 
@@ -2930,13 +2931,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "طريقة الدفع ورقم الحساب مطلوبان" });
       }
 
-      // Get freelancer wallet balance
-      const freelancer = await storage.getFreelancer(req.user.userId);
-      if (!freelancer) {
-        return res.status(404).json({ error: "المستقل غير موجود" });
+      // Get wallet balance
+      const wallet = await storage.getWalletByFreelancer(req.user.userId);
+      if (!wallet) {
+        return res.status(404).json({ error: "المحفظة غير موجودة" });
       }
 
-      if (parseFloat(freelancer.walletBalance) < amount) {
+      const availableBalance = parseFloat(wallet.balance?.toString() || "0");
+      if (availableBalance < withdrawAmount) {
         return res.status(400).json({ error: "الرصيد غير كافٍ" });
       }
 
@@ -2946,6 +2948,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         paymentMethod,
         accountNumber,
         status: "pending",
+      });
+
+      // Deduct from available balance
+      await storage.updateWallet(wallet.id, {
+        balance: (availableBalance - withdrawAmount).toString() as any,
       });
 
       // Create notification for freelancer
@@ -2976,6 +2983,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching withdrawals:", error);
       res.status(500).json({ error: "حدث خطأ أثناء جلب طلبات السحب" });
+    }
+  });
+
+  // Cancel withdrawal request
+  app.post("/api/withdrawals/:withdrawalId/cancel", authMiddleware, requireRole(["freelancer"]), async (req: AuthRequest, res) => {
+    try {
+      const { withdrawalId } = req.params;
+      const userId = req.user!.userId;
+
+      const { withdrawals } = await import("@shared/schema");
+      const [withdrawal] = await db.select().from(withdrawals).where(eq(withdrawals.id, withdrawalId));
+
+      if (!withdrawal) {
+        return res.status(404).json({ error: "طلب السحب غير موجود" });
+      }
+
+      if (withdrawal.freelancerId !== userId) {
+        return res.status(403).json({ error: "غير مصرح" });
+      }
+
+      if (withdrawal.status !== "pending") {
+        return res.status(400).json({ error: "لا يمكن إلغاء هذا الطلب" });
+      }
+
+      // Refund the amount back to wallet
+      const wallet = await storage.getWalletByFreelancer(userId);
+      if (wallet) {
+        const withdrawAmount = parseFloat(withdrawal.amount);
+        const newBalance = (parseFloat(wallet.balance?.toString() || "0")) + withdrawAmount;
+        await storage.updateWallet(wallet.id, {
+          balance: newBalance.toString() as any,
+        });
+      }
+
+      // Update withdrawal status
+      await db.update(withdrawals).set({
+        status: "cancelled",
+      }).where(eq(withdrawals.id, withdrawalId));
+
+      res.json({ message: "تم إلغاء طلب السحب" });
+    } catch (error) {
+      console.error("Error cancelling withdrawal:", error);
+      res.status(500).json({ error: "حدث خطأ أثناء إلغاء طلب السحب" });
     }
   });
 
