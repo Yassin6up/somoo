@@ -27,7 +27,11 @@ import {
     Copy,
     LayoutDashboard,
     Activity,
-    Search
+    Search,
+    Briefcase,
+    MessageCircle,
+    DollarSign,
+    Clock
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { formatDistanceToNow } from "date-fns";
@@ -91,6 +95,30 @@ export default function GroupLeaderDashboard() {
         enabled: !!groupId,
         queryFn: async () => {
             const res = await fetch(`/api/groups/${groupId}/requests`, {
+                headers: { 'Authorization': `Bearer ${localStorage.getItem("token")}` }
+            });
+            if (!res.ok) return [];
+            return res.json();
+        }
+    });
+
+    // Fetch orders for the group leader
+    const { data: orders = [], isLoading: ordersLoading } = useQuery({
+        queryKey: [`/api/orders`],
+        queryFn: async () => {
+            const res = await fetch(`/api/orders`, {
+                headers: { 'Authorization': `Bearer ${localStorage.getItem("token")}` }
+            });
+            if (!res.ok) return [];
+            return res.json();
+        }
+    });
+
+    // Fetch conversations
+    const { data: conversations = [], isLoading: conversationsLoading } = useQuery({
+        queryKey: [`/api/conversations`],
+        queryFn: async () => {
+            const res = await fetch(`/api/conversations`, {
                 headers: { 'Authorization': `Bearer ${localStorage.getItem("token")}` }
             });
             if (!res.ok) return [];
@@ -261,6 +289,32 @@ export default function GroupLeaderDashboard() {
                                     {requests.length > 0 && (
                                         <Badge variant="secondary" className="mr-auto bg-red-100 text-red-700 animate-pulse">
                                             {requests.length}
+                                        </Badge>
+                                    )}
+                                </Button>
+                                <Button
+                                    variant={activeTab === "orders" ? "default" : "ghost"}
+                                    className={`w-full justify-start gap-3 ${activeTab === "orders" ? "bg-blue-600 hover:bg-blue-700" : "hover:bg-blue-50"}`}
+                                    onClick={() => setActiveTab("orders")}
+                                >
+                                    <Briefcase className="w-4 h-4" />
+                                    الطلبات
+                                    {orders.length > 0 && (
+                                        <Badge variant="secondary" className="mr-auto bg-orange-100 text-orange-700">
+                                            {orders.length}
+                                        </Badge>
+                                    )}
+                                </Button>
+                                <Button
+                                    variant={activeTab === "conversations" ? "default" : "ghost"}
+                                    className={`w-full justify-start gap-3 ${activeTab === "conversations" ? "bg-blue-600 hover:bg-blue-700" : "hover:bg-blue-50"}`}
+                                    onClick={() => setActiveTab("conversations")}
+                                >
+                                    <MessageCircle className="w-4 h-4" />
+                                    المحادثات
+                                    {conversations.length > 0 && (
+                                        <Badge variant="secondary" className="mr-auto bg-green-100 text-green-700">
+                                            {conversations.length}
                                         </Badge>
                                     )}
                                 </Button>
@@ -511,6 +565,137 @@ export default function GroupLeaderDashboard() {
                                                                 >
                                                                     <X className="w-4 h-4" />
                                                                     رفض
+                                                                </Button>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </CardContent>
+                                    </Card>
+                                )}
+
+                                {activeTab === "orders" && (
+                                    <Card>
+                                        <CardHeader>
+                                            <CardTitle>الطلبات المستقبلة</CardTitle>
+                                            <CardDescription>
+                                                {orders.length === 0
+                                                    ? "لا توجد طلبات من أصحاب المشاريع حالياً"
+                                                    : `لديك ${orders.length} طلب من أصحاب المشاريع`}
+                                            </CardDescription>
+                                        </CardHeader>
+                                        <CardContent>
+                                            {orders.length === 0 ? (
+                                                <div className="text-center py-12">
+                                                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                                        <Briefcase className="w-8 h-8 text-gray-400" />
+                                                    </div>
+                                                    <p className="text-gray-500">لا توجد طلبات جديدة حالياً</p>
+                                                </div>
+                                            ) : (
+                                                <div className="space-y-4">
+                                                    {orders.map((order: any) => (
+                                                        <div key={order.id} className="p-4 border rounded-xl hover:shadow-md transition-shadow">
+                                                            <div className="flex justify-between items-start mb-3">
+                                                                <div>
+                                                                    <h4 className="font-semibold text-gray-900">
+                                                                        طلب خدمة: {order.serviceType}
+                                                                    </h4>
+                                                                    <p className="text-sm text-gray-500">
+                                                                        من {order.productOwner?.fullName || "صاحب مشروع"}
+                                                                    </p>
+                                                                </div>
+                                                                <Badge className={`
+                                                                    ${order.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : ''}
+                                                                    ${order.status === 'payment_confirmed' ? 'bg-green-100 text-green-800' : ''}
+                                                                    ${order.status === 'in_progress' ? 'bg-blue-100 text-blue-800' : ''}
+                                                                    ${order.status === 'completed' ? 'bg-gray-100 text-gray-800' : ''}
+                                                                `}>
+                                                                    {order.status === 'pending' && 'في انتظار الدفع'}
+                                                                    {order.status === 'payment_confirmed' && 'تم تأكيد الدفع'}
+                                                                    {order.status === 'in_progress' && 'قيد التنفيذ'}
+                                                                    {order.status === 'completed' && 'مكتمل'}
+                                                                </Badge>
+                                                            </div>
+                                                            <div className="grid grid-cols-3 gap-3 mb-3">
+                                                                <div className="bg-blue-50 p-3 rounded-lg">
+                                                                    <p className="text-xs text-gray-600">الكمية المطلوبة</p>
+                                                                    <p className="font-semibold text-lg text-blue-600">{order.quantity}</p>
+                                                                </div>
+                                                                <div className="bg-green-50 p-3 rounded-lg">
+                                                                    <p className="text-xs text-gray-600">إجمالي المبلغ</p>
+                                                                    <p className="font-semibold text-lg text-green-600">${parseFloat(order.totalAmount).toFixed(2)}</p>
+                                                                </div>
+                                                                <div className="bg-purple-50 p-3 rounded-lg">
+                                                                    <p className="text-xs text-gray-600">عمولتك</p>
+                                                                    <p className="font-semibold text-lg text-purple-600">${parseFloat(order.leaderCommission).toFixed(2)}</p>
+                                                                </div>
+                                                            </div>
+                                                            <div className="flex gap-2">
+                                                                <Button size="sm" variant="outline" className="flex-1">
+                                                                    عرض التفاصيل
+                                                                </Button>
+                                                                {order.status === 'payment_confirmed' && (
+                                                                    <Button size="sm" className="flex-1 gap-2">
+                                                                        <Check className="w-4 h-4" />
+                                                                        تم الاستقبال
+                                                                    </Button>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </CardContent>
+                                    </Card>
+                                )}
+
+                                {activeTab === "conversations" && (
+                                    <Card>
+                                        <CardHeader>
+                                            <CardTitle>المحادثات</CardTitle>
+                                            <CardDescription>
+                                                {conversations.length === 0
+                                                    ? "لا توجد محادثات حالياً"
+                                                    : `لديك ${conversations.length} محادثة نشطة`}
+                                            </CardDescription>
+                                        </CardHeader>
+                                        <CardContent>
+                                            {conversations.length === 0 ? (
+                                                <div className="text-center py-12">
+                                                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                                        <MessageCircle className="w-8 h-8 text-gray-400" />
+                                                    </div>
+                                                    <p className="text-gray-500">لا توجد محادثات حالياً</p>
+                                                </div>
+                                            ) : (
+                                                <div className="space-y-3">
+                                                    {conversations.map((conversation: any) => (
+                                                        <div key={conversation.id} className="p-4 border rounded-xl hover:bg-gray-50 cursor-pointer transition-colors">
+                                                            <div className="flex items-center gap-4">
+                                                                <Avatar>
+                                                                    <AvatarImage src={conversation.productOwner?.profileImage} />
+                                                                    <AvatarFallback>
+                                                                        {conversation.productOwner?.fullName?.substring(0, 2)}
+                                                                    </AvatarFallback>
+                                                                </Avatar>
+                                                                <div className="flex-1">
+                                                                    <h4 className="font-semibold text-gray-900">
+                                                                        {conversation.productOwner?.fullName}
+                                                                    </h4>
+                                                                    <p className="text-sm text-gray-500">
+                                                                        {conversation.group?.name}
+                                                                    </p>
+                                                                    {conversation.lastMessageAt && (
+                                                                        <p className="text-xs text-gray-400 mt-1">
+                                                                            آخر رسالة منذ{' '}
+                                                                            {formatDistanceToNow(new Date(conversation.lastMessageAt), { locale: ar })}
+                                                                        </p>
+                                                                    )}
+                                                                </div>
+                                                                <Button size="sm" variant="outline">
+                                                                    فتح المحادثة
                                                                 </Button>
                                                             </div>
                                                         </div>
