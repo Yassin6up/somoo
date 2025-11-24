@@ -119,18 +119,18 @@ export function Navbar() {
   const mobileNavItemClass = "block px-4 py-3 text-gray-700 hover:text-blue-600 font-medium transition-all duration-300 cursor-pointer";
 
   return (
-    <nav className={`fixed top-0 w-full z-50 transition-all duration-500 ${
+    <nav className={`fixed top-0 left-0 right-0 max-w-screen z-50 transition-all duration-500 overflow-hidden ${
       isScrolled 
         ? "bg-white/90 backdrop-blur-xl shadow-lg border-b border-gray-200/50" 
         : "bg-transparent"
     }`}>
       {/* Enhanced Background Elements */}
-      <div className="absolute inset-0 -z-10">
+      <div className="absolute inset-0 -z-10 overflow-hidden">
         <div className="absolute top-0 left-1/4 w-32 h-32 bg-blue-200/20 rounded-full blur-3xl"></div>
         <div className="absolute top-0 right-1/4 w-32 h-32 bg-purple-200/20 rounded-full blur-3xl"></div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-10">
+      <div className="max-w-screen mx-auto px-6 sm:px-8 lg:px-10">
         <div className="flex justify-between items-center h-20">
           {/* Logo & Main Navigation */}
           <div className="flex items-center gap-12">
