@@ -128,6 +128,19 @@ export default function GroupLeaderDashboard() {
         }
     });
 
+    // Fetch accepted projects
+    const { data: acceptedProjects = [], isLoading: projectsLoading } = useQuery({
+        queryKey: [`/api/groups/${groupId}/accepted-projects`],
+        enabled: !!groupId,
+        queryFn: async () => {
+            const res = await fetch(`/api/groups/${groupId}/accepted-projects`, {
+                headers: { 'Authorization': `Bearer ${localStorage.getItem("token")}` }
+            });
+            if (!res.ok) return [];
+            return res.json();
+        }
+    });
+
     // Update group mutation
     const updateGroupMutation = useMutation({
         mutationFn: async (data: any) => {
@@ -325,6 +338,20 @@ export default function GroupLeaderDashboard() {
                                     {conversations.length > 0 && (
                                         <Badge variant="secondary" className="mr-auto bg-green-100 text-green-700">
                                             {conversations.length}
+                                        </Badge>
+                                    )}
+                                </Button>
+                                <Button
+                                    variant={activeTab === "projects" ? "default" : "ghost"}
+                                    className={`w-full justify-start gap-3 ${activeTab === "projects" ? "bg-blue-600 hover:bg-blue-700" : "hover:bg-blue-50"}`}
+                                    onClick={() => setActiveTab("projects")}
+                                    data-testid="button-projects-tab"
+                                >
+                                    <Briefcase className="w-4 h-4" />
+                                    المشاريع المقبولة
+                                    {acceptedProjects.length > 0 && (
+                                        <Badge variant="secondary" className="mr-auto bg-purple-100 text-purple-700">
+                                            {acceptedProjects.length}
                                         </Badge>
                                     )}
                                 </Button>
@@ -582,6 +609,86 @@ export default function GroupLeaderDashboard() {
                                                                 </Button>
                                                             </div>
                                                         </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </CardContent>
+                                    </Card>
+                                )}
+
+                                {activeTab === "projects" && (
+                                    <Card data-testid="card-projects">
+                                        <CardHeader>
+                                            <CardTitle>المشاريع المقبولة</CardTitle>
+                                            <CardDescription>
+                                                {acceptedProjects.length === 0
+                                                    ? "لا توجد مشاريع مقبولة حالياً"
+                                                    : `لديك ${acceptedProjects.length} مشروع مقبول`}
+                                            </CardDescription>
+                                        </CardHeader>
+                                        <CardContent>
+                                            {projectsLoading ? (
+                                                <div className="text-center py-8">
+                                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                                                </div>
+                                            ) : acceptedProjects.length === 0 ? (
+                                                <div className="text-center py-12">
+                                                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                                        <Briefcase className="w-8 h-8 text-gray-400" />
+                                                    </div>
+                                                    <p className="text-gray-500">لا توجد مشاريع مقبولة بعد</p>
+                                                </div>
+                                            ) : (
+                                                <div className="space-y-4">
+                                                    {acceptedProjects.map((project: any) => (
+                                                        <Card key={project.id} className="bg-white border shadow-sm" data-testid={`project-card-${project.id}`}>
+                                                            <CardContent className="p-4 space-y-3">
+                                                                <div className="flex items-start justify-between gap-4">
+                                                                    <div className="flex-1">
+                                                                        <h4 className="font-semibold text-gray-900">{project.title}</h4>
+                                                                        <p className="text-sm text-gray-600 line-clamp-2 mt-1">{project.description}</p>
+                                                                    </div>
+                                                                    <Badge
+                                                                        variant={
+                                                                            project.status === 'accepted' ? 'default' :
+                                                                            project.status === 'completed' ? 'secondary' :
+                                                                            'outline'
+                                                                        }
+                                                                        data-testid={`status-${project.id}`}
+                                                                    >
+                                                                        {project.status === 'accepted' && 'مقبول'}
+                                                                        {project.status === 'completed' && 'مكتمل'}
+                                                                        {project.status === 'paid_out' && 'تم الدفع'}
+                                                                    </Badge>
+                                                                </div>
+
+                                                                <div className="grid grid-cols-2 gap-4 pt-2 border-t">
+                                                                    <div>
+                                                                        <p className="text-xs text-gray-500">السعر</p>
+                                                                        <p className="font-semibold text-gray-900">{project.price} ريال</p>
+                                                                    </div>
+                                                                    <div>
+                                                                        <p className="text-xs text-gray-500">عدد المهام</p>
+                                                                        <p className="font-semibold text-gray-900">{project.tasksCount}</p>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div className="grid grid-cols-3 gap-2 text-xs pt-2">
+                                                                    <div className="bg-yellow-50 p-2 rounded text-center">
+                                                                        <p className="text-gray-500">حصتك (3%)</p>
+                                                                        <p className="font-semibold text-yellow-700">{project.leaderEarnings} ريال</p>
+                                                                    </div>
+                                                                    <div className="bg-purple-50 p-2 rounded text-center">
+                                                                        <p className="text-gray-500">للأعضاء (87%)</p>
+                                                                        <p className="font-semibold text-purple-700">{project.memberEarnings} ريال</p>
+                                                                    </div>
+                                                                    <div className="bg-blue-50 p-2 rounded text-center">
+                                                                        <p className="text-gray-500">منصة (10%)</p>
+                                                                        <p className="font-semibold text-blue-700">{project.platformFee} ريال</p>
+                                                                    </div>
+                                                                </div>
+                                                            </CardContent>
+                                                        </Card>
                                                     ))}
                                                 </div>
                                             )}
