@@ -7,11 +7,12 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { Navbar } from "@/components/Navbar";
-import { Briefcase, Search, Calendar, DollarSign, CheckCircle2, Users, MapPin } from "lucide-react";
+import { Briefcase, Search, Calendar, DollarSign, CheckCircle2, Users, MapPin, Zap } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import type { Project, Group } from "@shared/schema";
+import type { Project, Group, Campaign } from "@shared/schema";
 
 export default function Projects() {
   const [, navigate] = useLocation();
@@ -19,6 +20,7 @@ export default function Projects() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [selectedGroupId, setSelectedGroupId] = useState<string>("");
+  const [activeTab, setActiveTab] = useState("projects");
   const [user, setUser] = useState<any>(() => {
     const userData = localStorage.getItem("user");
     return userData ? JSON.parse(userData) : null;
@@ -27,6 +29,11 @@ export default function Projects() {
   // Fetch pending projects (for freelancers) or user's projects (for product owners)
   const { data: projects = [], isLoading: projectsLoading } = useQuery<Project[]>({
     queryKey: user?.userType === "product_owner" ? ["/api/projects/my"] : ["/api/projects/pending"],
+  });
+
+  // Fetch campaigns
+  const { data: campaigns = [], isLoading: campaignsLoading } = useQuery<Campaign[]>({
+    queryKey: ["/api/campaigns"],
   });
 
   // Fetch user's groups where they are leader
@@ -67,11 +74,16 @@ export default function Projects() {
     },
   });
 
-  // Filter projects
+  // Filter projects and campaigns
   const filteredProjects = projects.filter((project) =>
     project.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     project.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
     project.targetCountry.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const filteredCampaigns = campaigns.filter((campaign) =>
+    campaign.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    campaign.description.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleAcceptProject = () => {
@@ -125,42 +137,86 @@ export default function Projects() {
           </div>
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">المشاريع المتاحة</CardTitle>
-              <Briefcase className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{projects.length}</div>
-            </CardContent>
-          </Card>
+        {/* Tabs */}
+        <Tabs defaultValue="projects" value={activeTab} onValueChange={setActiveTab} className="mb-8">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="projects" className="gap-2">
+              <Briefcase className="h-4 w-4" />
+              المشاريع ({projects.length})
+            </TabsTrigger>
+            <TabsTrigger value="campaigns" className="gap-2">
+              <Zap className="h-4 w-4" />
+              الحملات ({campaigns.length})
+            </TabsTrigger>
+          </TabsList>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">إجمالي الميزانيات</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {projects.reduce((sum, p) => sum + parseFloat(p.budget as string), 0).toLocaleString()} ر.س
-              </div>
-            </CardContent>
-          </Card>
+          {/* Stats for Projects Tab */}
+          {activeTab === "projects" && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6 mb-8">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">المشاريع المتاحة</CardTitle>
+                  <Briefcase className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{projects.length}</div>
+                </CardContent>
+              </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">جروباتي (كقائد)</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{leaderGroups.length}</div>
-            </CardContent>
-          </Card>
-        </div>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">إجمالي الميزانيات</CardTitle>
+                  <DollarSign className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    {projects.reduce((sum, p) => sum + parseFloat(p.budget as string), 0).toLocaleString()} ر.س
+                  </div>
+                </CardContent>
+              </Card>
 
-        {/* Projects Grid */}
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">جروباتي (كقائد)</CardTitle>
+                  <Users className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{leaderGroups.length}</div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {/* Stats for Campaigns Tab */}
+          {activeTab === "campaigns" && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6 mb-8">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">إجمالي الحملات</CardTitle>
+                  <Zap className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{campaigns.length}</div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">إجمالي الميزانيات</CardTitle>
+                  <DollarSign className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    {campaigns.reduce((sum, c) => sum + parseFloat(c.budget as string), 0).toLocaleString()} ر.س
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+        </Tabs>
+
+        {/* Projects Tab Content */}
+        <TabsContent value="projects">
         {projectsLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[1, 2, 3, 4, 5, 6].map((i) => (
@@ -274,6 +330,106 @@ export default function Projects() {
             ))}
           </div>
         )}
+        </TabsContent>
+
+        {/* Campaigns Tab Content */}
+        <TabsContent value="campaigns">
+        {campaignsLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <Card key={i} className="animate-pulse">
+                <CardHeader>
+                  <div className="h-6 bg-muted rounded w-3/4 mb-2" />
+                  <div className="h-4 bg-muted rounded w-full" />
+                </CardHeader>
+                <CardContent>
+                  <div className="h-32 bg-muted rounded mb-4" />
+                  <div className="h-10 bg-muted rounded" />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : filteredCampaigns.length === 0 ? (
+          <Card>
+            <CardContent className="flex flex-col items-center justify-center py-12">
+              <Zap className="h-12 w-12 text-muted-foreground mb-4" />
+              <h3 className="text-lg font-semibold mb-2">لا توجد حملات</h3>
+              <p className="text-muted-foreground text-center mb-4">
+                {searchTerm ? "لم يتم العثور على حملات تطابق البحث" : "لا توجد حملات متاحة حالياً"}
+              </p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredCampaigns.map((campaign) => (
+              <Card
+                key={campaign.id}
+                className="hover-elevate transition-all"
+                data-testid={`card-campaign-${campaign.id}`}
+              >
+                <CardHeader>
+                  <div className="flex items-start justify-between mb-2">
+                    <CardTitle className="text-xl" style={{ fontFamily: "Tajawal, sans-serif" }}>
+                      {campaign.title}
+                    </CardTitle>
+                    <Badge className="bg-blue-100 text-blue-800">{campaign.status || "نشطة"}</Badge>
+                  </div>
+                  <CardDescription className="line-clamp-3 min-h-[3.5rem]">
+                    {campaign.description}
+                  </CardDescription>
+                </CardHeader>
+
+                <CardContent>
+                  <div className="space-y-3 mb-4">
+                    {/* Budget */}
+                    <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center text-muted-foreground">
+                        <DollarSign className="ml-2 h-4 w-4" />
+                        الميزانية
+                      </div>
+                      <span className="font-semibold text-green-600">
+                        {parseFloat(campaign.budget as string).toLocaleString()} ر.س
+                      </span>
+                    </div>
+
+                    {/* Testers Needed */}
+                    <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center text-muted-foreground">
+                        <Users className="ml-2 h-4 w-4" />
+                        المختبرين المطلوبين
+                      </div>
+                      <span className="font-semibold">{campaign.testersNeeded}</span>
+                    </div>
+
+                    {/* Testers Assigned */}
+                    <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center text-muted-foreground">
+                        <CheckCircle2 className="ml-2 h-4 w-4" />
+                        المختبرين المعينين
+                      </div>
+                      <span className="font-semibold">{campaign.testersAssigned}</span>
+                    </div>
+
+                    {/* Package */}
+                    <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center text-muted-foreground">
+                        <Briefcase className="ml-2 h-4 w-4" />
+                        الباقة
+                      </div>
+                      <span className="font-semibold">{campaign.package}</span>
+                    </div>
+                  </div>
+
+                  <Button className="w-full" disabled data-testid={`button-campaign-${campaign.id}`}>
+                    عرض التفاصيل
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+        </TabsContent>
+        </Tabs>
       </div>
 
       {/* Accept Project Dialog */}
