@@ -182,7 +182,11 @@ export default function Projects() {
               <Briefcase className="h-12 w-12 text-muted-foreground mb-4" />
               <h3 className="text-lg font-semibold mb-2">لا توجد مشاريع</h3>
               <p className="text-muted-foreground text-center mb-4">
-                {searchTerm ? "لم يتم العثور على مشاريع تطابق البحث" : "لا توجد مشاريع متاحة حالياً"}
+                {searchTerm 
+                  ? "لم يتم العثور على مشاريع تطابق البحث" 
+                  : user?.userType === "product_owner" 
+                  ? "لم تقم بإنشاء أي مشاريع بعد" 
+                  : "لا توجد مشاريع متاحة حالياً"}
               </p>
             </CardContent>
           </Card>
