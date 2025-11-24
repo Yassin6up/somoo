@@ -31,8 +31,10 @@ import {
     Briefcase,
     MessageCircle,
     DollarSign,
-    Clock
+    Clock,
+    FileText
 } from "lucide-react";
+import CampaignsTab from "./group-leader-dashboard/Campaigns";
 import { motion, AnimatePresence } from "framer-motion";
 import { formatDistanceToNow } from "date-fns";
 import { ar } from "date-fns/locale";
