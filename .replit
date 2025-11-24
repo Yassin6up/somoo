@@ -47,6 +47,10 @@ localPort = 40979
 externalPort = 4200
 
 [[ports]]
+localPort = 43773
+externalPort = 8080
+
+[[ports]]
 localPort = 45029
 externalPort = 6800
 
@@ -84,3 +88,10 @@ waitForPort = 5000
 
 [agent]
 integrations = ["javascript_object_storage:1.0.0", "javascript_mem_db:1.0.0", "javascript_openai_ai_integrations:1.0.0", "javascript_database:1.0.0"]
+
+[userenv]
+
+[userenv.shared]
+VITE_HMR_HOST = "localhost"
+VITE_HMR_PORT = "5173"
+VITE_HMR_PROTOCOL = "ws"
