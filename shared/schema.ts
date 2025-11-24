@@ -303,6 +303,10 @@ export const groupPosts = pgTable("group_posts", {
   imageUrl: text("image_url"), // صورة المنشور (اختيارية)
   likesCount: integer("likes_count").default(0).notNull(),
   commentsCount: integer("comments_count").default(0).notNull(),
+  taskId: varchar("task_id").references(() => tasks.id), // Link to task if post has a task
+  taskTitle: text("task_title"), // Title of the task
+  taskReward: text("task_reward"), // Reward amount
+  orderId: varchar("order_id").references(() => orders.id), // Link to order
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
