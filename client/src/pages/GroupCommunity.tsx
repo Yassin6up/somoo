@@ -1263,6 +1263,7 @@ function EnhancedPostCard({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/posts/${post.id}/comments`] });
+      queryClient.invalidateQueries({ queryKey: ["/api/wallet"] }); // Refetch wallet when task is completed
       setCommentInputs((prev: Record<string, string>) => ({ ...prev, [post.id]: "" }));
       setCommentImages((prev: Record<string, string>) => {
         const newState = { ...prev };
