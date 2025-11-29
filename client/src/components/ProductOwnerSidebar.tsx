@@ -9,6 +9,7 @@ import {
   ChevronDown,
   MessageCircle,
   Bell,
+  Wallet,
 } from "lucide-react";
 import { useLocation, Link } from "wouter";
 import {
@@ -39,12 +40,18 @@ const menuItems = [
       { title: "جميع المشاريع", url: "/product-owner-dashboard/projects" },
       { title: "قيد التنفيذ", url: "/product-owner-dashboard/projects/active" },
       { title: "المكتملة", url: "/product-owner-dashboard/projects/completed" },
+      { title: "إنشاء مشروع", url: "/projects/create" },
     ],
   },
   {
     title: "المدفوعات",
     url: "/product-owner-dashboard/payments",
     icon: CreditCard,
+  },
+  {
+    title: "المحفظة",
+    url: "/product-owner-dashboard/wallet",
+    icon: Wallet,
   },
   {
     title: "طلباتي",

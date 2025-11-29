@@ -1,61 +1,60 @@
 import { Link } from "wouter";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
-import { Users, Briefcase, Sparkles } from "lucide-react";
-import { motion } from "framer-motion";
+import { Users, Briefcase } from "lucide-react";
 
 export default function RoleSelection() {
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-white">
       <Navbar />
 
-      <div className="flex-1 py-16 px-4">
+      <div className="flex-1 py-12 px-4 mt-12">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-12">
-            <div className="inline-flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-full mb-6">
-              <Sparkles className="h-4 w-4 text-primary" />
-              <span className="text-sm font-medium text-primary">ابدأ رحلتك معنا</span>
-            </div>
-            <h1 className="text-4xl font-bold mb-4" data-testid="text-role-title">
+            <h1 className="text-3xl font-semibold text-gray-900 mb-4" data-testid="text-role-title">
               اختر نوع حسابك
             </h1>
-            <p className="text-lg text-muted-foreground">
+            <p className="text-lg text-gray-600">
               هل أنت مستقل تبحث عن فرص أم صاحب منتج تحتاج لاختباره؟
             </p>
           </div>
 
-          <div className="flex justify-center gap-4 flex-wrap">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl mx-auto">
             <Link href="/freelancer-signup">
-              <motion.div
-                className="inline-flex items-center justify-center gap-2 rounded-full py-6 px-12 text-lg font-bold shadow-lg bg-primary text-primary-foreground hover-elevate active-elevate-2 cursor-pointer transition-all"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                transition={{ duration: 0.2 }}
+              <div 
+                className="border border-gray-200 rounded-lg p-8 text-center hover:border-gray-300 hover:bg-gray-50 transition-all cursor-pointer group"
                 data-testid="button-freelancer"
               >
-                <Users className="h-6 w-6" />
-                <span>مستقل محترف</span>
-              </motion.div>
+                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-blue-200 transition-colors">
+                  <Users className="h-8 w-8 text-blue-600" />
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">مستقل محترف</h3>
+                <p className="text-gray-600">
+                  انضم كفريلانسر وابدأ في تقديم خدماتك للعملاء
+                </p>
+              </div>
             </Link>
 
             <Link href="/product-owner-signup">
-              <motion.div
-                className="inline-flex items-center justify-center gap-2 rounded-full py-6 px-12 text-lg font-bold shadow-lg bg-primary text-primary-foreground hover-elevate active-elevate-2 cursor-pointer transition-all"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                transition={{ duration: 0.2 }}
+              <div 
+                className="border border-gray-200 rounded-lg p-8 text-center hover:border-gray-300 hover:bg-gray-50 transition-all cursor-pointer group"
                 data-testid="button-owner"
               >
-                <Briefcase className="h-6 w-6" />
-                <span>صاحب منتج رقمي</span>
-              </motion.div>
+                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-green-200 transition-colors">
+                  <Briefcase className="h-8 w-8 text-green-600" />
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">صاحب منتج رقمي</h3>
+                <p className="text-gray-600">
+                  اختر محترفين لاختبار وتقييم منتجاتك الرقمية
+                </p>
+              </div>
             </Link>
           </div>
 
           <div className="text-center mt-8">
-            <p className="text-sm text-muted-foreground">
+            <p className="text-gray-600">
               لديك حساب بالفعل؟{" "}
-              <Link href="/login" className="text-primary font-medium hover:underline" data-testid="link-login">
+              <Link href="/login" className="text-gray-900 font-medium hover:underline" data-testid="link-login">
                 تسجيل الدخول
               </Link>
             </p>

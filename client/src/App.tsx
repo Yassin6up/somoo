@@ -39,6 +39,7 @@ import OrdersPage from "@/pages/freelancer-dashboard/Orders";
 import SettingsPage from "@/pages/freelancer-dashboard/Settings";
 import FreelancerConversations from "@/pages/freelancer-dashboard/Conversations";
 import FreelancerNotifications from "@/pages/freelancer-dashboard/Notifications";
+import GroupProjects from "@/pages/freelancer-dashboard/GroupProjects";
 import { ProductOwnerDashboardLayout } from "@/components/ProductOwnerDashboardLayout";
 import ProductOwnerOverview from "@/pages/product-owner-dashboard/Overview";
 import ProductOwnerProjects from "@/pages/product-owner-dashboard/Projects";
@@ -49,6 +50,7 @@ import PaymentsPage from "@/pages/product-owner-dashboard/Payments";
 import ProductOwnerSettings from "@/pages/product-owner-dashboard/Settings";
 import ProductOwnerConversations from "@/pages/product-owner-dashboard/Conversations";
 import ProductOwnerNotifications from "@/pages/product-owner-dashboard/Notifications";
+import ProductOwnerWallet from "@/pages/product-owner-dashboard/Wallet";
 import FreelancerInstructions from "@/pages/FreelancerInstructions";
 import ProductOwnerInstructions from "@/pages/ProductOwnerInstructions";
 import Services from "@/pages/Services";
@@ -125,6 +127,13 @@ function Router() {
         {() => (
           <FreelancerDashboardLayout>
             <WithdrawalsPage />
+          </FreelancerDashboardLayout>
+        )}
+      </Route>
+      <Route path="/freelancer-dashboard/projects/group">
+        {() => (
+          <FreelancerDashboardLayout>
+            <GroupProjects />
           </FreelancerDashboardLayout>
         )}
       </Route>
@@ -218,6 +227,13 @@ function Router() {
         {() => (
           <ProductOwnerDashboardLayout>
             <ProductOwnerConversations />
+          </ProductOwnerDashboardLayout>
+        )}
+      </Route>
+      <Route path="/product-owner-dashboard/wallet">
+        {() => (
+          <ProductOwnerDashboardLayout>
+            <ProductOwnerWallet />
           </ProductOwnerDashboardLayout>
         )}
       </Route>

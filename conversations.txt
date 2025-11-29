@@ -1,0 +1,13 @@
+﻿All conversations: [
+  {
+    "id": "62bba686-faed-4465-891d-a0679d7fa684",
+    "product_owner_id": "f5bfcebd-b5f0-446e-bbae-1da66e060ccf",
+    "group_id": "7c81a217-dc67-4032-9e19-79480e7a26bb",
+    "leader_id": "97ea9e4b-9d2d-4896-93ec-66fb641ee545",
+    "last_message_at": "2025-11-25T14:15:38.567Z",
+    "created_at": "2025-11-24T21:56:21.852Z",
+    "active_proposal_id": null,
+    "total_proposals": 0,
+    "total_completed_projects": 0
+  }
+]

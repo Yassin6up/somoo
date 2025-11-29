@@ -13,15 +13,22 @@ import {
   ArrowRight, 
   MapPin, 
   Clock, 
-  Phone, 
   MessageCircle, 
   Send, 
   Star,
   ShieldAlert,
   CheckCircle2,
   AlertTriangle,
-  Lightbulb
+  Lightbulb,
+  Flag,
+  MoreVertical
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { Group, Freelancer, Conversation, ConversationMessage } from "@shared/schema";
 
@@ -51,6 +58,13 @@ export default function ChatWithLeader() {
   const { data: leader } = useQuery<Freelancer>({
     queryKey: ["/api/freelancers", group?.leaderId],
     enabled: !!group?.leaderId,
+  });
+
+  // Fetch leader online status
+  const { data: leaderStatus } = useQuery<{ userId: string; isOnline: boolean; lastSeen: Date | null }>({
+    queryKey: ["/api/freelancers", group?.leaderId, "status"],
+    enabled: !!group?.leaderId,
+    refetchInterval: 30000, // Refetch every 30 seconds
   });
 
   // Get or create conversation
@@ -94,6 +108,28 @@ export default function ChatWithLeader() {
       toast({
         title: "خطأ",
         description: error.message || "حدث خطأ أثناء إرسال الرسالة",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Report conversation mutation
+  const reportConversationMutation = useMutation({
+    mutationFn: async () => {
+      if (!conversationId) throw new Error("لا توجد محادثة");
+      const res = await apiRequest(`/api/conversations/${conversationId}/report`, "POST", { reason: "inappropriate_content" });
+      return await res.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "تم",
+        description: "تم تقرير المحادثة بنجاح",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "خطأ",
+        description: error.message || "حدث خطأ أثناء تقرير المحادثة",
         variant: "destructive",
       });
     },
@@ -200,8 +236,8 @@ export default function ChatWithLeader() {
                   <h2 className="text-xl font-bold mb-1" style={{ fontFamily: "Tajawal, sans-serif" }}>
                     {leader?.fullName || "قائد الجروب"}
                   </h2>
-                  <Badge variant="default" className="mb-2">
-                    متصل
+                  <Badge variant={leaderStatus?.isOnline ? "default" : "secondary"} className="mb-2">
+                    {leaderStatus?.isOnline ? "متصل" : "غير متصل"}
                   </Badge>
                 </div>
 
@@ -287,27 +323,23 @@ export default function ChatWithLeader() {
                 {/* Action Buttons */}
                 <div className="space-y-2">
                   <Button
-                    variant="outline"
-                    className="w-full"
-                    onClick={() => {
-                      toast({
-                        title: "قريباً",
-                        description: "هذه الميزة ستكون متاحة قريباً",
-                      });
-                    }}
-                    data-testid="button-voice-call"
-                  >
-                    <Phone className="ml-2 h-4 w-4" />
-                    طلب محادثة شفهية
-                  </Button>
-                  
-                  <Button
                     className="w-full"
                     disabled
                     data-testid="button-chat-active"
                   >
                     <MessageCircle className="ml-2 h-4 w-4" />
                     المحادثة النصية نشطة
+                  </Button>
+
+                  <Button
+                    variant="outline"
+                    className="w-full text-red-600 hover:text-red-700"
+                    onClick={() => reportConversationMutation.mutate()}
+                    disabled={!conversationId || reportConversationMutation.isPending}
+                    data-testid="button-report-chat"
+                  >
+                    <Flag className="ml-2 h-4 w-4" />
+                    تقرير هذه المحادثة
                   </Button>
                 </div>
               </CardContent>
@@ -318,12 +350,34 @@ export default function ChatWithLeader() {
           <div className="lg:col-span-2">
             <Card className="h-[calc(100vh-200px)] flex flex-col">
               <CardHeader className="border-b">
-                <CardTitle className="text-xl" style={{ fontFamily: "Tajawal, sans-serif" }}>
-                  محادثة مع {leader?.fullName || "قائد الجروب"}
-                </CardTitle>
-                <CardDescription>
-                  {group.name}
-                </CardDescription>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="text-xl" style={{ fontFamily: "Tajawal, sans-serif" }}>
+                      محادثة مع {leader?.fullName || "قائد الجروب"}
+                    </CardTitle>
+                    <CardDescription>
+                      {group.name}
+                    </CardDescription>
+                  </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" data-testid="button-menu-options">
+                        <MoreVertical className="h-5 w-5" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem
+                        onClick={() => reportConversationMutation.mutate()}
+                        disabled={!conversationId || reportConversationMutation.isPending}
+                        className="text-red-600"
+                        data-testid="menu-report-chat"
+                      >
+                        <Flag className="h-4 w-4 ml-2" />
+                        تقرير هذه المحادثة
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
               </CardHeader>
 
               {/* Messages Area */}

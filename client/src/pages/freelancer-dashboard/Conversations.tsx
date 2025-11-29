@@ -1,69 +1,71 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
-import { Search, MessageSquare, Loader2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Search, MessageSquare, Loader2, User, FileText, Briefcase } from "lucide-react";
 import { DirectMessageChat } from "@/components/DirectMessageChat";
+import { ProjectProposalModal } from "@/components/ProjectProposalModal";
+import { useLocation } from "wouter";
 
 export default function FreelancerConversations() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedConversation, setSelectedConversation] = useState<any>(null);
+  const [showProposalModal, setShowProposalModal] = useState(false);
+  const [, navigate] = useLocation();
 
   const currentUser = localStorage.getItem("user")
     ? JSON.parse(localStorage.getItem("user")!)
     : null;
 
   // Fetch conversation history
-  const { data: conversations, isLoading } = useQuery({
-    queryKey: ["/api/direct-messages"],
+  const { data: conversations = [], isLoading, error } = useQuery({
+    queryKey: ["direct-messages"],
     queryFn: async () => {
+      console.log("Fetching conversations...");
+      const token = localStorage.getItem("token");
+      const userType = localStorage.getItem("userType");
+      const user = localStorage.getItem("user");
+      console.log("Token exists:", !!token);
+      console.log("UserType:", userType);
+      console.log("User:", user);
+      
       const response = await fetch("/api/direct-messages", {
+        credentials: "include",
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          "Authorization": token ? `Bearer ${token}` : "",
         },
       });
-
+      
+      console.log("Response status:", response.status);
+      
       if (!response.ok) {
-        return [];
+        console.error("Failed to fetch conversations:", response.status);
+        const errorText = await response.text();
+        console.error("Error text:", errorText);
+        throw new Error("Failed to fetch");
       }
-
-      return response.json();
+      const data = await response.json();
+      console.log("Received conversations:", data);
+      return data;
     },
+    refetchInterval: 5000,
   });
 
-  // Fetch user details for each conversation
-  const { data: conversationsWithDetails } = useQuery({
-    queryKey: ["/api/direct-messages", "with-details", conversations],
-    queryFn: async () => {
-      if (!conversations || conversations.length === 0) return [];
+  console.log("Conversations state:", { conversations, isLoading, error });
 
-      const details = await Promise.all(
-        conversations.map(async (conv: any) => {
-          const response = await fetch(`/api/freelancers/${conv.otherUserId}`, {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-          });
-
-          if (!response.ok) return conv;
-
-          const userDetails = await response.json();
-          return {
-            ...conv,
-            userDetails,
-          };
-        })
-      );
-
-      return details;
-    },
-    enabled: !!conversations && conversations.length > 0,
+  const filteredConversations = conversations.filter((conv: any) => {
+    if (!searchQuery) return true; // Show all when no search
+    const otherUser = conv.otherUserType === "product_owner" ? conv.productOwner : conv.freelancer;
+    const fullName = otherUser?.fullName || "";
+    return fullName.toLowerCase().includes(searchQuery.toLowerCase());
   });
 
-  const filteredConversations = conversationsWithDetails?.filter((conv: any) =>
-    conv.userDetails?.fullName?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  console.log("Total conversations:", conversations.length);
+  console.log("Filtered conversations:", filteredConversations.length);
 
   if (isLoading) {
     return (
@@ -74,109 +76,231 @@ export default function FreelancerConversations() {
   }
 
   return (
-    <div className="h-[calc(100vh-80px)] flex flex-col p-6" dir="rtl">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-          <MessageSquare className="h-8 w-8 text-blue-600" />
-          المحادثات
-        </h1>
-        <p className="text-gray-600 mt-2">تواصل مع أعضاء المجموعات</p>
-      </div>
-
-      <div className="flex-1 flex gap-6 overflow-hidden">
-        {/* Conversations List */}
-        <Card className="w-96 flex flex-col overflow-hidden shadow-xl">
-          <div className="p-4 border-b bg-white">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-              <Input
-                placeholder="ابحث عن محادثة..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 rounded-full"
-              />
-            </div>
+    <div className="h-full flex gap-4 p-4" dir="rtl">
+      {/* Conversations List */}
+      <Card className="w-96 flex flex-col">
+        <div className="p-4 border-b">
+          <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+            <MessageSquare className="h-5 w-5" />
+            المحادثات
+          </h2>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+            <Input
+              placeholder="ابحث عن محادثة..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
           </div>
+        </div>
+        <ScrollArea className="flex-1">
+          {conversations.length === 0 ? (
+            <div className="p-6 text-center text-muted-foreground">
+              <MessageSquare className="h-12 w-12 mx-auto mb-2 opacity-20" />
+              <p>لا توجد محادثات حالياً</p>
+            </div>
+          ) : (
+            <div className="space-y-1 p-2">
+              {filteredConversations.map((conv: any) => {
+                const isProductOwner = conv.otherUserType === "product_owner";
+                const otherUser = isProductOwner ? conv.productOwner : conv.freelancer;
+                const unreadCount = conv.unreadCount || 0;
 
-          <div className="flex-1 overflow-y-auto">
-            {!conversationsWithDetails || conversationsWithDetails.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full p-6 text-center">
-                <div className="bg-gray-100 rounded-full p-6 mb-4">
-                  <MessageSquare className="h-12 w-12 text-gray-400" />
-                </div>
-                <p className="text-gray-500 font-semibold">لا توجد محادثات</p>
-                <p className="text-gray-400 text-sm mt-2">
-                  ابدأ محادثة جديدة من صفحة المجموعات
-                </p>
-              </div>
-            ) : (
-              <div className="divide-y">
-                {filteredConversations?.map((conv: any) => (
+                return (
                   <div
-                    key={conv.otherUserId}
+                    key={conv.conversationKey}
                     onClick={() => setSelectedConversation(conv)}
-                    className={`p-4 cursor-pointer transition-all hover:bg-blue-50 ${
-                      selectedConversation?.otherUserId === conv.otherUserId
-                        ? "bg-blue-50 border-r-4 border-blue-600"
+                    className={`p-3 rounded-lg cursor-pointer transition-colors hover:bg-accent ${
+                      selectedConversation?.conversationKey === conv.conversationKey
+                        ? "bg-accent"
                         : ""
                     }`}
                   >
                     <div className="flex items-center gap-3">
-                      <Avatar className="h-12 w-12 border-2 border-gray-200">
-                        <AvatarImage src={conv.userDetails?.profileImage} />
+                      <Avatar className="h-12 w-12">
+                        <AvatarImage src={otherUser?.profileImage} />
                         <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-500 text-white font-bold">
-                          {conv.userDetails?.fullName?.substring(0, 2) || "U"}
+                          {otherUser?.fullName?.charAt(0)?.toUpperCase() || "U"}
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between mb-1">
-                          <h3 className="font-semibold text-gray-900 truncate">
-                            {conv.userDetails?.fullName || "مستخدم"}
-                          </h3>
-                          <span className="text-xs text-gray-500">
-                            {new Date(conv.lastMessageAt).toLocaleDateString("ar-EG", {
-                              month: "short",
-                              day: "numeric",
-                            })}
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="font-semibold truncate">
+                            {otherUser?.fullName || "مستخدم"}
                           </span>
+                          {isProductOwner && (
+                            <Badge variant="secondary" className="text-xs">
+                              صاحب عمل
+                            </Badge>
+                          )}
+                          {unreadCount > 0 && (
+                            <Badge variant="destructive" className="text-xs">
+                              {unreadCount}
+                            </Badge>
+                          )}
                         </div>
-                        <p className="text-sm text-gray-600 truncate">
-                          {conv.lastMessage}
-                        </p>
+                        {conv.lastMessage && (
+                          <p className="text-sm text-muted-foreground truncate">
+                            {(() => {
+                              const content = conv.lastMessage.content;
+                              // Check if it's a proposal
+                              if (content?.includes("[PROPOSAL]") && content?.includes("[/PROPOSAL]")) {
+                                try {
+                                  const match = content.match(/\[PROPOSAL\]([\s\S]*?)\[\/PROPOSAL\]/);
+                                  if (match) {
+                                    const proposalData = JSON.parse(match[1]);
+                                    return `💼 عرض مشروع: ${proposalData.title}`;
+                                  }
+                                } catch (e) {
+                                  return "💼 عرض مشروع";
+                                }
+                              }
+                              return content;
+                            })()}
+                          </p>
+                        )}
                       </div>
                     </div>
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </Card>
+                );
+              })}
+            </div>
+          )}
+        </ScrollArea>
+      </Card>
 
-        {/* Chat Area */}
-        <div className="flex-1 overflow-hidden">
-          {selectedConversation ? (
-            <DirectMessageChat
-              roomId={[currentUser?.id, selectedConversation.otherUserId].sort().join('-')}
-              receiverId={selectedConversation.otherUserId}
-              receiverType={selectedConversation.otherUserType}
-              receiverInfo={selectedConversation.userDetails}
-            />
-          ) : (
-            <Card className="h-full flex items-center justify-center shadow-xl">
-              <div className="text-center p-6">
-                <div className="bg-gradient-to-br from-blue-100 to-purple-100 rounded-full p-8 mb-4 inline-block">
-                  <MessageSquare className="h-16 w-16 text-blue-600" />
+      {/* Chat Area */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {selectedConversation ? (
+          <>
+            {/* Chat Header with User Info and Actions */}
+            <Card className="p-4 mb-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="relative">
+                    <Avatar className="h-12 w-12">
+                      <AvatarImage 
+                        src={
+                          selectedConversation.otherUserType === "freelancer"
+                            ? selectedConversation.freelancer?.profileImage
+                            : selectedConversation.productOwner?.profileImage
+                        } 
+                      />
+                      <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-500 text-white font-bold text-lg">
+                        {(selectedConversation.otherUserType === "product_owner"
+                          ? selectedConversation.productOwner?.fullName
+                          : selectedConversation.freelancer?.fullName)?.charAt(0)?.toUpperCase() || "U"}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className={`absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full border-2 border-white ${
+                      selectedConversation.isOnline ? "bg-green-500" : "bg-gray-400"
+                    }`} />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-lg">
+                      {selectedConversation.otherUserType === "product_owner"
+                        ? selectedConversation.productOwner?.fullName || "صاحب عمل"
+                        : selectedConversation.freelancer?.fullName || "مستقل"}
+                    </h3>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      {selectedConversation.isOnline ? (
+                        <span className="flex items-center gap-1">
+                          <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                          متصل الآن
+                        </span>
+                      ) : (
+                        <span>غير متصل</span>
+                      )}
+                    </div>
+                  </div>
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2">
-                  اختر محادثة للبدء
-                </h3>
-                <p className="text-gray-600">
-                  اختر محادثة من القائمة لعرض الرسائل
-                </p>
+                
+                {/* Action Buttons - Show for Product Owners */}
+                {selectedConversation.otherUserType === "product_owner" && (
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => navigate(`/freelancer-dashboard/projects`)}
+                      className="gap-2"
+                    >
+                      <Briefcase className="h-4 w-4" />
+                      المشاريع المتاحة
+                    </Button>
+                    <Button
+                      variant="default"
+                      size="sm"
+                      onClick={() => setShowProposalModal(true)}
+                      className="gap-2"
+                    >
+                      <FileText className="h-4 w-4" />
+                      إرسال عرض مشروع
+                    </Button>
+                  </div>
+                )}
               </div>
             </Card>
-          )}
-        </div>
+
+            {/* Chat Messages */}
+            <div className="flex-1 overflow-hidden">
+              <DirectMessageChat
+                roomId={[currentUser?.id, selectedConversation.otherUserId].sort().join("-")}
+                receiverId={selectedConversation.otherUserId}
+                receiverType={selectedConversation.otherUserType}
+                receiverInfo={
+                  selectedConversation.otherUserType === "product_owner"
+                    ? selectedConversation.productOwner
+                    : selectedConversation.freelancer
+                }
+              />
+            </div>
+
+            {/* Project Proposal Modal */}
+            {showProposalModal && (
+              <ProjectProposalModal
+                isOpen={showProposalModal}
+                onClose={() => setShowProposalModal(false)}
+                receiverId={selectedConversation.otherUserId}
+                receiverType={selectedConversation.otherUserType}
+                receiverName={
+                  selectedConversation.otherUserType === "product_owner"
+                    ? selectedConversation.productOwner?.fullName || "صاحب عمل"
+                    : selectedConversation.freelancer?.fullName || "مستقل"
+                }
+                onSendMessage={(content: string) => {
+                  // Get the DirectMessageChat component's send function
+                  // We'll emit a socket event to send the message
+                  const socket = (window as any).socket;
+                  if (socket) {
+                    fetch("/api/direct-messages", {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${localStorage.getItem("token")}`,
+                      },
+                      body: JSON.stringify({
+                        receiverId: selectedConversation.otherUserId,
+                        receiverType: selectedConversation.otherUserType,
+                        content,
+                      }),
+                    }).catch(err => console.error("Failed to send proposal:", err));
+                  }
+                }}
+              />
+            )}
+          </>
+        ) : (
+          <Card className="h-full flex items-center justify-center">
+            <div className="text-center p-6">
+              <MessageSquare className="h-16 w-16 mx-auto mb-4 opacity-20" />
+              <h3 className="text-lg font-semibold mb-2">اختر محادثة</h3>
+              <p className="text-sm text-muted-foreground">
+                اختر محادثة من القائمة لعرض الرسائل
+              </p>
+            </div>
+          </Card>
+        )}
       </div>
     </div>
   );

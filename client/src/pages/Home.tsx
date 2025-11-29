@@ -2,310 +2,289 @@
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { motion } from "framer-motion";
+import { motion, useScroll, useTransform } from "framer-motion";
+import { useRef } from "react";
 import { 
   ArrowRight, 
-  Star, 
+  Star,
   MapPin,
+  MessageCircle,
   Smartphone,
   Users,
+  TrendingUp,
+  CheckCircle,
+  Play,
   Shield,
   Zap,
-  TrendingUp,
-  CheckCircle2,
-  Play,
-  MessageCircle,
-  ThumbsUp,
-  Target,
   Award,
   Clock,
-  Quote,
-  Rocket
+  ThumbsUp,
+  Eye,
+  BarChart3,
+  Target,
+  Calendar,
+  Mail,
+  Phone,
+  Map
 } from "lucide-react";
-import LightRays from '../components/Ballpit';
 
 export default function Home() {
+  const containerRef = useRef(null);
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ["start start", "end end"]
+  });
+
+  const y1 = useTransform(scrollYProgress, [0, 1], [0, 100]);
+  const y2 = useTransform(scrollYProgress, [0, 1], [0, -50]);
+  const opacity = useTransform(scrollYProgress, [0, 0.2], [0, 1]);
+
+  const services = [
+    { 
+      icon: MapPin, 
+      title: "Google Maps", 
+      description: "تقييمات حقيقية لمتجرك أو عملك",
+      features: ["تقييمات 5 نجوم", "تعليقات حقيقية", "تحسين التصنيف"]
+    },
+    { 
+      icon: MessageCircle, 
+      title: "Social Media", 
+      description: "تعزيز وجودك على منصات التواصل",
+      features: ["متابعين حقيقيين", "إعجابات وتفاعل", "تعليقات إيجابية"]
+    },
+    { 
+      icon: Smartphone, 
+      title: "App Testing", 
+      description: "اختبارات دقيقة لتطبيقات الجوال",
+      features: ["اختبار UX/UI", "كشف الأخطاء", "تحسين الأداء"]
+    },
+    { 
+      icon: Star, 
+      title: "Store Ratings", 
+      description: "تحسين تصنيف متجرك الإلكتروني",
+      features: ["تقييمات المنتجات", "مراجعات حقيقية", "زيادة المبيعات"]
+    },
+  ];
+
+  const process = [
+    {
+      step: "1",
+      title: "اختر الخدمة",
+      description: "اختر منصة التقييم المناسبة لك"
+    },
+    {
+      step: "2",
+      title: "حدد العدد",
+      description: "اختر عدد التقييمات المطلوبة"
+    },
+    {
+      step: "3",
+      title: "ادفع بسهولة",
+      description: "دفع آمن عبر multiple options"
+    },
+    {
+      step: "4",
+      title: "استلم النتائج",
+      description: "احصل على تقييمات حقيقية من فريقنا"
+    }
+  ];
+
+  const stats = [
+    { number: "25K", label: "مختبر نشط", icon: Users },
+    { number: "50K", label: "تقييم مكتمل", icon: Star },
+    { number: "98%", label: "رضا العملاء", icon: ThumbsUp },
+    { number: "24/7", label: "دعم فني", icon: Clock },
+  ];
+
   const features = [
     {
-      icon: MapPin,
-      title: "تقييمات خرائط جوجل",
-      description: "تعزيز وجودك على خرائط جوجل بتقييمات حقيقية وموثوقة"
+      icon: Shield,
+      title: "آمن وموثوق",
+      description: "جميع التقييمات حقيقية وآمنة 100%"
     },
     {
-      icon: Smartphone,
-      title: "تقييمات متاجر التطبيقات",
-      description: "تحسين تصنيف تطبيقك في متجري App Store و Google Play"
+      icon: Zap,
+      title: "نتائج سريعة",
+      description: "احصل على النتائج خلال 24 ساعة"
     },
     {
-      icon: Users,
-      title: "مختبرون محترفون",
-      description: "فريق من المختبرين المؤهلين لتقييم تجربة المستخدم"
+      icon: Award,
+      title: "جودة مضمونة",
+      description: "نضمن لك الحصول على أفضل النتائج"
     },
     {
       icon: TrendingUp,
       title: "تحليلات مفصلة",
-      description: "تقارير شاملة تساعدك في فهم أداء منتجك الرقمي"
-    }
-  ];
-
-  const services = [
-    {
-      icon: Star,
-      title: "تقييمات جوجل",
-      stats: "2,500+ تقييم",
-      description: "تقييمات موثوقة لتحسين تصنيفك على خرائط جوجل",
-      gradient: "from-blue-500 to-cyan-500"
-    },
-    {
-      icon: Smartphone,
-      title: "تقييمات التطبيقات",
-      stats: "1,800+ تقييم",
-      description: "تعزيز وجود تطبيقك في متاجر التطبيقات",
-      gradient: "from-purple-500 to-pink-500"
-    },
-    {
-      icon: Users,
-      title: "اختبار UX/UI",
-      stats: "950+ اختبار",
-      description: "تحسين تجربة المستخدم من خلال اختبارات احترافية",
-      gradient: "from-green-500 to-emerald-500"
-    },
-    {
-      icon: ThumbsUp,
-      title: "مراجعات وسائل التواصل",
-      stats: "3,200+ مراجعة",
-      description: "زيادة التفاعل والمصداقية على المنصات الاجتماعية",
-      gradient: "from-orange-500 to-red-500"
+      description: "تقارير شاملة عن أداء تقييماتك"
     }
   ];
 
   const testimonials = [
     {
       name: "أحمد محمد",
-      role: "مدير مطعم",
-      content: "ساعدتني سومو في زيادة تقييم مطعمي على جوجل من 3.2 إلى 4.8 في شهرين فقط!",
+      business: "مطعم اللذة الشرقية",
+      comment: "ارتفع تصنيفنا من 3.2 إلى 4.8 في أسبوعين فقط!",
       rating: 5
     },
     {
-      name: "فاطمة العلي",
-      role: "مطور تطبيقات",
-      content: "التقييمات الحقيقية ساعدت تطبيقي على الصعود إلى المراكز الأولى في المتجر",
+      name: "سارة العلي",
+      business: "متجر إلكتروني",
+      comment: "المبيعات تضاعفت بعد تحسين التقييمات",
       rating: 5
     },
     {
-      name: "خالد السعيد",
-      role: "صاحب شركة",
-      content: "الخدمة احترافية والمختبرون يقدمون ملاحظات قيمة ساعدت في تطوير خدماتنا",
+      name: "خالد عبدالله",
+      business: "تطبيق توصيل",
+      comment: "أفضل استثمار قمنا به لتحسين سمعة التطبيق",
       rating: 5
     }
   ];
 
-  const stats = [
-    { number: "10,000", label: "تقييم مكتمل" },
-    { number: "2,500", label: "عميل راضي" },
-    { number: "4.9", label: "تقييم متوسط" },
-    { number: "98%", label: "رضا العملاء" }
+  const pricing = [
+    {
+      name: "الباقة الأساسية",
+      price: "99",
+      features: [
+        "10 تقييمات حقيقية",
+        "تقييمات 5 نجوم",
+        "دعم عبر البريد الإلكتروني",
+        "نتائج خلال 3 أيام"
+      ]
+    },
+    {
+      name: "الباقة المتوسطة",
+      price: "199",
+      popular: true,
+      features: [
+        "25 تقييمات حقيقية",
+        "تقييمات 5 نجوم",
+        "تعليقات مكتوبة",
+        "دعم فني سريع",
+        "نتائج خلال 48 ساعة"
+      ]
+    },
+    {
+      name: "الباقة المتقدمة",
+      price: "399",
+      features: [
+        "50 تقييمات حقيقية",
+        "تقييمات 5 نجوم",
+        "تعليقات مفصلة",
+        "دعم فني مخصص",
+        "نتائج خلال 24 ساعة",
+        "تقرير تحليلي مفصل"
+      ]
+    }
   ];
 
-  const process = [
-    {
-      step: "01",
-      title: "اختر الخدمة",
-      description: "اختر من بين خدماتنا المتنوعة للتقييم والاختبار"
-    },
-    {
-      step: "02",
-      title: "حدد المتطلبات",
-      description: "أخبرنا باحتياجاتك ومتطلباتك الخاصة"
-    },
-    {
-      step: "03",
-      title: "تنفيذ المهمة",
-      description: "فريقنا المحترف ينفذ المهمة بدقة واحترافية"
-    },
-    {
-      step: "04",
-      title: "تسليم النتائج",
-      description: "احصل على تقرير مفصل ونتائج ملموسة"
-    }
+  const platforms = [
+    { name: "Google Maps", icon: "🗺️" },
+    { name: "Facebook", icon: "📘" },
+    { name: "Instagram", icon: "📷" },
+    { name: "App Store", icon: "📱" },
+    { name: "Google Play", icon: "🎮" },
+    { name: "Amazon", icon: "📦" },
   ];
 
   return (
-    <div className="min-h-screen bg-white">
+    <div ref={containerRef} className="min-h-screen bg-white">
       <Navbar />
 
-      {/* Full Screen Hero Section with LightRays Background */}
-{/* Full Screen Hero Section with LightRays on White Background */}
-{/* Full Screen Hero Section with Multiple Visible LightRays */}
-<section className="relative h-screen flex items-center justify-center overflow-hidden bg-white">
-  {/* Multiple LightRays Background with Strong Colors */}
-  {/* Ultra Visible LightRays */}
-<div className="absolute inset-0 z-0">
-  {/* Strong Blue Rays */}
-  <LightRays
-    raysOrigin="top-left"
-    raysColor="#1D4ED8"
-    raysSpeed={1.0}
-    lightSpread={0.3}
-    rayLength={2.5}
-    followMouse={true}
-    mouseInfluence={0.12}
-    noiseAmount={0.05}
-    distortion={0.03}
-    pulsating={true}
-    fadeDistance={0.8}
-    saturation={1.5}
-    className="w-full h-full opacity-90"
-  />
-  {/* Strong Purple Rays */}
-  <LightRays
-    raysOrigin="top-right"
-    raysColor="#6D28D9"
-    raysSpeed={1.5}
-    lightSpread={0.25}
-    rayLength={2.8}
-    followMouse={true}
-    mouseInfluence={0.18}
-    noiseAmount={0.03}
-    distortion={0.025}
-    pulsating={true}
-    fadeDistance={0.7}
-    saturation={1.6}
-    className="w-full h-full opacity-85"
-  />
-  {/* Strong Cyan Rays */}
-  <LightRays
-    raysOrigin="bottom-center"
-    raysColor="#0E7490"
-    raysSpeed={0.7}
-    lightSpread={0.4}
-    rayLength={2.2}
-    followMouse={true}
-    mouseInfluence={0.08}
-    noiseAmount={0.06}
-    distortion={0.015}
-    pulsating={true}
-    fadeDistance={1.0}
-    saturation={1.4}
-    className="w-full h-full opacity-75"
-  />
-</div>
-
-{/* Stronger Color Overlay */}
-<div className="absolute inset-0 bg-gradient-to-br from-blue-200/50 via-white/80 to-purple-200/40 z-1"></div>
-  {/* Enhanced Background Elements */}
-  <div className="absolute inset-0 overflow-hidden">
-    <div className="absolute top-1/4 left-1/4 w-80 h-80 bg-blue-200/30 rounded-full blur-3xl animate-pulse"></div>
-    <div className="absolute bottom-1/3 right-1/3 w-96 h-96 bg-purple-200/30 rounded-full blur-3xl animate-pulse delay-1000"></div>
-    <div className="absolute top-2/3 left-1/3 w-72 h-72 bg-cyan-200/25 rounded-full blur-3xl animate-pulse delay-500"></div>
-  </div>
-
-  {/* Hero Content */}
-  <div className="relative z-10 max-w-6xl mx-auto px-6 text-center">
-    <motion.div
-      initial={{ opacity: 0, y: 30 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.8 }}
-    >
-      <Badge className="bg-white/90 text-blue-600 border border-blue-200 backdrop-blur-lg mb-6 px-6 py-3 text-lg font-medium shadow-lg">
-        <Star className="w-5 h-5 ml-2" />
-        المنصة الرائدة للتقييمات والاختبارات
-      </Badge>
-      
-      <h1 className="text-5xl lg:text-7xl font-bold text-gray-900 mb-8 leading-tight">
-        <span className="block">ارتقِ بتقييماتك</span>
-        <span className="block bg-gradient-to-r from-blue-600 via-purple-600 to-cyan-600 bg-clip-text text-transparent mt-4">
-          الرقمية
-        </span>
-      </h1>
-      
-      <p className="text-xl text-gray-700 mb-12 max-w-3xl mx-auto leading-relaxed backdrop-blur-lg bg-white/80 rounded-2xl p-8 border border-white shadow-xl">
-        نوفر لك تقييمات حقيقية واختبارات احترافية لتعزيز وجودك الرقمي على 
-        خرائط جوجل، متاجر التطبيقات، ومنصات التواصل الاجتماعي
-      </p>
-      
-      <div className="flex flex-col sm:flex-row gap-6 justify-center items-center mb-16">
-        <Link href="/role-selection">
-          <Button size="lg" className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-12 py-6 text-xl rounded-2xl shadow-2xl hover:shadow-3xl transition-all duration-300 transform hover:-translate-y-1">
-            ابدأ رحلتك الآن
-            <Rocket className="mr-3 h-6 w-6" />
-          </Button>
-        </Link>
-        <Button size="lg" variant="outline" className="border-2 border-gray-300 text-gray-700 hover:border-blue-500 hover:text-blue-600 px-12 py-6 text-xl rounded-2xl backdrop-blur-lg bg-white/90 shadow-lg hover:shadow-xl transition-all duration-300">
-          <Play className="mr-3 h-6 w-6" />
-          شاهد التجارب
-        </Button>
-      </div>
-
-      {/* Stats Preview */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 max-w-2xl mx-auto">
-        {stats.map((stat, index) => (
+      {/* Hero Section */}
+      <section className="min-h-screen flex items-center justify-center px-6 relative overflow-hidden">
+        <motion.div
+          style={{ y: y1 }}
+          className="absolute inset-0 bg-gradient-to-br from-gray-50 to-blue-50 -z-10"
+        />
+        
+        <div className="max-w-4xl mx-auto text-center">
           <motion.div
-            key={index}
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5, delay: index * 0.1 + 0.5 }}
-            className="text-center backdrop-blur-lg bg-white/90 rounded-2xl p-6 border border-white shadow-lg hover:shadow-xl transition-all duration-300"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
           >
-            <div className="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
-              {stat.number}
-            </div>
-            <div className="text-gray-600 font-medium">{stat.label}</div>
-          </motion.div>
-        ))}
-      </div>
-    </motion.div>
-  </div>
-
-  {/* Scroll Indicator */}
-  <motion.div
-    initial={{ opacity: 0 }}
-    animate={{ opacity: 1 }}
-    transition={{ duration: 1, delay: 1.5 }}
-    className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-10"
-  >
-    <div className="animate-bounce">
-      <div className="w-6 h-10 border-2 border-blue-400 rounded-full flex justify-center shadow-lg">
-        <div className="w-1 h-3 bg-blue-500 rounded-full mt-2"></div>
-      </div>
-    </div>
-  </motion.div>
-</section>
-      {/* Rest of your sections remain the same */}
-      {/* Features Section */}
-      <section className="py-24 bg-white relative">
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="text-center mb-20">
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.2 }}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-black/5 text-gray-600 text-sm mb-8"
             >
-              <h2 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-6">
-                خدماتنا <span className="text-blue-600">المتميزة</span>
-              </h2>
-              <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-                نقدم مجموعة متكاملة من خدمات التقييم والاختبارات لتعزيز وجودك الرقمي
-              </p>
+              <Star className="h-4 w-4" />
+              المنصة الأولى للتصنيف والاختبار
             </motion.div>
-          </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {features.map((feature, index) => (
+            <h1 className="text-4xl md:text-6xl font-light text-gray-900 mb-6">
+              اصنع <span className="text-blue-600">سمعتك</span>
+              <br />
+              <span className="text-gray-600">الرقمية</span>
+            </h1>
+
+            <p className="text-xl text-gray-600 mb-12 max-w-2xl mx-auto">
+              مع <span className="font-semibold">25,000+ مختبر محترف</span>، 
+              نحن نضمن حصولك على التقييمات الحقيقية التي تجعل عملك مشهورًا
+            </p>
+
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
+              <Link href="/get-started">
+                <Button size="lg" className="px-8 bg-gray-900 hover:bg-gray-800">
+                  ابدأ التقييم الآن
+                  <ArrowRight className="mr-2 h-4 w-4" />
+                </Button>
+              </Link>
+              
+              <Link href="/how-it-works">
+                <Button size="lg" variant="outline" className="px-8 border-gray-300">
+                  <Play className="mr-2 h-4 w-4" />
+                  شاهد كيف نعمل
+                </Button>
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-2xl mx-auto">
+              {stats.map((stat, index) => {
+                const StatIcon = stat.icon;
+                return (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.5 + index * 0.1 }}
+                    className="text-center"
+                  >
+                    <StatIcon className="h-6 w-6 text-gray-600 mx-auto mb-2" />
+                    <div className="text-2xl font-semibold text-gray-900">{stat.number}</div>
+                    <div className="text-sm text-gray-600">{stat.label}</div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Platforms Section */}
+      <section className="py-16 bg-white border-y border-gray-200">
+        <div className="max-w-4xl mx-auto px-6">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            className="text-center mb-12"
+          >
+            <h3 className="text-sm font-medium text-gray-500 mb-2">نعمل على جميع المنصات</h3>
+            <p className="text-gray-600">ندعم جميع منصات التقييم والاختبار الرئيسية</p>
+          </motion.div>
+
+          <div className="grid grid-cols-3 md:grid-cols-6 gap-4">
+            {platforms.map((platform, index) => (
               <motion.div
                 key={index}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-                whileHover={{ y: -5 }}
-                className="group text-center p-8 rounded-3xl bg-gradient-to-br from-white to-gray-50 border border-gray-200 hover:border-blue-300 hover:shadow-xl transition-all duration-300"
+                initial={{ opacity: 0, scale: 0.8 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                transition={{ delay: index * 0.1 }}
+                className="flex flex-col items-center justify-center p-4 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors"
               >
-                <div className="bg-blue-50 p-4 rounded-2xl w-fit mx-auto mb-6 group-hover:scale-110 transition-transform duration-300">
-                  <feature.icon className="h-8 w-8 text-blue-600" />
-                </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-4">{feature.title}</h3>
-                <p className="text-gray-600 leading-relaxed">{feature.description}</p>
+                <span className="text-2xl mb-2">{platform.icon}</span>
+                <span className="text-xs font-medium text-center text-gray-700">{platform.name}</span>
               </motion.div>
             ))}
           </div>
@@ -313,139 +292,151 @@ export default function Home() {
       </section>
 
       {/* Services Section */}
-      <section className="py-24 bg-gray-50 relative">
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="text-center mb-20">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-            >
-              <Badge className="bg-purple-100 text-purple-600 border-0 mb-6 px-4 py-2">
-                حلول متكاملة
-              </Badge>
-              <h2 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-6">
-                كيف يمكننا <span className="text-purple-600">مساعدتك؟</span>
-              </h2>
-            </motion.div>
-          </div>
+      <section className="py-20 px-6 bg-gray-50">
+        <div className="max-w-6xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            className="text-center mb-16"
+          >
+            <h2 className="text-3xl font-light text-gray-900 mb-4">خدماتنا المتخصصة</h2>
+            <p className="text-gray-600 max-w-xl mx-auto">اختر منصة التقييم المناسبة لاحتياجاتك</p>
+          </motion.div>
 
-          <div className="grid md:grid-cols-2 gap-8">
-            {services.map((service, index) => (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {services.map((service, index) => {
+              const ServiceIcon = service.icon;
+              return (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                  className="bg-white p-8 rounded-xl border border-gray-200 hover:border-gray-300 transition-all duration-300"
+                >
+                  <ServiceIcon className="h-12 w-12 text-blue-600 mb-6" />
+                  <h3 className="text-2xl font-semibold text-gray-900 mb-4">{service.title}</h3>
+                  <p className="text-gray-600 mb-6">{service.description}</p>
+                  
+                  <div className="space-y-2">
+                    {service.features.map((feature, idx) => (
+                      <div key={idx} className="flex items-center gap-3 text-sm text-gray-600">
+                        <CheckCircle className="h-4 w-4 text-green-500" />
+                        {feature}
+                      </div>
+                    ))}
+                  </div>
+                  
+                  <Link href={`/services/${service.title.toLowerCase().replace(' ', '-')}`}>
+                    <Button variant="outline" className="w-full mt-6">
+                      اختر هذه الخدمة
+                      <ArrowRight className="mr-2 h-4 w-4" />
+                    </Button>
+                  </Link>
+                </motion.div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* How It Works */}
+      <section className="py-20 px-6 bg-white">
+        <div className="max-w-6xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            className="text-center mb-16"
+          >
+            <h2 className="text-3xl font-light text-gray-900 mb-4">كيف نعمل</h2>
+            <p className="text-gray-600 max-w-xl mx-auto">4 خطوات بسيطة تفصلك عن تحقيق الشهرة الرقمية</p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {process.map((step, index) => (
               <motion.div
                 key={index}
-                initial={{ opacity: 0, x: index % 2 === 0 ? -30 : 30 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
-                whileHover={{ y: -5 }}
-                className="group bg-white rounded-3xl p-8 border border-gray-200 hover:shadow-xl transition-all duration-300"
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.2 }}
+                className="text-center"
               >
-                <div className="flex items-start gap-6">
-                  <div className={`p-4 rounded-2xl bg-gradient-to-r ${service.gradient} group-hover:scale-110 transition-transform duration-300`}>
-                    <service.icon className="h-8 w-8 text-white" />
-                  </div>
-                  <div className="flex-1 text-right">
-                    <h3 className="text-2xl font-bold text-gray-900 mb-4">{service.title}</h3>
-                    <p className="text-gray-600 mb-6 leading-relaxed">{service.description}</p>
-                    <Badge className="bg-gray-100 text-gray-700 border-0 px-4 py-2 font-semibold">
-                      {service.stats}
-                    </Badge>
+                <div className="relative mb-6">
+                  <div className="w-16 h-16 bg-gray-900 rounded-full flex items-center justify-center text-white text-lg font-medium mx-auto">
+                    {step.step}
                   </div>
                 </div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-3">{step.title}</h3>
+                <p className="text-gray-600">{step.description}</p>
               </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Process Section */}
-      <section className="py-24 bg-white relative">
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="text-center mb-20">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-            >
-              <Badge className="bg-green-100 text-green-600 border-0 mb-6 px-4 py-2">
-                خطوات العمل
-              </Badge>
-              <h2 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-6">
-                <span className="text-green-600">4 خطوات</span> بسيطة للنتيجة
-              </h2>
-            </motion.div>
-          </div>
+      {/* Features Section */}
+      <section className="py-20 px-6 bg-gray-50">
+        <div className="max-w-6xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            className="text-center mb-16"
+          >
+            <h2 className="text-3xl font-light text-gray-900 mb-4">لماذا تختارنا؟</h2>
+            <p className="text-gray-600 max-w-xl mx-auto">نقدم مميزات استثنائية تضمن نجاحك</p>
+          </motion.div>
 
-          <div className="grid md:grid-cols-4 gap-8 relative">
-            {/* Connection Line */}
-            <div className="hidden md:block absolute top-12 left-8 right-8 h-1 bg-gradient-to-r from-blue-200 via-purple-200 to-green-200 rounded-full"></div>
-            
-            {process.map((step, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-                className="text-center relative"
-              >
-                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 w-12 h-12 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-lg shadow-lg">
-                  {step.step}
-                </div>
-                <div className="bg-gradient-to-br from-blue-50 to-purple-50 p-6 rounded-2xl mt-4">
-                  <h3 className="text-xl font-bold text-gray-900 mb-4">{step.title}</h3>
-                  <p className="text-gray-600 leading-relaxed">{step.description}</p>
-                </div>
-              </motion.div>
-            ))}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {features.map((feature, index) => {
+              const FeatureIcon = feature.icon;
+              return (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                  className="bg-white p-6 rounded-lg border border-gray-200 text-center"
+                >
+                  <FeatureIcon className="h-8 w-8 text-blue-600 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">{feature.title}</h3>
+                  <p className="text-gray-600 text-sm">{feature.description}</p>
+                </motion.div>
+              );
+            })}
           </div>
         </div>
       </section>
 
       {/* Testimonials Section */}
-      <section className="py-24 bg-gray-50 relative">
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="text-center mb-20">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-            >
-              <Badge className="bg-yellow-100 text-yellow-600 border-0 mb-6 px-4 py-2">
-                <Quote className="w-4 h-4 ml-1" />
-                آراء العملاء
-              </Badge>
-              <h2 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-6">
-                يثق بنا <span className="text-yellow-600">آلاف العملاء</span>
-              </h2>
-            </motion.div>
-          </div>
+      <section className="py-20 px-6 bg-white">
+        <div className="max-w-6xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            className="text-center mb-16"
+          >
+            <h2 className="text-3xl font-light text-gray-900 mb-4">ماذا يقول عملاؤنا؟</h2>
+            <p className="text-gray-600 max-w-xl mx-auto">انضم إلى آلاف العملاء الراضين عن خدماتنا</p>
+          </motion.div>
 
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {testimonials.map((testimonial, index) => (
               <motion.div
                 key={index}
-                initial={{ opacity: 0, y: 30 }}
+                initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-                whileHover={{ y: -5 }}
-                className="bg-white rounded-3xl p-8 border border-gray-200 hover:shadow-xl transition-all duration-300"
+                transition={{ delay: index * 0.1 }}
+                className="bg-gray-50 p-6 rounded-xl border border-gray-200"
               >
-                <div className="flex gap-1 mb-6">
+                <div className="flex gap-1 mb-4">
                   {[...Array(testimonial.rating)].map((_, i) => (
-                    <Star key={i} className="h-5 w-5 text-yellow-400 fill-yellow-400" />
+                    <Star key={i} className="h-4 w-4 fill-amber-400 text-amber-400" />
                   ))}
                 </div>
-                <p className="text-gray-700 mb-8 leading-relaxed text-lg">
-                  "{testimonial.content}"
-                </p>
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-500 rounded-2xl flex items-center justify-center text-white font-bold">
-                    {testimonial.name.split(' ').map(n => n[0]).join('')}
-                  </div>
-                  <div className="flex-1 text-right">
-                    <div className="font-bold text-gray-900">{testimonial.name}</div>
-                    <div className="text-gray-600 text-sm">{testimonial.role}</div>
-                  </div>
+                <p className="text-gray-700 mb-4 leading-relaxed">"{testimonial.comment}"</p>
+                <div>
+                  <div className="font-semibold text-gray-900">{testimonial.name}</div>
+                  <div className="text-sm text-gray-600">{testimonial.business}</div>
                 </div>
               </motion.div>
             ))}
@@ -453,31 +444,148 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Final CTA Section */}
-      <section className="py-24 bg-gradient-to-r from-blue-600 via-purple-600 to-cyan-600 text-white relative">
-        <div className="max-w-4xl mx-auto px-6 text-center">
+      {/* Pricing Section */}
+      {/* <section className="py-20 px-6 bg-gray-50">
+        <div className="max-w-6xl mx-auto">
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
+            className="text-center mb-16"
           >
-            <h2 className="text-4xl lg:text-5xl font-bold mb-8">
-              مستعد لتحسين تقييماتك الرقمية؟
-            </h2>
-            <p className="text-xl text-blue-100 mb-12 max-w-2xl mx-auto leading-relaxed">
-              انضم إلى آلاف الشركات والأفراد الذين حققوا نجاحات مذهلة في تعزيز وجودهم الرقمي
+            <h2 className="text-3xl font-light text-gray-900 mb-4">باقات الأسعار</h2>
+            <p className="text-gray-600 max-w-xl mx-auto">اختر الباقة المناسبة لاحتياجاتك</p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {pricing.map((plan, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+                className={`bg-white rounded-xl border-2 ${
+                  plan.popular ? 'border-blue-500 relative' : 'border-gray-200'
+                } p-8`}
+              >
+                {plan.popular && (
+                  <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                    <span className="bg-blue-500 text-white px-4 py-1 rounded-full text-sm font-medium">
+                      الأكثر شيوعًا
+                    </span>
+                  </div>
+                )}
+                
+                <h3 className="text-2xl font-semibold text-gray-900 mb-4">{plan.name}</h3>
+                <div className="mb-6">
+                  <span className="text-4xl font-bold text-gray-900">${plan.price}</span>
+                  <span className="text-gray-600">/شهريًا</span>
+                </div>
+                
+                <div className="space-y-3 mb-8">
+                  {plan.features.map((feature, idx) => (
+                    <div key={idx} className="flex items-center gap-3 text-sm text-gray-600">
+                      <CheckCircle className="h-4 w-4 text-green-500" />
+                      {feature}
+                    </div>
+                  ))}
+                </div>
+                
+                <Button className={`w-full ${plan.popular ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-900 hover:bg-gray-800'}`}>
+                  اختر الباقة
+                </Button>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section> */}
+
+      {/* FAQ Section */}
+      <section className="py-20 px-6 bg-white">
+        <div className="max-w-4xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            className="text-center mb-16"
+          >
+            <h2 className="text-3xl font-light text-gray-900 mb-4">الأسئلة الشائعة</h2>
+            <p className="text-gray-600">إجابات على أسئلتك الأكثر شيوعًا</p>
+          </motion.div>
+
+          <div className="space-y-6">
+            {[
+              {
+                question: "هل التقييمات حقيقية وآمنة؟",
+                answer: "نعم، جميع التقييمات من مستخدمين حقيقيين وتتم بطريقة آمنة تمامًا."
+              },
+              {
+                question: "كم تستغرق عملية التقييم؟",
+                answer: "تستغرق معظم الطلبات من 24 إلى 72 ساعة حسب حجم الطلب."
+              },
+              {
+                question: "هل يمكنني إلغاء الطلب؟",
+                answer: "نعم، يمكنك إلغاء الطلب خلال 24 ساعة من تقديمه."
+              },
+              {
+                question: "كيف أضمن جودة التقييمات؟",
+                answer: "نحن نعمل مع فريق من المختبرين المحترفين ونراجع جميع التقييمات قبل تسليمها."
+              }
+            ].map((faq, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 10 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+                className="bg-gray-50 p-6 rounded-lg border border-gray-200"
+              >
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">{faq.question}</h3>
+                <p className="text-gray-600">{faq.answer}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Final CTA */}
+      <section className="py-20 px-6 bg-gray-900 text-white">
+        <div className="max-w-4xl mx-auto text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+          >
+            <h2 className="text-3xl md:text-4xl font-light mb-4">مستعد للبدء؟</h2>
+            <p className="text-gray-300 mb-8 text-xl">
+              انضم إلى آلاف العملاء الذين حصلوا على تقييمات حقيقية وحققوا نجاحًا ملحوظًا
             </p>
-            <div className="flex flex-col sm:flex-row gap-6 justify-center">
-              <Link href="/role-selection">
-                <Button size="lg" className="bg-white text-blue-600 hover:bg-gray-100 px-12 py-6 text-xl rounded-2xl shadow-2xl">
-                  ابدأ مجاناً الآن
-                  <ArrowRight className="mr-3 h-6 w-6" />
+            
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
+              <Link href="/get-started">
+                <Button size="lg" className="bg-white text-gray-900 hover:bg-gray-100 px-8">
+                  ابدأ التقييم الآن
+                  <ArrowRight className="mr-2 h-4 w-4" />
                 </Button>
               </Link>
-              <Button size="lg" variant="outline" className="border-2 border-white text-white hover:bg-white/10 px-12 py-6 text-xl rounded-2xl backdrop-blur-sm">
-                <MessageCircle className="mr-3 h-6 w-6" />
-                تواصل معنا
-              </Button>
+              
+              <Link href="/become-tester">
+                <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/10 px-8">
+                  <Users className="mr-2 h-4 w-4" />
+                  انضم كمختبر
+                </Button>
+              </Link>
+            </div>
+            
+            <div className="flex flex-wrap justify-center gap-6 text-sm text-gray-400">
+              <div className="flex items-center gap-2">
+                <CheckCircle className="h-4 w-4 text-green-400" />
+                تقييمات حقيقية 100%
+              </div>
+              <div className="flex items-center gap-2">
+                <Shield className="h-4 w-4 text-blue-400" />
+                أمان وخصوصية تامة
+              </div>
+              <div className="flex items-center gap-2">
+                <Zap className="h-4 w-4 text-yellow-400" />
+                نتائج فورية
+              </div>
             </div>
           </motion.div>
         </div>

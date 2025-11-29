@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Play, Send } from "lucide-react";
+import { Play, Send, Upload } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { Task } from "@shared/schema";
@@ -15,6 +15,8 @@ export default function MyTasks() {
   const { toast } = useToast();
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [submissionText, setSubmissionText] = useState("");
+  const [proofFile, setProofFile] = useState<File | null>(null);
+  const [proofPreviewUrl, setProofPreviewUrl] = useState<string | null>(null);
   const [showSubmitDialog, setShowSubmitDialog] = useState(false);
 
   const { data: myTasks = [], isLoading } = useQuery<Task[]>({
@@ -35,13 +37,16 @@ export default function MyTasks() {
   });
 
   const submitTaskMutation = useMutation({
-    mutationFn: async (data: { taskId: string; submission: string }) => {
-      return apiRequest( `/api/tasks/${data.taskId}/submit`,"PATCH", { submission: data.submission });
+    mutationFn: async ({ taskId, formData }: { taskId: string; formData: FormData }) => {
+      return apiRequest( `/api/tasks/${taskId}/submit-proof`,"PATCH", formData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/tasks/my-tasks"] });
       setShowSubmitDialog(false);
       setSubmissionText("");
+      if (proofPreviewUrl) URL.revokeObjectURL(proofPreviewUrl);
+      setProofPreviewUrl(null);
+      setProofFile(null);
       toast({
         title: "تم تسليم المهمة",
         description: "تم إرسال المهمة للمراجعة بنجاح",
@@ -163,7 +168,7 @@ export default function MyTasks() {
             </DialogDescription>
           </DialogHeader>
           <div>
-            <Label htmlFor="submission">التقرير</Label>
+            <Label htmlFor="submission">التقرير *</Label>
             <Textarea
               id="submission"
               value={submissionText}
@@ -173,24 +178,56 @@ export default function MyTasks() {
               rows={5}
               data-testid="textarea-submission"
             />
+            <div className="mt-4 space-y-2">
+              <Label htmlFor="proofImage">صورة الإثبات *</Label>
+              <input
+                id="proofImage"
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  const file = e.target.files?.[0] ?? null;
+                  setProofFile(file);
+                  if (proofPreviewUrl) URL.revokeObjectURL(proofPreviewUrl);
+                  setProofPreviewUrl(file ? URL.createObjectURL(file) : null);
+                }}
+                data-testid="input-proof-file"
+              />
+              {proofPreviewUrl && (
+                <div className="mt-2">
+                  <img src={proofPreviewUrl} alt="معاينة الصورة" className="h-24 rounded-lg border" />
+                </div>
+              )}
+              <p className="text-xs text-muted-foreground">أرفق صورة واضحة لإثبات إنجاز المهمة</p>
+            </div>
           </div>
           <DialogFooter className="gap-2">
             <Button
               variant="outline"
-              onClick={() => setShowSubmitDialog(false)}
+              onClick={() => {
+                setShowSubmitDialog(false);
+                if (proofPreviewUrl) URL.revokeObjectURL(proofPreviewUrl);
+                setProofPreviewUrl(null);
+                setProofFile(null);
+              }}
               className="rounded-xl"
               data-testid="button-cancel"
             >
               إلغاء
             </Button>
             <Button
-              onClick={() => selectedTask && submitTaskMutation.mutate({ taskId: selectedTask.id, submission: submissionText })}
-              disabled={submitTaskMutation.isPending || !submissionText.trim()}
+              onClick={() => {
+                if (!selectedTask || !submissionText.trim() || !proofFile) return;
+                const form = new FormData();
+                form.append("report", submissionText.trim());
+                form.append("proofImage", proofFile);
+                submitTaskMutation.mutate({ taskId: selectedTask.id, formData: form });
+              }}
+              disabled={submitTaskMutation.isPending || !submissionText.trim() || !proofFile}
               className="rounded-xl"
               data-testid="button-confirm-submit"
             >
-              <Send className="ml-2 h-4 w-4" />
-              إرسال التقرير
+              <Upload className="ml-2 h-4 w-4" />
+              تسليم المهمة
             </Button>
           </DialogFooter>
         </DialogContent>

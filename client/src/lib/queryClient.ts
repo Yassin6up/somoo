@@ -15,7 +15,10 @@ export async function apiRequest(
   const token = localStorage.getItem("token");
   const headers: Record<string, string> = {};
   
-  if (data) {
+  // Only set JSON content type when sending plain objects.
+  // For FormData (e.g., file uploads), let the browser set the multipart boundary.
+  const isFormData = typeof FormData !== "undefined" && data instanceof FormData;
+  if (data && !isFormData) {
     headers["Content-Type"] = "application/json";
   }
   
@@ -26,7 +29,7 @@ export async function apiRequest(
   const res = await fetch(url, {
     method,
     headers,
-    body: data ? JSON.stringify(data) : undefined,
+    body: data ? (isFormData ? (data as FormData) : JSON.stringify(data)) : undefined,
     credentials: "include",
   });
 
@@ -41,8 +44,16 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
+    const token = localStorage.getItem("token");
+    const headers: Record<string, string> = {};
+    
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+    
     const res = await fetch(queryKey.join("/") as string, {
       credentials: "include",
+      headers,
     });
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {

@@ -19,7 +19,8 @@ export default function MyTasks() {
   const { toast } = useToast();
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [submission, setSubmission] = useState("");
-  const [proofImage, setProofImage] = useState("");
+  const [proofImageFile, setProofImageFile] = useState<File | null>(null);
+  const [proofPreviewUrl, setProofPreviewUrl] = useState<string | null>(null);
 
   // Fetch assigned tasks
   const { data: tasks = [], isLoading } = useQuery<Task[]>({
@@ -49,8 +50,8 @@ export default function MyTasks() {
 
   // Submit task mutation
   const submitTaskMutation = useMutation({
-    mutationFn: async ({ taskId, data }: { taskId: string; data: { submission: string; proofImage?: string } }) => {
-      return await apiRequest(`/api/tasks/${taskId}/submit-proof`, "PATCH", data);
+    mutationFn: async ({ taskId, formData }: { taskId: string; formData: FormData }) => {
+      return await apiRequest(`/api/tasks/${taskId}/submit-proof`, "PATCH", formData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/tasks/my/assigned"] });
@@ -60,7 +61,11 @@ export default function MyTasks() {
       });
       setSelectedTask(null);
       setSubmission("");
-      setProofImage("");
+      setProofImageFile(null);
+      if (proofPreviewUrl) {
+        URL.revokeObjectURL(proofPreviewUrl);
+      }
+      setProofPreviewUrl(null);
     },
     onError: (error: any) => {
       toast({
@@ -72,14 +77,11 @@ export default function MyTasks() {
   });
 
   const handleSubmitTask = () => {
-    if (selectedTask && submission.trim()) {
-      submitTaskMutation.mutate({
-        taskId: selectedTask.id,
-        data: {
-          submission: submission.trim(),
-          proofImage: proofImage.trim() || undefined,
-        },
-      });
+    if (selectedTask && submission.trim() && proofImageFile) {
+      const form = new FormData();
+      form.append("report", submission.trim());
+      form.append("proofImage", proofImageFile);
+      submitTaskMutation.mutate({ taskId: selectedTask.id, formData: form });
     }
   };
 
@@ -372,7 +374,11 @@ export default function MyTasks() {
       <Dialog open={!!selectedTask} onOpenChange={() => {
         setSelectedTask(null);
         setSubmission("");
-        setProofImage("");
+        setProofImageFile(null);
+        if (proofPreviewUrl) {
+          URL.revokeObjectURL(proofPreviewUrl);
+        }
+        setProofPreviewUrl(null);
       }}>
         <DialogContent className="max-w-2xl" data-testid="dialog-submit-task">
           <DialogHeader>
@@ -401,17 +407,26 @@ export default function MyTasks() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">رابط صورة الإثبات (اختياري)</label>
+                <label className="text-sm font-medium">صورة الإثبات (مطلوبة)</label>
                 <Input
-                  type="url"
-                  placeholder="https://example.com/proof-image.jpg"
-                  value={proofImage}
-                  onChange={(e) => setProofImage(e.target.value)}
-                  data-testid="input-proof-image"
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0] ?? null;
+                    setProofImageFile(file);
+                    if (proofPreviewUrl) {
+                      URL.revokeObjectURL(proofPreviewUrl);
+                    }
+                    setProofPreviewUrl(file ? URL.createObjectURL(file) : null);
+                  }}
+                  data-testid="input-proof-file"
                 />
-                <p className="text-xs text-muted-foreground">
-                  يمكنك رفع الصورة على خدمة مثل Imgur ووضع الرابط هنا
-                </p>
+                {proofPreviewUrl && (
+                  <div className="mt-2">
+                    <img src={proofPreviewUrl} alt="معاينة الصورة" className="h-24 rounded-lg border" />
+                  </div>
+                )}
+                <p className="text-xs text-muted-foreground">أرفق صورة واضحة لإثبات إنجاز المهمة</p>
               </div>
             </div>
           )}
@@ -422,7 +437,11 @@ export default function MyTasks() {
               onClick={() => {
                 setSelectedTask(null);
                 setSubmission("");
-                setProofImage("");
+                if (proofPreviewUrl) {
+                  URL.revokeObjectURL(proofPreviewUrl);
+                }
+                setProofPreviewUrl(null);
+                setProofImageFile(null);
               }}
               data-testid="button-cancel-submit"
             >
@@ -430,7 +449,7 @@ export default function MyTasks() {
             </Button>
             <Button
               onClick={handleSubmitTask}
-              disabled={!submission.trim() || submitTaskMutation.isPending}
+              disabled={!submission.trim() || !proofImageFile || submitTaskMutation.isPending}
               data-testid="button-confirm-submit"
             >
               {submitTaskMutation.isPending ? "جاري التسليم..." : "تسليم المهمة"}

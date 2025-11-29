@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Checkbox } from "@/components/ui/checkbox";
-import { LogIn, Mail, Lock, Sparkles } from "lucide-react";
+import { LogIn, Mail, Lock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -85,55 +85,51 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-muted/20">
+    <div className="min-h-screen flex flex-col bg-white">
       <Navbar />
 
-      <div className="flex-1 flex items-center justify-center py-12 px-4">
+      <div className="flex-1 flex items-center justify-center py-8 px-4 mt-12">
         <div className="w-full max-w-md">
           {/* Header */}
           <div className="text-center mb-8 space-y-3">
-            <div className="inline-flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-full mb-2">
-              <Sparkles className="h-4 w-4 text-primary" />
-              <span className="text-sm font-medium text-primary">مرحبًا بعودتك</span>
-            </div>
-            <h1 className="text-3xl font-bold">تسجيل الدخول</h1>
-            <p className="text-muted-foreground">
+            <h1 className="text-2xl font-semibold text-gray-900">تسجيل الدخول</h1>
+            <p className="text-gray-600">
               ادخل إلى حسابك في منصة سُمُوّ
             </p>
           </div>
 
           {/* Login Card */}
-          <Card className="rounded-2xl shadow-xl border-2">
-            <CardHeader className="space-y-2 pb-6">
-              <CardTitle className="text-2xl text-center">تسجيل الدخول</CardTitle>
-              <CardDescription className="text-center">
+          <Card className="border border-gray-200 rounded-lg">
+            <CardHeader className="space-y-2 pb-4">
+              <CardTitle className="text-xl text-center text-gray-900">تسجيل الدخول</CardTitle>
+              <CardDescription className="text-center text-gray-600">
                 ادخل بياناتك للوصول إلى حسابك
               </CardDescription>
             </CardHeader>
 
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-4">
               <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                   {/* Email Field */}
                   <FormField
                     control={form.control}
                     name="email"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="flex items-center gap-2">
-                          <Mail className="h-4 w-4 text-primary" />
-                          البريد الإلكتروني
-                        </FormLabel>
+                        <FormLabel className="text-gray-700">البريد الإلكتروني</FormLabel>
                         <FormControl>
-                          <Input 
-                            {...field} 
-                            type="email"
-                            placeholder="example@email.com" 
-                            className="rounded-xl h-11" 
-                            data-testid="input-email"
-                            autoComplete="email"
-                            name="email"
-                          />
+                          <div className="relative">
+                            <Mail className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                            <Input 
+                              {...field} 
+                              type="email"
+                              placeholder="example@email.com" 
+                              className="rounded-lg border-gray-300 focus:border-gray-400 pr-10" 
+                              data-testid="input-email"
+                              autoComplete="email"
+                              name="email"
+                            />
+                          </div>
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -146,20 +142,20 @@ export default function Login() {
                     name="password"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="flex items-center gap-2">
-                          <Lock className="h-4 w-4 text-primary" />
-                          كلمة المرور
-                        </FormLabel>
+                        <FormLabel className="text-gray-700">كلمة المرور</FormLabel>
                         <FormControl>
-                          <Input 
-                            {...field} 
-                            type="password"
-                            placeholder="••••••••" 
-                            className="rounded-xl h-11" 
-                            data-testid="input-password"
-                            autoComplete="current-password"
-                            name="password"
-                          />
+                          <div className="relative">
+                            <Lock className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                            <Input 
+                              {...field} 
+                              type="password"
+                              placeholder="••••••••" 
+                              className="rounded-lg border-gray-300 focus:border-gray-400 pr-10" 
+                              data-testid="input-password"
+                              autoComplete="current-password"
+                              name="password"
+                            />
+                          </div>
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -178,9 +174,10 @@ export default function Login() {
                               checked={field.value}
                               onCheckedChange={field.onChange}
                               data-testid="checkbox-remember"
+                              className="border-gray-300 data-[state=checked]:bg-gray-900 data-[state=checked]:border-gray-900"
                             />
                           </FormControl>
-                          <FormLabel className="text-sm cursor-pointer mt-0">
+                          <FormLabel className="text-sm text-gray-700 cursor-pointer mt-0">
                             تذكرني
                           </FormLabel>
                         </FormItem>
@@ -188,7 +185,7 @@ export default function Login() {
                     />
                     <a 
                       href="#forgot-password" 
-                      className="text-sm text-primary hover:underline"
+                      className="text-sm text-gray-600 hover:text-gray-900 hover:underline"
                       data-testid="link-forgot-password"
                     >
                       نسيت كلمة المرور؟
@@ -198,7 +195,7 @@ export default function Login() {
                   {/* Submit Button */}
                   <Button 
                     type="submit" 
-                    className="w-full rounded-xl h-11 text-base"
+                    className="w-full bg-gray-900 hover:bg-gray-800 text-white rounded-lg"
                     disabled={loginMutation.isPending}
                     data-testid="button-login"
                   >
@@ -206,7 +203,7 @@ export default function Login() {
                       "جاري تسجيل الدخول..."
                     ) : (
                       <>
-                        <LogIn className="ml-2 h-5 w-5" />
+                        <LogIn className="ml-2 h-4 w-4" />
                         تسجيل الدخول
                       </>
                     )}
@@ -215,20 +212,20 @@ export default function Login() {
                   {/* Divider */}
                   <div className="relative">
                     <div className="absolute inset-0 flex items-center">
-                      <div className="w-full border-t"></div>
+                      <div className="w-full border-t border-gray-200"></div>
                     </div>
                     <div className="relative flex justify-center text-xs">
-                      <span className="bg-card px-3 text-muted-foreground">
+                      <span className="bg-white px-3 text-gray-500">
                         أو
                       </span>
                     </div>
                   </div>
 
                   {/* Sign Up Link */}
-                  <div className="text-center space-y-3">
-                    <p className="text-sm text-muted-foreground">
+                  <div className="text-center">
+                    <p className="text-sm text-gray-600">
                       ليس لديك حساب؟{" "}
-                      <Link href="/role-selection" className="text-primary font-semibold hover:underline" data-testid="link-signup">
+                      <Link href="/role-selection" className="text-gray-900 font-medium hover:underline" data-testid="link-signup">
                         أنشئ حسابًا جديدًا
                       </Link>
                     </p>
@@ -240,11 +237,11 @@ export default function Login() {
 
           {/* Additional Info */}
           <div className="mt-6 text-center">
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-gray-500">
               بتسجيل الدخول، أنت توافق على{" "}
-              <a href="#terms" className="text-primary hover:underline" data-testid="link-terms">الشروط والأحكام</a>
+              <a href="#terms" className="text-gray-700 hover:underline" data-testid="link-terms">الشروط والأحكام</a>
               {" "}و{" "}
-              <a href="#privacy" className="text-primary hover:underline" data-testid="link-privacy">سياسة الخصوصية</a>
+              <a href="#privacy" className="text-gray-700 hover:underline" data-testid="link-privacy">سياسة الخصوصية</a>
             </p>
           </div>
         </div>

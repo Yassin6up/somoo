@@ -31,7 +31,7 @@ const servicesList = [
   { id: "ux_testing", name: "اختبار تجربة المستخدم لتطبيقك أو موقعك", pricePerReview: 1 },
   { id: "software_testing", name: "اختبار أنظمة السوفت وير", pricePerReview: 1 },
   { id: "social_media_engagement", name: "التفاعل مع منشورات السوشيال ميديا", pricePerReview: 1 },
-  { id: "google_maps_review", name: "تقييمات خرائط جوجل ماب (Google Maps Reviews)", pricePerReview: 2 },
+  { id: "google_maps_review", name: "تقييمات خرائط جوجل ماب", pricePerReview: 2 },
 ];
 
 const step1Schema = z.object({
@@ -100,9 +100,8 @@ export default function ProductOwnerSignup() {
       
       toast({
         title: "تم إنشاء الحساب بنجاح!",
-        description: "يرجى قراءة الشروط والأحكام الهامة قبل البدء",
+        description: "مرحبًا بك في منصة سُمُوّ",
       });
-      // Redirect to instructions page first
       navigate("/product-owner-instructions");
     },
     onError: (error: any) => {
@@ -140,13 +139,11 @@ export default function ProductOwnerSignup() {
   const totalCost = reviewsCount * pricePerReview;
 
   const handleNext = async () => {
-    // For Step 2, if user wants to skip order, allow skipping validation
     if (currentStep === 2) {
       const currentValues = form.getValues();
       const updatedFormData = { ...formData, ...currentValues };
       setFormData(updatedFormData);
       
-      // If skipping order, go directly to step 3
       if (currentValues.skipOrder) {
         setCurrentStep(currentStep + 1);
         form.clearErrors();
@@ -178,26 +175,26 @@ export default function ProductOwnerSignup() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-muted/20">
+    <div className="min-h-screen flex flex-col bg-white">
       <Navbar />
 
-      <div className="flex-1 py-8 px-4">
+      <div className="flex-1 py-8 px-4 mt-12">
         <div className="max-w-3xl mx-auto">
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold mb-2">إنشاء حساب صاحب منتج</h1>
-            <p className="text-muted-foreground">احصل على تقييمات واختبارات حقيقية لمنتجك</p>
+            <h1 className="text-2xl font-semibold text-gray-900 mb-2">إنشاء حساب صاحب منتج</h1>
+            <p className="text-gray-600">احصل على تقييمات واختبارات حقيقية لمنتجك</p>
           </div>
 
           <StepIndicator steps={steps} currentStep={currentStep} />
 
-          <Card className="rounded-2xl shadow-lg">
-            <CardHeader className="border-b">
-              <CardTitle className="text-2xl text-center">
+          <Card className="border border-gray-200 rounded-lg">
+            <CardHeader className="border-b border-gray-200">
+              <CardTitle className="text-xl text-center text-gray-900">
                 {steps[currentStep - 1].title}
               </CardTitle>
             </CardHeader>
 
-            <CardContent className="p-6 md:p-8">
+            <CardContent className="p-6">
               <Form {...form}>
                 <form className="space-y-6">
                   {/* Step 1: Basic Information */}
@@ -208,12 +205,12 @@ export default function ProductOwnerSignup() {
                         name="fullName"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>الاسم الكامل / اسم الشركة *</FormLabel>
+                            <FormLabel className="text-gray-700">الاسم الكامل / اسم الشركة *</FormLabel>
                             <FormControl>
                               <Input 
                                 {...field} 
                                 placeholder="أحمد محمد" 
-                                className="rounded-xl" 
+                                className="rounded-lg border-gray-300 focus:border-gray-400" 
                                 data-testid="input-fullname"
                               />
                             </FormControl>
@@ -227,13 +224,13 @@ export default function ProductOwnerSignup() {
                         name="email"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>البريد الإلكتروني *</FormLabel>
+                            <FormLabel className="text-gray-700">البريد الإلكتروني *</FormLabel>
                             <FormControl>
                               <Input 
                                 {...field} 
                                 type="email" 
                                 placeholder="info@company.com" 
-                                className="rounded-xl" 
+                                className="rounded-lg border-gray-300 focus:border-gray-400" 
                                 data-testid="input-email"
                                 autoComplete="email"
                                 name="email"
@@ -249,13 +246,13 @@ export default function ProductOwnerSignup() {
                         name="password"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>كلمة المرور *</FormLabel>
+                            <FormLabel className="text-gray-700">كلمة المرور *</FormLabel>
                             <FormControl>
                               <Input 
                                 {...field} 
                                 type="password" 
                                 placeholder="••••••••" 
-                                className="rounded-xl" 
+                                className="rounded-lg border-gray-300 focus:border-gray-400" 
                                 data-testid="input-password"
                                 autoComplete="new-password"
                                 name="password"
@@ -276,7 +273,7 @@ export default function ProductOwnerSignup() {
                         control={form.control}
                         name="skipOrder"
                         render={({ field }) => (
-                          <FormItem className="flex items-center gap-3 space-y-0 p-4 bg-blue-50 border border-blue-200 rounded-2xl">
+                          <FormItem className="flex items-center gap-3 space-y-0 p-4 bg-blue-50 border border-blue-200 rounded-lg">
                             <FormControl>
                               <Checkbox
                                 checked={field.value}
@@ -285,13 +282,14 @@ export default function ProductOwnerSignup() {
                                   setFormData({ ...formData, skipOrder: !!checked });
                                 }}
                                 data-testid="checkbox-skip-order"
+                                className="border-gray-300 data-[state=checked]:bg-gray-900 data-[state=checked]:border-gray-900"
                               />
                             </FormControl>
                             <div className="flex-1">
-                              <FormLabel className="text-base font-semibold cursor-pointer">
+                              <FormLabel className="text-gray-700 font-medium cursor-pointer">
                                 أتجاهل إنشاء طلب الآن وأنشئ حسابي فقط
                               </FormLabel>
-                              <FormDescription className="mt-1">
+                              <FormDescription className="mt-1 text-gray-600">
                                 يمكنك إضافة طلب لاحقاً من لوحة تحكمك
                               </FormDescription>
                             </div>
@@ -306,7 +304,7 @@ export default function ProductOwnerSignup() {
                             name="serviceType"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>اختر نوع الخدمة</FormLabel>
+                                <FormLabel className="text-gray-700">اختر نوع الخدمة</FormLabel>
                                 <Select 
                                   onValueChange={(value) => {
                                     field.onChange(value);
@@ -315,7 +313,7 @@ export default function ProductOwnerSignup() {
                                   defaultValue={field.value}
                                 >
                                   <FormControl>
-                                    <SelectTrigger className="rounded-xl" data-testid="select-service-type">
+                                    <SelectTrigger className="rounded-lg border-gray-300" data-testid="select-service-type">
                                       <SelectValue placeholder="اختر الخدمة المطلوبة" />
                                     </SelectTrigger>
                                   </FormControl>
@@ -339,7 +337,7 @@ export default function ProductOwnerSignup() {
                                 name="reviewsCount"
                                 render={({ field }) => (
                                   <FormItem>
-                                    <FormLabel>أدخل عدد التقييمات المطلوبة</FormLabel>
+                                    <FormLabel className="text-gray-700">أدخل عدد التقييمات المطلوبة</FormLabel>
                                     <FormControl>
                                       <Input 
                                         {...field} 
@@ -347,7 +345,7 @@ export default function ProductOwnerSignup() {
                                         min="1"
                                         max="1000"
                                         placeholder="50" 
-                                        className="rounded-xl" 
+                                        className="rounded-lg border-gray-300 focus:border-gray-400" 
                                         data-testid="input-reviews-count"
                                         onChange={(e) => {
                                           const value = parseInt(e.target.value) || 0;
@@ -356,7 +354,7 @@ export default function ProductOwnerSignup() {
                                         }}
                                       />
                                     </FormControl>
-                                    <FormDescription>
+                                    <FormDescription className="text-gray-600">
                                       أدخل عدد التقييمات التي تحتاجها (من 1 إلى 1000)
                                     </FormDescription>
                                     <FormMessage />
@@ -365,36 +363,33 @@ export default function ProductOwnerSignup() {
                               />
 
                               {/* عرض ملخص التكلفة */}
-                              <div className="bg-primary/5 border border-primary/20 p-6 rounded-2xl space-y-4">
-                                <div className="flex items-center gap-2 mb-4">
-                                  <DollarSign className="h-5 w-5 text-primary" />
-                                  <h3 className="font-bold text-lg">ملخص التكلفة</h3>
-                                </div>
+                              <div className="bg-gray-50 border border-gray-200 p-4 rounded-lg space-y-3">
+                                <h3 className="font-semibold text-gray-900">ملخص التكلفة</h3>
                                 
-                                <div className="space-y-3">
+                                <div className="space-y-2">
                                   <div className="flex justify-between items-center">
-                                    <span className="text-muted-foreground">نوع الخدمة:</span>
-                                    <span className="font-medium">{selectedService?.name}</span>
+                                    <span className="text-gray-600">نوع الخدمة:</span>
+                                    <span className="font-medium text-gray-900">{selectedService?.name}</span>
                                   </div>
                                   
                                   <div className="flex justify-between items-center">
-                                    <span className="text-muted-foreground">عدد التقييمات:</span>
-                                    <span className="font-medium flex items-center gap-1">
-                                      <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+                                    <span className="text-gray-600">عدد التقييمات:</span>
+                                    <span className="font-medium text-gray-900 flex items-center gap-1">
+                                      <Star className="h-4 w-4 text-yellow-500" />
                                       {reviewsCount} تقييم
                                     </span>
                                   </div>
                                   
                                   <div className="flex justify-between items-center">
-                                    <span className="text-muted-foreground">سعر التقييم الواحد:</span>
-                                    <span className="font-medium">{pricePerReview} دولار</span>
+                                    <span className="text-gray-600">سعر التقييم الواحد:</span>
+                                    <span className="font-medium text-gray-900">{pricePerReview} دولار</span>
                                   </div>
                                   
-                                  <div className="h-px bg-border my-3"></div>
+                                  <div className="h-px bg-gray-200 my-2"></div>
                                   
                                   <div className="flex justify-between items-center">
-                                    <span className="font-bold text-lg">التكلفة الإجمالية:</span>
-                                    <span className="font-bold text-2xl text-primary">
+                                    <span className="font-semibold text-gray-900">التكلفة الإجمالية:</span>
+                                    <span className="font-bold text-lg text-gray-900">
                                       ${totalCost}
                                     </span>
                                   </div>
@@ -406,8 +401,8 @@ export default function ProductOwnerSignup() {
                       )}
 
                       {formData.skipOrder && (
-                        <div className="bg-green-50 border border-green-200 p-6 rounded-2xl text-center space-y-3">
-                          <p className="font-semibold text-green-900">سيتم إنشاء حسابك بدون طلب</p>
+                        <div className="bg-green-50 border border-green-200 p-4 rounded-lg text-center space-y-2">
+                          <p className="font-medium text-green-900">سيتم إنشاء حسابك بدون طلب</p>
                           <p className="text-sm text-green-800">يمكنك إضافة طلب جديد من لوحة التحكم في أي وقت</p>
                         </div>
                       )}
@@ -417,41 +412,41 @@ export default function ProductOwnerSignup() {
                   {/* Step 3: Confirmation */}
                   {currentStep === 3 && (
                     <div className="space-y-6">
-                      <div className="bg-accent/10 p-6 rounded-2xl space-y-4">
-                        <h3 className="font-semibold text-lg">ملخص الحساب</h3>
-                        <div className="space-y-3 text-sm">
+                      <div className="bg-gray-50 border border-gray-200 p-4 rounded-lg space-y-3">
+                        <h3 className="font-semibold text-gray-900">ملخص الحساب</h3>
+                        <div className="space-y-2 text-sm">
                           <div className="flex justify-between">
-                            <span className="text-muted-foreground">الاسم:</span>
-                            <span className="font-medium">{formData.fullName}</span>
+                            <span className="text-gray-600">الاسم:</span>
+                            <span className="font-medium text-gray-900">{formData.fullName}</span>
                           </div>
                           <div className="flex justify-between">
-                            <span className="text-muted-foreground">البريد الإلكتروني:</span>
-                            <span className="font-medium">{formData.email}</span>
+                            <span className="text-gray-600">البريد الإلكتروني:</span>
+                            <span className="font-medium text-gray-900">{formData.email}</span>
                           </div>
                           
                           {!formData.skipOrder && (
                             <>
-                              <div className="h-px bg-border my-2"></div>
-                              <h4 className="font-semibold text-base">تفاصيل الطلب:</h4>
+                              <div className="h-px bg-gray-200 my-2"></div>
+                              <h4 className="font-semibold text-gray-900">تفاصيل الطلب:</h4>
                               <div className="flex justify-between">
-                                <span className="text-muted-foreground">الخدمة:</span>
-                                <span className="font-medium">{selectedService?.name}</span>
+                                <span className="text-gray-600">الخدمة:</span>
+                                <span className="font-medium text-gray-900">{selectedService?.name}</span>
                               </div>
                               <div className="flex justify-between">
-                                <span className="text-muted-foreground">عدد التقييمات:</span>
-                                <span className="font-medium">{reviewsCount} تقييم</span>
+                                <span className="text-gray-600">عدد التقييمات:</span>
+                                <span className="font-medium text-gray-900">{reviewsCount} تقييم</span>
                               </div>
-                              <div className="h-px bg-border my-2"></div>
+                              <div className="h-px bg-gray-200 my-2"></div>
                               <div className="flex justify-between">
-                                <span className="font-bold">التكلفة الإجمالية:</span>
-                                <span className="font-bold text-primary text-lg">${totalCost}</span>
+                                <span className="font-semibold text-gray-900">التكلفة الإجمالية:</span>
+                                <span className="font-bold text-gray-900">${totalCost}</span>
                               </div>
                             </>
                           )}
                           
                           {formData.skipOrder && (
                             <>
-                              <div className="h-px bg-border my-2"></div>
+                              <div className="h-px bg-gray-200 my-2"></div>
                               <div className="bg-green-50 p-3 rounded-lg text-center">
                                 <p className="text-green-800 font-medium">بدون طلب</p>
                                 <p className="text-xs text-green-700">يمكنك إنشاء طلب لاحقاً</p>
@@ -465,18 +460,19 @@ export default function ProductOwnerSignup() {
                         control={form.control}
                         name="acceptTerms"
                         render={({ field }) => (
-                          <FormItem className="flex items-start gap-2 space-y-0 p-4 bg-muted/30 rounded-xl">
+                          <FormItem className="flex items-start gap-2 space-y-0 p-4 bg-gray-50 rounded-lg border border-gray-200">
                             <FormControl>
                               <Checkbox
                                 checked={field.value}
                                 onCheckedChange={field.onChange}
                                 data-testid="checkbox-terms"
+                                className="border-gray-300 data-[state=checked]:bg-gray-900 data-[state=checked]:border-gray-900"
                               />
                             </FormControl>
                             <div className="flex-1">
-                              <FormLabel className="text-sm leading-relaxed cursor-pointer">
+                              <FormLabel className="text-sm text-gray-700 leading-relaxed cursor-pointer">
                                 أتعهد بعدم طلب تقييمات غير حقيقية، وجميع التجارب ستكون فعلية داخل المنصة. أوافق على{" "}
-                                <a href="#terms" className="text-primary hover:underline">الشروط والأحكام</a>
+                                <a href="#terms" className="text-gray-900 hover:underline">الشروط والأحكام</a>
                               </FormLabel>
                               <FormMessage />
                             </div>
@@ -493,7 +489,7 @@ export default function ProductOwnerSignup() {
                         type="button" 
                         variant="outline" 
                         onClick={handleBack}
-                        className="flex-1 rounded-2xl"
+                        className="flex-1 rounded-lg border-gray-300 text-gray-700 hover:bg-gray-50"
                         data-testid="button-back"
                       >
                         <ArrowLeft className="ml-2 h-4 w-4" />
@@ -505,7 +501,7 @@ export default function ProductOwnerSignup() {
                       type="button"
                       onClick={handleNext}
                       disabled={createOwnerMutation.isPending}
-                      className="flex-1 rounded-2xl"
+                      className="flex-1 bg-gray-900 hover:bg-gray-800 text-white rounded-lg"
                       data-testid="button-next"
                     >
                       {currentStep === 3 ? (
@@ -525,9 +521,9 @@ export default function ProductOwnerSignup() {
 
           {/* Sign in link */}
           <div className="text-center mt-6">
-            <p className="text-sm text-muted-foreground">
+            <p className="text-gray-600">
               هل لديك حساب بالفعل؟{" "}
-              <a href="/login" className="text-primary hover:underline font-medium">
+              <a href="/login" className="text-gray-900 hover:underline font-medium">
                 تسجيل الدخول
               </a>
             </p>

@@ -14,6 +14,18 @@ import { Briefcase, Search, Calendar, DollarSign, CheckCircle2, Users, MapPin, Z
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { Project, Group, Campaign } from "@shared/schema";
 
+// Helper function to translate status to Arabic
+function getStatusLabel(status: string): string {
+  const statusLabels: Record<string, string> = {
+    "pending": "متاح",
+    "accepted": "مقبولة",
+    "in_progress": "قيد التنفيذ",
+    "completed": "مكتملة",
+    "cancelled": "ملغي"
+  };
+  return statusLabels[status] || status;
+}
+
 export default function Projects() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
@@ -266,7 +278,7 @@ export default function Projects() {
                     <CardTitle className="text-xl" style={{ fontFamily: "Tajawal, sans-serif" }}>
                       {project.title}
                     </CardTitle>
-                    <Badge>{project.status === "pending" ? "متاح" : project.status}</Badge>
+                    <Badge>{getStatusLabel(project.status)}</Badge>
                   </div>
                   <CardDescription className="line-clamp-3 min-h-[3.5rem]">
                     {project.description}

@@ -32,10 +32,9 @@ import {
     MessageCircle,
     DollarSign,
     Clock,
+    CheckCircle2,
     FileText
 } from "lucide-react";
-import CampaignsTab from "./group-leader-dashboard/Campaigns";
-import { motion, AnimatePresence } from "framer-motion";
 import { formatDistanceToNow } from "date-fns";
 import { ar } from "date-fns/locale";
 
@@ -67,11 +66,24 @@ interface GroupJoinRequest {
     };
 }
 
+// Helper function to translate status to Arabic
+function getStatusLabel(status: string): string {
+    const statusLabels: Record<string, string> = {
+        "pending": "قيد الانتظار",
+        "accepted": "مقبولة",
+        "in_progress": "قيد التنفيذ",
+        "completed": "مكتملة",
+        "cancelled": "ملغي"
+    };
+    return statusLabels[status] || status;
+}
+
 export default function GroupLeaderDashboard() {
     const { id: groupId } = useParams<{ id: string }>();
     const [, navigate] = useLocation();
     const { toast } = useToast();
     const [activeTab, setActiveTab] = useState("overview");
+    const [projectStatusFilter, setProjectStatusFilter] = useState<"active" | "completed">("active");
 
     // Fetch group data
     const { data: group, isLoading: groupLoading } = useQuery({
@@ -141,6 +153,14 @@ export default function GroupLeaderDashboard() {
         }
     });
 
+    // Filter projects based on status
+    const filteredProjects = acceptedProjects.filter((p: any) => {
+        if (projectStatusFilter === "active") {
+            return p.status === "in_progress";
+        }
+        return p.status === "completed";
+    });
+
     // Update group mutation
     const updateGroupMutation = useMutation({
         mutationFn: async (data: any) => {
@@ -167,16 +187,30 @@ export default function GroupLeaderDashboard() {
         mutationFn: async ({ requestId, status }: { requestId: string, status: 'approved' | 'rejected' }) => {
             return await apiRequest(`/api/groups/${groupId}/requests/${requestId}`, "PATCH", { status });
         },
+        onMutate: async ({ requestId }) => {
+            await queryClient.cancelQueries({ queryKey: [`/api/groups/${groupId}/requests`] });
+            
+            const previousRequests = queryClient.getQueryData([`/api/groups/${groupId}/requests`]);
+            
+            queryClient.setQueryData([`/api/groups/${groupId}/requests`], (old: any[]) => {
+                return old ? old.filter((req: any) => req.id !== requestId) : [];
+            });
+            
+            return { previousRequests };
+        },
         onSuccess: (_, variables) => {
             queryClient.invalidateQueries({ queryKey: [`/api/groups/${groupId}/requests`] });
             queryClient.invalidateQueries({ queryKey: [`/api/groups/${groupId}/members`] });
-            queryClient.invalidateQueries({ queryKey: [`/groups/${groupId}`] }); // Update member count
+            queryClient.invalidateQueries({ queryKey: [`/groups/${groupId}`] });
             toast({
                 title: variables.status === 'approved' ? "تم القبول" : "تم الرفض",
                 description: variables.status === 'approved' ? "تم قبول العضو بنجاح" : "تم رفض طلب الانضمام",
             });
         },
-        onError: (error: any) => {
+        onError: (error: any, _, context: any) => {
+            if (context?.previousRequests) {
+                queryClient.setQueryData([`/api/groups/${groupId}/requests`], context.previousRequests);
+            }
             toast({
                 title: "خطأ",
                 description: error.message || "حدث خطأ أثناء معالجة الطلب",
@@ -192,7 +226,7 @@ export default function GroupLeaderDashboard() {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: [`/api/groups/${groupId}/members`] });
-            queryClient.invalidateQueries({ queryKey: [`/groups/${groupId}`] }); // Update member count
+            queryClient.invalidateQueries({ queryKey: [`/groups/${groupId}`] });
             toast({
                 title: "تم الحذف",
                 description: "تم إزالة العضو من المجموعة",
@@ -218,25 +252,28 @@ export default function GroupLeaderDashboard() {
 
     if (groupLoading) {
         return (
-            <div className="flex items-center justify-center min-h-screen">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+            <div className="flex items-center justify-center min-h-screen bg-white">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
             </div>
         );
     }
 
     if (!group) {
-        return <div>Group not found</div>;
+        return <div className="flex items-center justify-center min-h-screen bg-white">المجموعة غير موجودة</div>;
     }
 
     // Check if current user is leader
     const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
     if (group.leaderId !== currentUser.id) {
         return (
-            <div className="flex flex-col items-center justify-center min-h-screen p-4">
-                <Shield className="w-16 h-16 text-red-500 mb-4" />
-                <h1 className="text-2xl font-bold text-gray-900">غير مصرح</h1>
+            <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-white">
+                <Shield className="w-16 h-16 text-gray-400 mb-4" />
+                <h1 className="text-xl font-semibold text-gray-900">غير مصرح</h1>
                 <p className="text-gray-600 mb-4">فقط قائد المجموعة يمكنه الوصول لهذه الصفحة</p>
-                <Button onClick={() => navigate(`/groups/${groupId}`)}>
+                <Button 
+                    onClick={() => navigate(`/groups/${groupId}`)}
+                    className="bg-gray-900 hover:bg-gray-800 text-white"
+                >
                     العودة للمجموعة
                 </Button>
             </div>
@@ -244,16 +281,21 @@ export default function GroupLeaderDashboard() {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50/50" dir="rtl">
+        <div className="min-h-screen bg-white" dir="rtl">
             <div className="bg-white border-b border-gray-200 sticky top-0 z-30">
                 <div className="container mx-auto px-4">
                     <div className="flex items-center justify-between h-16">
-                        <div className="flex items-center gap-4">
-                            <Button variant="ghost" size="icon" onClick={() => navigate(`/groups/${groupId}`)}>
+                        <div className="flex items-center gap-3">
+                            <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                onClick={() => navigate(`/groups/${groupId}`)}
+                                className="text-gray-600 hover:bg-gray-100"
+                            >
                                 <ArrowRight className="w-5 h-5" />
                             </Button>
-                            <h1 className="text-xl font-bold text-gray-900">لوحة تحكم القائد</h1>
-                            <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                            <h1 className="text-lg font-semibold text-gray-900">لوحة تحكم القائد</h1>
+                            <Badge variant="secondary" className="bg-gray-100 text-gray-800">
                                 {group.name}
                             </Badge>
                         </div>
@@ -261,31 +303,31 @@ export default function GroupLeaderDashboard() {
                 </div>
             </div>
 
-            <div className="container mx-auto px-4 py-8 max-w-6xl">
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <div className="container mx-auto px-4 py-6 max-w-6xl">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                     {/* Sidebar Navigation */}
                     <div className="lg:col-span-3">
-                        <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm sticky top-24">
-                            <CardContent className="p-4 space-y-2">
+                        <Card className="border border-gray-200 rounded-lg">
+                            <CardContent className="p-4 space-y-1">
                                 <Button
                                     variant={activeTab === "overview" ? "default" : "ghost"}
-                                    className={`w-full justify-start gap-3 ${activeTab === "overview" ? "bg-blue-600 hover:bg-blue-700" : "hover:bg-blue-50"}`}
+                                    className={`w-full justify-start gap-3 ${activeTab === "overview" ? "bg-gray-900 hover:bg-gray-800 text-white" : "text-gray-700 hover:bg-gray-50"}`}
                                     onClick={() => setActiveTab("overview")}
                                 >
                                     <LayoutDashboard className="w-4 h-4" />
                                     نظرة عامة
                                 </Button>
                                 <Button
-                                    variant={activeTab === "campaigns" ? "default" : "ghost"}
-                                    className={`w-full justify-start gap-3 ${activeTab === "campaigns" ? "bg-blue-600 hover:bg-blue-700" : "hover:bg-blue-50"}`}
-                                    onClick={() => setActiveTab("campaigns")}
+                                    variant={activeTab === "projects" ? "default" : "ghost"}
+                                    className={`w-full justify-start gap-3 ${activeTab === "projects" ? "bg-gray-900 hover:bg-gray-800 text-white" : "text-gray-700 hover:bg-gray-50"}`}
+                                    onClick={() => setActiveTab("projects")}
                                 >
-                                    <FileText className="w-4 h-4" />
-                                    الحملات
+                                    <Briefcase className="w-4 h-4" />
+                                    المشاريع والمهام
                                 </Button>
                                 <Button
                                     variant={activeTab === "settings" ? "default" : "ghost"}
-                                    className={`w-full justify-start gap-3 ${activeTab === "settings" ? "bg-blue-600 hover:bg-blue-700" : "hover:bg-blue-50"}`}
+                                    className={`w-full justify-start gap-3 ${activeTab === "settings" ? "bg-gray-900 hover:bg-gray-800 text-white" : "text-gray-700 hover:bg-gray-50"}`}
                                     onClick={() => setActiveTab("settings")}
                                 >
                                     <Settings className="w-4 h-4" />
@@ -293,44 +335,31 @@ export default function GroupLeaderDashboard() {
                                 </Button>
                                 <Button
                                     variant={activeTab === "members" ? "default" : "ghost"}
-                                    className={`w-full justify-start gap-3 ${activeTab === "members" ? "bg-blue-600 hover:bg-blue-700" : "hover:bg-blue-50"}`}
+                                    className={`w-full justify-start gap-3 ${activeTab === "members" ? "bg-gray-900 hover:bg-gray-800 text-white" : "text-gray-700 hover:bg-gray-50"}`}
                                     onClick={() => setActiveTab("members")}
                                 >
                                     <Users className="w-4 h-4" />
                                     الأعضاء
-                                    <Badge variant="secondary" className="mr-auto bg-blue-100 text-blue-700">
+                                    <Badge variant="secondary" className="mr-auto bg-gray-100 text-gray-700">
                                         {group.currentMembers}
                                     </Badge>
                                 </Button>
                                 <Button
                                     variant={activeTab === "requests" ? "default" : "ghost"}
-                                    className={`w-full justify-start gap-3 ${activeTab === "requests" ? "bg-blue-600 hover:bg-blue-700" : "hover:bg-blue-50"}`}
+                                    className={`w-full justify-start gap-3 ${activeTab === "requests" ? "bg-gray-900 hover:bg-gray-800 text-white" : "text-gray-700 hover:bg-gray-50"}`}
                                     onClick={() => setActiveTab("requests")}
                                 >
                                     <UserPlus className="w-4 h-4" />
                                     طلبات الانضمام
                                     {requests.length > 0 && (
-                                        <Badge variant="secondary" className="mr-auto bg-red-100 text-red-700 animate-pulse">
+                                        <Badge variant="secondary" className="mr-auto bg-red-100 text-red-700">
                                             {requests.length}
                                         </Badge>
                                     )}
                                 </Button>
                                 <Button
-                                    variant={activeTab === "orders" ? "default" : "ghost"}
-                                    className={`w-full justify-start gap-3 ${activeTab === "orders" ? "bg-blue-600 hover:bg-blue-700" : "hover:bg-blue-50"}`}
-                                    onClick={() => setActiveTab("orders")}
-                                >
-                                    <Briefcase className="w-4 h-4" />
-                                    الطلبات
-                                    {orders.length > 0 && (
-                                        <Badge variant="secondary" className="mr-auto bg-orange-100 text-orange-700">
-                                            {orders.length}
-                                        </Badge>
-                                    )}
-                                </Button>
-                                <Button
                                     variant={activeTab === "conversations" ? "default" : "ghost"}
-                                    className={`w-full justify-start gap-3 ${activeTab === "conversations" ? "bg-blue-600 hover:bg-blue-700" : "hover:bg-blue-50"}`}
+                                    className={`w-full justify-start gap-3 ${activeTab === "conversations" ? "bg-gray-900 hover:bg-gray-800 text-white" : "text-gray-700 hover:bg-gray-50"}`}
                                     onClick={() => setActiveTab("conversations")}
                                 >
                                     <MessageCircle className="w-4 h-4" />
@@ -341,496 +370,631 @@ export default function GroupLeaderDashboard() {
                                         </Badge>
                                     )}
                                 </Button>
-                                <Button
-                                    variant={activeTab === "projects" ? "default" : "ghost"}
-                                    className={`w-full justify-start gap-3 ${activeTab === "projects" ? "bg-blue-600 hover:bg-blue-700" : "hover:bg-blue-50"}`}
-                                    onClick={() => setActiveTab("projects")}
-                                    data-testid="button-projects-tab"
-                                >
-                                    <Briefcase className="w-4 h-4" />
-                                    المشاريع المقبولة
-                                    {acceptedProjects.length > 0 && (
-                                        <Badge variant="secondary" className="mr-auto bg-purple-100 text-purple-700">
-                                            {acceptedProjects.length}
-                                        </Badge>
-                                    )}
-                                </Button>
                             </CardContent>
                         </Card>
                     </div>
 
                     {/* Main Content */}
                     <div className="lg:col-span-9">
-                        <AnimatePresence mode="wait">
-                            <motion.div
-                                key={activeTab}
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: -20 }}
-                                transition={{ duration: 0.2 }}
-                            >
-                                {activeTab === "overview" && (
-                                    <div className="space-y-6">
-                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                            <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white border-0 shadow-lg">
-                                                <CardContent className="p-6">
-                                                    <div className="flex items-center justify-between mb-4">
-                                                        <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
-                                                            <Users className="w-6 h-6 text-white" />
-                                                        </div>
-                                                        <Badge className="bg-white/20 hover:bg-white/30 text-white border-0">
-                                                            {Math.round((group.currentMembers / group.maxMembers) * 100)}% ممتلئ
-                                                        </Badge>
+                        <div className="space-y-6">
+                            {activeTab === "overview" && (
+                                <div className="space-y-6">
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        <Card className="border border-gray-200 rounded-lg">
+                                            <CardContent className="p-4">
+                                                <div className="flex items-center justify-between mb-3">
+                                                    <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                                                        <Users className="w-5 h-5 text-blue-600" />
                                                     </div>
-                                                    <h3 className="text-3xl font-bold mb-1">{group.currentMembers}</h3>
-                                                    <p className="text-blue-100 text-sm">عضو نشط حالياً</p>
-                                                </CardContent>
-                                            </Card>
-
-                                            <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white border-0 shadow-lg">
-                                                <CardContent className="p-6">
-                                                    <div className="flex items-center justify-between mb-4">
-                                                        <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
-                                                            <UserPlus className="w-6 h-6 text-white" />
-                                                        </div>
-                                                        {requests.length > 0 && (
-                                                            <Badge className="bg-red-500 hover:bg-red-600 text-white border-0 animate-pulse">
-                                                                جديد
-                                                            </Badge>
-                                                        )}
-                                                    </div>
-                                                    <h3 className="text-3xl font-bold mb-1">{requests.length}</h3>
-                                                    <p className="text-purple-100 text-sm">طلب انضمام معلق</p>
-                                                </CardContent>
-                                            </Card>
-
-                                            <Card className="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white border-0 shadow-lg">
-                                                <CardContent className="p-6">
-                                                    <div className="flex items-center justify-between mb-4">
-                                                        <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
-                                                            <Activity className="w-6 h-6 text-white" />
-                                                        </div>
-                                                    </div>
-                                                    <h3 className="text-3xl font-bold mb-1">{group.status === 'active' ? 'نشط' : 'غير نشط'}</h3>
-                                                    <p className="text-emerald-100 text-sm">حالة المجموعة</p>
-                                                </CardContent>
-                                            </Card>
-                                        </div>
-
-                                        <Card>
-                                            <CardHeader>
-                                                <CardTitle>مشاركة المجموعة</CardTitle>
-                                                <CardDescription>شارك رابط مجموعتك لدعوة أعضاء جدد</CardDescription>
-                                            </CardHeader>
-                                            <CardContent>
-                                                <div className="flex gap-2">
-                                                    <Input
-                                                        value={`${window.location.origin}/groups/${groupId}`}
-                                                        readOnly
-                                                        className="bg-gray-50"
-                                                    />
-                                                    <Button onClick={copyGroupLink} className="gap-2">
-                                                        <Copy className="w-4 h-4" />
-                                                        نسخ
-                                                    </Button>
+                                                    <Badge className="bg-blue-100 text-blue-700">
+                                                        {Math.round((group.currentMembers / group.maxMembers) * 100)}% ممتلئ
+                                                    </Badge>
                                                 </div>
+                                                <h3 className="text-2xl font-semibold text-gray-900 mb-1">{group.currentMembers}</h3>
+                                                <p className="text-sm text-gray-600">عضو نشط</p>
+                                            </CardContent>
+                                        </Card>
+
+                                        <Card className="border border-gray-200 rounded-lg">
+                                            <CardContent className="p-4">
+                                                <div className="flex items-center justify-between mb-3">
+                                                    <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                                                        <UserPlus className="w-5 h-5 text-purple-600" />
+                                                    </div>
+                                                    {requests.length > 0 && (
+                                                        <Badge className="bg-red-100 text-red-700">
+                                                            جديد
+                                                        </Badge>
+                                                    )}
+                                                </div>
+                                                <h3 className="text-2xl font-semibold text-gray-900 mb-1">{requests.length}</h3>
+                                                <p className="text-sm text-gray-600">طلب انضمام معلق</p>
+                                            </CardContent>
+                                        </Card>
+
+                                        <Card className="border border-gray-200 rounded-lg">
+                                            <CardContent className="p-4">
+                                                <div className="flex items-center justify-between mb-3">
+                                                    <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                                                        <Activity className="w-5 h-5 text-green-600" />
+                                                    </div>
+                                                    <Badge className="bg-green-100 text-green-700">
+                                                        نشط
+                                                    </Badge>
+                                                </div>
+                                                <h3 className="text-xl font-semibold text-gray-900 mb-1">{group.privacy === 'private' ? 'خاص' : 'عام'}</h3>
+                                                <p className="text-sm text-gray-600">حالة المجموعة</p>
                                             </CardContent>
                                         </Card>
                                     </div>
-                                )}
 
-                                {activeTab === "campaigns" && (
-                                    <CampaignsTab groupId={groupId!} />
-                                )}
-
-                                {activeTab === "settings" && (
-                                    <Card>
-                                        <CardHeader>
-                                            <CardTitle>إعدادات المجموعة</CardTitle>
-                                            <CardDescription>تعديل المعلومات الأساسية وخصوصية المجموعة</CardDescription>
+                                    <Card className="border border-gray-200 rounded-lg">
+                                        <CardHeader className="pb-3">
+                                            <CardTitle className="text-lg">مشاركة المجموعة</CardTitle>
+                                            <CardDescription>شارك رابط مجموعتك لدعوة أعضاء جدد</CardDescription>
                                         </CardHeader>
-                                        <CardContent className="space-y-6">
-                                            <div className="space-y-2">
-                                                <Label>اسم المجموعة</Label>
+                                        <CardContent>
+                                            <div className="flex gap-2">
                                                 <Input
-                                                    defaultValue={group.name}
-                                                    onChange={(e) => updateGroupMutation.mutate({ name: e.target.value })}
+                                                    value={`${window.location.origin}/groups/${groupId}`}
+                                                    readOnly
+                                                    className="bg-gray-50 border-gray-300"
                                                 />
-                                            </div>
-
-                                            <div className="space-y-2">
-                                                <Label>الوصف</Label>
-                                                <Textarea
-                                                    defaultValue={group.description || ""}
-                                                    onChange={(e) => updateGroupMutation.mutate({ description: e.target.value })}
-                                                    rows={4}
-                                                />
-                                            </div>
-
-                                            <div className="flex items-center justify-between p-4 border rounded-xl bg-gray-50">
-                                                <div className="space-y-0.5">
-                                                    <Label className="text-base flex items-center gap-2">
-                                                        {group.privacy === 'private' ? <Lock className="w-4 h-4" /> : <Globe className="w-4 h-4" />}
-                                                        خصوصية المجموعة
-                                                    </Label>
-                                                    <p className="text-sm text-gray-500">
-                                                        {group.privacy === 'private'
-                                                            ? "المجموعة خاصة، لا يمكن للأعضاء الانضمام إلا بموافقة"
-                                                            : "المجموعة عامة، يمكن لأي شخص الانضمام مباشرة"}
-                                                    </p>
-                                                </div>
-                                                <Switch
-                                                    checked={group.privacy === 'private'}
-                                                    onCheckedChange={(checked) =>
-                                                        updateGroupMutation.mutate({ privacy: checked ? 'private' : 'public' })
-                                                    }
-                                                />
+                                                <Button 
+                                                    onClick={copyGroupLink} 
+                                                    className="gap-2 bg-gray-900 hover:bg-gray-800 text-white"
+                                                >
+                                                    <Copy className="w-4 h-4" />
+                                                    نسخ
+                                                </Button>
                                             </div>
                                         </CardContent>
                                     </Card>
-                                )}
+                                </div>
+                            )}
 
-                                {activeTab === "members" && (
-                                    <Card>
-                                        <CardHeader>
-                                            <CardTitle>إدارة الأعضاء</CardTitle>
-                                            <CardDescription>قائمة بجميع أعضاء المجموعة ({members.length})</CardDescription>
-                                        </CardHeader>
-                                        <CardContent>
-                                            <div className="space-y-4">
-                                                <div className="relative">
-                                                    <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                                                    <Input placeholder="بحث عن عضو..." className="pr-10" />
-                                                </div>
-
-                                                <div className="space-y-4">
-                                                    {members.map((member: any) => (
-                                                        <div key={member.id} className="flex items-center justify-between p-4 border rounded-xl hover:bg-gray-50 transition-colors">
-                                                            <div className="flex items-center gap-4">
-                                                                <Avatar>
-                                                                    <AvatarImage src={member.freelancer?.profileImage} />
-                                                                    <AvatarFallback>{member.freelancer?.fullName?.substring(0, 2)}</AvatarFallback>
-                                                                </Avatar>
-                                                                <div>
-                                                                    <h4 className="font-semibold text-gray-900 flex items-center gap-2">
-                                                                        {member.freelancer?.fullName}
-                                                                        {member.role === 'leader' && (
-                                                                            <Badge variant="secondary" className="text-xs bg-yellow-100 text-yellow-700">
-                                                                                قائد
-                                                                            </Badge>
-                                                                        )}
-                                                                    </h4>
-                                                                    <p className="text-sm text-gray-500">{member.freelancer?.jobTitle || "عضو"}</p>
-                                                                </div>
-                                                            </div>
-
-                                                            {member.role !== 'leader' && (
-                                                                <Button
-                                                                    variant="ghost"
-                                                                    size="icon"
-                                                                    className="text-red-500 hover:text-red-600 hover:bg-red-50"
-                                                                    onClick={() => {
-                                                                        if (confirm("هل أنت متأكد من إزالة هذا العضو؟")) {
-                                                                            removeMemberMutation.mutate(member.freelancerId);
-                                                                        }
-                                                                    }}
-                                                                >
-                                                                    <Trash2 className="w-4 h-4" />
-                                                                </Button>
-                                                            )}
-                                                        </div>
-                                                    ))}
-                                                </div>
+                            {activeTab === "projects" && (
+                                <div className="space-y-6">
+                                    <Card className="border border-gray-200 rounded-lg">
+                                        <CardContent className="p-4">
+                                            {/* Project Status Tabs */}
+                                            <div className="flex gap-2 mb-4 border-b border-gray-200">
+                                                <Button
+                                                    variant="ghost"
+                                                    className={`rounded-none border-b-2 ${projectStatusFilter === "active"
+                                                        ? "border-blue-600 text-blue-600"
+                                                        : "border-transparent text-gray-500"
+                                                        }`}
+                                                    onClick={() => setProjectStatusFilter("active")}
+                                                >
+                                                    <Clock className="w-4 h-4 ml-2" />
+                                                    قيد التنفيذ ({acceptedProjects.filter((p: any) => p.status === "in_progress").length})
+                                                </Button>
+                                                <Button
+                                                    variant="ghost"
+                                                    className={`rounded-none border-b-2 ${projectStatusFilter === "completed"
+                                                        ? "border-green-600 text-green-600"
+                                                        : "border-transparent text-gray-500"
+                                                        }`}
+                                                    onClick={() => setProjectStatusFilter("completed")}
+                                                >
+                                                    <Check className="w-4 h-4 ml-2" />
+                                                    المكتملة ({acceptedProjects.filter((p: any) => p.status === "completed").length})
+                                                </Button>
                                             </div>
-                                        </CardContent>
-                                    </Card>
-                                )}
 
-                                {activeTab === "requests" && (
-                                    <Card>
-                                        <CardHeader>
-                                            <CardTitle>طلبات الانضمام</CardTitle>
-                                            <CardDescription>
-                                                {requests.length === 0
-                                                    ? "لا توجد طلبات انضمام معلقة حالياً"
-                                                    : `لديك ${requests.length} طلب انضمام معلق`}
-                                            </CardDescription>
-                                        </CardHeader>
-                                        <CardContent>
-                                            {requests.length === 0 ? (
-                                                <div className="text-center py-12">
-                                                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                                                        <UserPlus className="w-8 h-8 text-gray-400" />
-                                                    </div>
-                                                    <p className="text-gray-500">لا توجد طلبات جديدة</p>
-                                                </div>
-                                            ) : (
-                                                <div className="space-y-4">
-                                                    {requests.map((request: any) => (
-                                                        <div key={request.id} className="flex items-center justify-between p-4 border rounded-xl bg-white shadow-sm">
-                                                            <div className="flex items-center gap-4">
-                                                                <Avatar className="w-12 h-12">
-                                                                    <AvatarImage src={request.freelancer?.profileImage} />
-                                                                    <AvatarFallback>{request.freelancer?.fullName?.substring(0, 2)}</AvatarFallback>
-                                                                </Avatar>
-                                                                <div>
-                                                                    <h4 className="font-semibold text-gray-900">{request.freelancer?.fullName}</h4>
-                                                                    <p className="text-sm text-gray-500 mb-1">{request.freelancer?.jobTitle}</p>
-                                                                    <p className="text-xs text-gray-400">
-                                                                        منذ {formatDistanceToNow(new Date(request.createdAt), { locale: ar })}
-                                                                    </p>
-                                                                    {request.message && (
-                                                                        <p className="text-sm bg-gray-50 p-2 rounded mt-2 text-gray-600">
-                                                                            "{request.message}"
-                                                                        </p>
-                                                                    )}
-                                                                </div>
-                                                            </div>
-
-                                                            <div className="flex gap-2">
-                                                                <Button
-                                                                    size="sm"
-                                                                    className="bg-green-600 hover:bg-green-700 text-white gap-2"
-                                                                    onClick={() => handleRequestMutation.mutate({ requestId: request.id, status: 'approved' })}
-                                                                    disabled={handleRequestMutation.isPending}
-                                                                >
-                                                                    <Check className="w-4 h-4" />
-                                                                    قبول
-                                                                </Button>
-                                                                <Button
-                                                                    size="sm"
-                                                                    variant="outline"
-                                                                    className="text-red-600 border-red-200 hover:bg-red-50 gap-2"
-                                                                    onClick={() => handleRequestMutation.mutate({ requestId: request.id, status: 'rejected' })}
-                                                                    disabled={handleRequestMutation.isPending}
-                                                                >
-                                                                    <X className="w-4 h-4" />
-                                                                    رفض
-                                                                </Button>
-                                                            </div>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            )}
-                                        </CardContent>
-                                    </Card>
-                                )}
-
-                                {activeTab === "projects" && (
-                                    <Card data-testid="card-projects">
-                                        <CardHeader>
-                                            <CardTitle>المشاريع المقبولة</CardTitle>
-                                            <CardDescription>
-                                                {acceptedProjects.length === 0
-                                                    ? "لا توجد مشاريع مقبولة حالياً"
-                                                    : `لديك ${acceptedProjects.length} مشروع مقبول`}
-                                            </CardDescription>
-                                        </CardHeader>
-                                        <CardContent>
                                             {projectsLoading ? (
                                                 <div className="text-center py-8">
-                                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
                                                 </div>
-                                            ) : acceptedProjects.length === 0 ? (
-                                                <div className="text-center py-12">
-                                                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                                                        <Briefcase className="w-8 h-8 text-gray-400" />
+                                            ) : filteredProjects.length === 0 ? (
+                                                <div className="text-center py-8">
+                                                    <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                                                        <Briefcase className="w-6 h-6 text-gray-400" />
                                                     </div>
-                                                    <p className="text-gray-500">لا توجد مشاريع مقبولة بعد</p>
+                                                    <p className="text-gray-500">
+                                                        {projectStatusFilter === "active"
+                                                            ? "لا توجد مشاريع قيد التنفيذ حالياً"
+                                                            : "لا توجد مشاريع مكتملة"}
+                                                    </p>
                                                 </div>
                                             ) : (
                                                 <div className="space-y-4">
-                                                    {acceptedProjects.map((project: any) => (
-                                                        <Card key={project.id} className="bg-white border shadow-sm" data-testid={`project-card-${project.id}`}>
-                                                            <CardContent className="p-4 space-y-3">
-                                                                <div className="flex items-start justify-between gap-4">
-                                                                    <div className="flex-1">
-                                                                        <h4 className="font-semibold text-gray-900">{project.title}</h4>
-                                                                        <p className="text-sm text-gray-600 line-clamp-2 mt-1">{project.description}</p>
-                                                                    </div>
-                                                                    <Badge
-                                                                        variant={
-                                                                            project.status === 'accepted' ? 'default' :
-                                                                            project.status === 'completed' ? 'secondary' :
-                                                                            'outline'
-                                                                        }
-                                                                        data-testid={`status-${project.id}`}
-                                                                    >
-                                                                        {project.status === 'accepted' && 'مقبول'}
-                                                                        {project.status === 'completed' && 'مكتمل'}
-                                                                        {project.status === 'paid_out' && 'تم الدفع'}
-                                                                    </Badge>
-                                                                </div>
-
-                                                                <div className="grid grid-cols-2 gap-4 pt-2 border-t">
-                                                                    <div>
-                                                                        <p className="text-xs text-gray-500">السعر</p>
-                                                                        <p className="font-semibold text-gray-900">{project.price} ريال</p>
-                                                                    </div>
-                                                                    <div>
-                                                                        <p className="text-xs text-gray-500">عدد المهام</p>
-                                                                        <p className="font-semibold text-gray-900">{project.tasksCount}</p>
-                                                                    </div>
-                                                                </div>
-
-                                                                <div className="grid grid-cols-3 gap-2 text-xs pt-2">
-                                                                    <div className="bg-yellow-50 p-2 rounded text-center">
-                                                                        <p className="text-gray-500">حصتك (3%)</p>
-                                                                        <p className="font-semibold text-yellow-700">{project.leaderEarnings} ريال</p>
-                                                                    </div>
-                                                                    <div className="bg-purple-50 p-2 rounded text-center">
-                                                                        <p className="text-gray-500">للأعضاء (87%)</p>
-                                                                        <p className="font-semibold text-purple-700">{project.memberEarnings} ريال</p>
-                                                                    </div>
-                                                                    <div className="bg-blue-50 p-2 rounded text-center">
-                                                                        <p className="text-gray-500">منصة (10%)</p>
-                                                                        <p className="font-semibold text-blue-700">{project.platformFee} ريال</p>
-                                                                    </div>
-                                                                </div>
-                                                            </CardContent>
-                                                        </Card>
+                                                    {filteredProjects.map((project: any) => (
+                                                        <ProjectCard
+                                                            key={project.id}
+                                                            project={project}
+                                                            members={members.filter(m => m.freelancerId !== localStorage.getItem("userId"))}
+                                                            groupId={groupId!}
+                                                        />
                                                     ))}
                                                 </div>
                                             )}
                                         </CardContent>
                                     </Card>
-                                )}
+                                </div>
+                            )}
 
-                                {activeTab === "orders" && (
-                                    <Card>
-                                        <CardHeader>
-                                            <CardTitle>الطلبات المستقبلة</CardTitle>
-                                            <CardDescription>
-                                                {orders.length === 0
-                                                    ? "لا توجد طلبات من أصحاب المشاريع حالياً"
-                                                    : `لديك ${orders.length} طلب من أصحاب المشاريع`}
-                                            </CardDescription>
-                                        </CardHeader>
-                                        <CardContent>
-                                            {orders.length === 0 ? (
-                                                <div className="text-center py-12">
-                                                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                                                        <Briefcase className="w-8 h-8 text-gray-400" />
+                            {activeTab === "settings" && (
+                                <Card className="border border-gray-200 rounded-lg">
+                                    <CardHeader>
+                                        <CardTitle>إعدادات المجموعة</CardTitle>
+                                        <CardDescription>تعديل المعلومات الأساسية وخصوصية المجموعة</CardDescription>
+                                    </CardHeader>
+                                    <CardContent className="space-y-4">
+                                        <div className="space-y-2">
+                                            <Label>اسم المجموعة</Label>
+                                            <Input
+                                                defaultValue={group.name}
+                                                onChange={(e) => updateGroupMutation.mutate({ name: e.target.value })}
+                                                className="border-gray-300 focus:border-gray-400"
+                                            />
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <Label>الوصف</Label>
+                                            <Textarea
+                                                defaultValue={group.description || ""}
+                                                onChange={(e) => updateGroupMutation.mutate({ description: e.target.value })}
+                                                rows={4}
+                                                className="border-gray-300 focus:border-gray-400"
+                                            />
+                                        </div>
+
+                                        <div className="flex items-center justify-between p-3 border border-gray-200 rounded-lg bg-gray-50">
+                                            <div className="space-y-0.5">
+                                                <Label className="text-base flex items-center gap-2">
+                                                    {group.privacy === 'private' ? <Lock className="w-4 h-4" /> : <Globe className="w-4 h-4" />}
+                                                    خصوصية المجموعة
+                                                </Label>
+                                                <p className="text-sm text-gray-600">
+                                                    {group.privacy === 'private'
+                                                        ? "المجموعة خاصة، لا يمكن للأعضاء الانضمام إلا بموافقة"
+                                                        : "المجموعة عامة، يمكن لأي شخص الانضمام مباشرة"}
+                                                </p>
+                                            </div>
+                                            <Switch
+                                                checked={group.privacy === 'private'}
+                                                onCheckedChange={(checked) =>
+                                                    updateGroupMutation.mutate({ privacy: checked ? 'private' : 'public' })
+                                                }
+                                                className="data-[state=checked]:bg-gray-900"
+                                            />
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            )}
+
+                            {activeTab === "members" && (
+                                <Card className="border border-gray-200 rounded-lg">
+                                    <CardHeader>
+                                        <CardTitle>إدارة الأعضاء</CardTitle>
+                                        <CardDescription>قائمة بجميع أعضاء المجموعة ({members.length})</CardDescription>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <div className="space-y-4">
+                                            <div className="relative">
+                                                <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                                <Input placeholder="بحث عن عضو..." className="pr-10 border-gray-300" />
+                                            </div>
+
+                                            <div className="space-y-3">
+                                                {members.map((member: any) => (
+                                                    <div key={member.id} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                                                        <div className="flex items-center gap-3">
+                                                            <Avatar className="w-10 h-10 border border-gray-200">
+                                                                <AvatarImage src={member.freelancer?.profileImage} />
+                                                                <AvatarFallback className="bg-gray-100 text-gray-600">
+                                                                    {member.freelancer?.fullName?.substring(0, 2)}
+                                                                </AvatarFallback>
+                                                            </Avatar>
+                                                            <div>
+                                                                <h4 className="font-medium text-gray-900 flex items-center gap-2">
+                                                                    {member.freelancer?.fullName}
+                                                                    {member.role === 'leader' && (
+                                                                        <Badge variant="secondary" className="text-xs bg-yellow-100 text-yellow-700">
+                                                                            قائد
+                                                                        </Badge>
+                                                                    )}
+                                                                </h4>
+                                                                <p className="text-sm text-gray-500">{member.freelancer?.jobTitle || "عضو"}</p>
+                                                            </div>
+                                                        </div>
+
+                                                        {member.role !== 'leader' && (
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                                                                onClick={() => {
+                                                                    if (confirm("هل أنت متأكد من إزالة هذا العضو؟")) {
+                                                                        removeMemberMutation.mutate(member.freelancerId);
+                                                                    }
+                                                                }}
+                                                            >
+                                                                <Trash2 className="w-4 h-4" />
+                                                            </Button>
+                                                        )}
                                                     </div>
-                                                    <p className="text-gray-500">لا توجد طلبات جديدة حالياً</p>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            )}
+
+                            {activeTab === "requests" && (
+                                <Card className="border border-gray-200 rounded-lg">
+                                    <CardHeader>
+                                        <CardTitle>طلبات الانضمام</CardTitle>
+                                        <CardDescription>
+                                            {requests.length === 0
+                                                ? "لا توجد طلبات انضمام معلقة حالياً"
+                                                : `لديك ${requests.length} طلب انضمام معلق`}
+                                        </CardDescription>
+                                    </CardHeader>
+                                    <CardContent>
+                                        {requests.length === 0 ? (
+                                            <div className="text-center py-8">
+                                                <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                                                    <UserPlus className="w-6 h-6 text-gray-400" />
                                                 </div>
-                                            ) : (
-                                                <div className="space-y-4">
-                                                    {orders.map((order: any) => (
-                                                        <div key={order.id} className="p-4 border rounded-xl hover:shadow-md transition-shadow">
-                                                            <div className="flex justify-between items-start mb-3">
-                                                                <div>
-                                                                    <h4 className="font-semibold text-gray-900">
-                                                                        طلب خدمة: {order.serviceType}
-                                                                    </h4>
-                                                                    <p className="text-sm text-gray-500">
-                                                                        من {order.productOwner?.fullName || "صاحب مشروع"}
+                                                <p className="text-gray-500">لا توجد طلبات جديدة</p>
+                                            </div>
+                                        ) : (
+                                            <div className="space-y-3">
+                                                {requests.map((request: any) => (
+                                                    <div key={request.id} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg bg-white">
+                                                        <div className="flex items-center gap-3">
+                                                            <Avatar className="w-10 h-10 border border-gray-200">
+                                                                <AvatarImage src={request.freelancer?.profileImage} />
+                                                                <AvatarFallback className="bg-gray-100 text-gray-600">
+                                                                    {request.freelancer?.fullName?.substring(0, 2)}
+                                                                </AvatarFallback>
+                                                            </Avatar>
+                                                            <div>
+                                                                <h4 className="font-medium text-gray-900">{request.freelancer?.fullName}</h4>
+                                                                <p className="text-sm text-gray-500 mb-1">{request.freelancer?.jobTitle}</p>
+                                                                <p className="text-xs text-gray-400">
+                                                                    منذ {formatDistanceToNow(new Date(request.createdAt), { locale: ar })}
+                                                                </p>
+                                                                {request.message && (
+                                                                    <p className="text-sm bg-gray-50 p-2 rounded mt-1 text-gray-600">
+                                                                        "{request.message}"
                                                                     </p>
-                                                                </div>
-                                                                <Badge className={`
-                                                                    ${order.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : ''}
-                                                                    ${order.status === 'payment_confirmed' ? 'bg-green-100 text-green-800' : ''}
-                                                                    ${order.status === 'in_progress' ? 'bg-blue-100 text-blue-800' : ''}
-                                                                    ${order.status === 'completed' ? 'bg-gray-100 text-gray-800' : ''}
-                                                                `}>
-                                                                    {order.status === 'pending' && 'في انتظار الدفع'}
-                                                                    {order.status === 'payment_confirmed' && 'تم تأكيد الدفع'}
-                                                                    {order.status === 'in_progress' && 'قيد التنفيذ'}
-                                                                    {order.status === 'completed' && 'مكتمل'}
-                                                                </Badge>
-                                                            </div>
-                                                            <div className="grid grid-cols-3 gap-3 mb-3">
-                                                                <div className="bg-blue-50 p-3 rounded-lg">
-                                                                    <p className="text-xs text-gray-600">الكمية المطلوبة</p>
-                                                                    <p className="font-semibold text-lg text-blue-600">{order.quantity}</p>
-                                                                </div>
-                                                                <div className="bg-green-50 p-3 rounded-lg">
-                                                                    <p className="text-xs text-gray-600">إجمالي المبلغ</p>
-                                                                    <p className="font-semibold text-lg text-green-600">${parseFloat(order.totalAmount).toFixed(2)}</p>
-                                                                </div>
-                                                                <div className="bg-purple-50 p-3 rounded-lg">
-                                                                    <p className="text-xs text-gray-600">عمولتك</p>
-                                                                    <p className="font-semibold text-lg text-purple-600">${parseFloat(order.leaderCommission).toFixed(2)}</p>
-                                                                </div>
-                                                            </div>
-                                                            <div className="flex gap-2">
-                                                                <Button size="sm" variant="outline" className="flex-1">
-                                                                    عرض التفاصيل
-                                                                </Button>
-                                                                {order.status === 'payment_confirmed' && (
-                                                                    <Button size="sm" className="flex-1 gap-2">
-                                                                        <Check className="w-4 h-4" />
-                                                                        تم الاستقبال
-                                                                    </Button>
                                                                 )}
                                                             </div>
                                                         </div>
-                                                    ))}
-                                                </div>
-                                            )}
-                                        </CardContent>
-                                    </Card>
-                                )}
 
-                                {activeTab === "conversations" && (
-                                    <Card>
-                                        <CardHeader>
-                                            <CardTitle>المحادثات</CardTitle>
-                                            <CardDescription>
-                                                {conversations.length === 0
-                                                    ? "لا توجد محادثات حالياً"
-                                                    : `لديك ${conversations.length} محادثة نشطة`}
-                                            </CardDescription>
-                                        </CardHeader>
-                                        <CardContent>
-                                            {conversations.length === 0 ? (
-                                                <div className="text-center py-12">
-                                                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                                                        <MessageCircle className="w-8 h-8 text-gray-400" />
-                                                    </div>
-                                                    <p className="text-gray-500">لا توجد محادثات حالياً</p>
-                                                </div>
-                                            ) : (
-                                                <div className="space-y-3">
-                                                    {conversations.map((conversation: any) => (
-                                                        <div key={conversation.id} className="p-4 border rounded-xl hover:bg-gray-50 cursor-pointer transition-colors">
-                                                            <div className="flex items-center gap-4">
-                                                                <Avatar>
-                                                                    <AvatarImage src={conversation.productOwner?.profileImage} />
-                                                                    <AvatarFallback>
-                                                                        {conversation.productOwner?.fullName?.substring(0, 2)}
-                                                                    </AvatarFallback>
-                                                                </Avatar>
-                                                                <div className="flex-1">
-                                                                    <h4 className="font-semibold text-gray-900">
-                                                                        {conversation.productOwner?.fullName}
-                                                                    </h4>
-                                                                    <p className="text-sm text-gray-500">
-                                                                        {conversation.group?.name}
-                                                                    </p>
-                                                                    {conversation.lastMessageAt && (
-                                                                        <p className="text-xs text-gray-400 mt-1">
-                                                                            آخر رسالة منذ{' '}
-                                                                            {formatDistanceToNow(new Date(conversation.lastMessageAt), { locale: ar })}
-                                                                        </p>
-                                                                    )}
-                                                                </div>
-                                                                <Button size="sm" variant="outline">
-                                                                    فتح المحادثة
-                                                                </Button>
-                                                            </div>
+                                                        <div className="flex gap-2">
+                                                            <Button
+                                                                size="sm"
+                                                                className="bg-gray-900 hover:bg-gray-800 text-white gap-2"
+                                                                onClick={() => handleRequestMutation.mutate({ requestId: request.id, status: 'approved' })}
+                                                                disabled={handleRequestMutation.isPending}
+                                                            >
+                                                                <Check className="w-4 h-4" />
+                                                                قبول
+                                                            </Button>
+                                                            <Button
+                                                                size="sm"
+                                                                variant="outline"
+                                                                className="text-red-600 border-red-200 hover:bg-red-50 gap-2"
+                                                                onClick={() => handleRequestMutation.mutate({ requestId: request.id, status: 'rejected' })}
+                                                                disabled={handleRequestMutation.isPending}
+                                                            >
+                                                                <X className="w-4 h-4" />
+                                                                رفض
+                                                            </Button>
                                                         </div>
-                                                    ))}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </CardContent>
+                                </Card>
+                            )}
+
+                            {activeTab === "conversations" && (
+                                <Card className="border border-gray-200 rounded-lg">
+                                    <CardHeader>
+                                        <CardTitle>المحادثات</CardTitle>
+                                        <CardDescription>
+                                            {conversations.length === 0
+                                                ? "لا توجد محادثات حالياً"
+                                                : `لديك ${conversations.length} محادثة نشطة`}
+                                        </CardDescription>
+                                    </CardHeader>
+                                    <CardContent>
+                                        {conversations.length === 0 ? (
+                                            <div className="text-center py-8">
+                                                <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                                                    <MessageCircle className="w-6 h-6 text-gray-400" />
                                                 </div>
-                                            )}
-                                        </CardContent>
-                                    </Card>
-                                )}
-                            </motion.div>
-                        </AnimatePresence>
+                                                <p className="text-gray-500">لا توجد محادثات حالياً</p>
+                                            </div>
+                                        ) : (
+                                            <div className="space-y-3">
+                                                {conversations.map((conversation: any) => (
+                                                    <div 
+                                                        key={conversation.id} 
+                                                        className="p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
+                                                        onClick={() => navigate(`/freelancer-dashboard/conversations`)}
+                                                    >
+                                                        <div className="flex items-center gap-3">
+                                                            <Avatar className="w-10 h-10 border border-gray-200">
+                                                                <AvatarImage src={conversation.productOwner?.profileImage} />
+                                                                <AvatarFallback className="bg-gray-100 text-gray-600">
+                                                                    {conversation.productOwner?.fullName?.substring(0, 2)}
+                                                                </AvatarFallback>
+                                                            </Avatar>
+                                                            <div className="flex-1">
+                                                                <h4 className="font-medium text-gray-900">
+                                                                    {conversation.productOwner?.fullName}
+                                                                </h4>
+                                                                <p className="text-sm text-gray-500">
+                                                                    {conversation.group?.name}
+                                                                </p>
+                                                                {conversation.lastMessageAt && (
+                                                                    <p className="text-xs text-gray-400 mt-1">
+                                                                        آخر رسالة منذ{' '}
+                                                                        {formatDistanceToNow(new Date(conversation.lastMessageAt), { locale: ar })}
+                                                                    </p>
+                                                                )}
+                                                            </div>
+                                                            <Button 
+                                                                size="sm" 
+                                                                variant="outline"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    navigate(`/freelancer-dashboard/conversations`);
+                                                                }}
+                                                                className="border-gray-300 text-gray-700 hover:bg-gray-50"
+                                                            >
+                                                                فتح المحادثة
+                                                            </Button>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </CardContent>
+                                </Card>
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
+    );
+}
+
+// Project Card Component with Task Creation
+function ProjectCard({ project, members, groupId }: { project: any; members: GroupMember[]; groupId: string }) {
+    const { toast } = useToast();
+    const [showTaskForm, setShowTaskForm] = useState(false);
+    const [taskForm, setTaskForm] = useState({
+        title: "",
+        description: "",
+        serviceType: project.serviceType || "social_media"
+    });
+
+    // Auto-calculate reward per member
+    const projectBudget = parseFloat(project.budget) || 0;
+    const memberCount = members.length + 1; // +1 for leader
+    const platformFee = projectBudget * 0.10;
+    const leaderCommission = projectBudget * 0.03;
+    const totalForMembers = projectBudget - platformFee - leaderCommission;
+    const rewardPerMember = totalForMembers / memberCount;
+
+    const createTaskMutation = useMutation({
+        mutationFn: async (taskData: any) => {
+            const res = await fetch(`/api/tasks`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${localStorage.getItem("token")}`
+                },
+                body: JSON.stringify({
+                    ...taskData,
+                    projectId: project.id,
+                    groupId: groupId,
+                    reward: rewardPerMember.toFixed(2)
+                })
+            });
+            if (!res.ok) {
+                const error = await res.json();
+                throw new Error(error.error);
+            }
+            return res.json();
+        },
+        onSuccess: (data) => {
+            toast({
+                title: "تم إنشاء المهام",
+                description: `تم تعيين المهمة لجميع الأعضاء بنجاح. المكافأة لكل عضو: $${rewardPerMember.toFixed(2)}`,
+            });
+            setShowTaskForm(false);
+            setTaskForm({ title: "", description: "", serviceType: project.serviceType || "social_media" });
+            queryClient.invalidateQueries({ queryKey: [`/api/projects/${project.id}/tasks`] });
+        },
+        onError: (error: Error) => {
+            toast({
+                title: "خطأ",
+                description: error.message,
+                variant: "destructive"
+            });
+        }
+    });
+
+    const handleCreateTask = () => {
+        if (!taskForm.title || !taskForm.description) {
+            toast({
+                title: "خطأ",
+                description: "يرجى ملء جميع الحقول",
+                variant: "destructive"
+            });
+            return;
+        }
+        createTaskMutation.mutate(taskForm);
+    };
+
+    const completeProjectMutation = useMutation({
+        mutationFn: async () => {
+            const res = await fetch(`/api/projects/${project.id}`, {
+                method: "PATCH",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${localStorage.getItem("token")}`
+                },
+                body: JSON.stringify({ status: "completed" })
+            });
+            if (!res.ok) {
+                const error = await res.json();
+                throw new Error(error.error);
+            }
+            return res.json();
+        },
+        onSuccess: () => {
+            toast({
+                title: "تم إكمال المشروع",
+                description: "تم تحديث حالة المشروع إلى مكتمل",
+            });
+            queryClient.invalidateQueries({ queryKey: [`/api/projects/group/${groupId}`] });
+        },
+        onError: (error: Error) => {
+            toast({
+                title: "خطأ",
+                description: error.message,
+                variant: "destructive"
+            });
+        }
+    });
+
+    return (
+        <Card className="border border-gray-200 rounded-lg hover:border-gray-300 transition-colors">
+            <CardHeader>
+                <div className="flex justify-between items-start">
+                    <div>
+                        <CardTitle className="text-lg">{project.title}</CardTitle>
+                        <CardDescription className="mt-1">{project.description}</CardDescription>
+                    </div>
+                    <Badge className="bg-green-100 text-green-800">{getStatusLabel(project.status)}</Badge>
+                </div>
+                <div className="flex gap-4 mt-3">
+                    <div className="flex items-center gap-2">
+                        <DollarSign className="w-4 h-4 text-gray-500" />
+                        <span className="font-medium">{project.budget} ريال</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Clock className="w-4 h-4 text-gray-500" />
+                        <span className="text-sm text-gray-600">
+                            {project.deadline ? formatDistanceToNow(new Date(project.deadline), { addSuffix: true, locale: ar }) : 'غير محدد'}
+                        </span>
+                    </div>
+                </div>
+            </CardHeader>
+            <CardContent>
+                <div className="flex gap-2 mb-3">
+                    {project.status !== "completed" && (
+                        <Button
+                            onClick={() => {
+                                if (confirm("هل أنت متأكد من إكمال هذا المشروع؟")) {
+                                    completeProjectMutation.mutate();
+                                }
+                            }}
+                            variant="outline"
+                            className="flex-1 gap-2 border-green-500 text-green-700 hover:bg-green-50"
+                            disabled={completeProjectMutation.isPending}
+                        >
+                            <Check className="w-4 h-4" />
+                            {completeProjectMutation.isPending ? "جاري التحديث..." : "تم إنهاء المشروع"}
+                        </Button>
+                    )}
+                </div>
+                {!showTaskForm ? (
+                    <Button
+                        onClick={() => setShowTaskForm(true)}
+                        className="w-full gap-2 bg-gray-900 hover:bg-gray-800 text-white"
+                    >
+                        <UserPlus className="w-4 h-4" />
+                        إنشاء مهمة جديدة
+                    </Button>
+                ) : (
+                    <div className="space-y-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                        <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
+                            <p className="text-xs text-blue-800 mb-2"><strong>معلومات المشروع:</strong></p>
+                            <div className="space-y-1 text-xs">
+                                <p className="flex justify-between">
+                                    <span>ميزانية المشروع:</span>
+                                    <span className="font-medium">${projectBudget.toFixed(2)}</span>
+                                </p>
+                                <p className="flex justify-between">
+                                    <span>عدد الأعضاء (مع القائد):</span>
+                                    <span className="font-medium">{memberCount}</span>
+                                </p>
+                                <p className="flex justify-between text-yellow-700">
+                                    <span>رسوم المنصة (10%):</span>
+                                    <span className="font-medium">-${platformFee.toFixed(2)}</span>
+                                </p>
+                                <p className="flex justify-between text-yellow-700">
+                                    <span>عمولة القائد (3%):</span>
+                                    <span className="font-medium">+${leaderCommission.toFixed(2)}</span>
+                                </p>
+                                <p className="flex justify-between pt-2 border-t border-blue-300 text-green-700 font-bold">
+                                    <span>المكافأة لكل عضو:</span>
+                                    <span>${rewardPerMember.toFixed(2)}</span>
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label>عنوان المهمة</Label>
+                            <Input
+                                value={taskForm.title}
+                                onChange={(e) => setTaskForm({ ...taskForm, title: e.target.value })}
+                                placeholder="مثال: تصميم منشور على انستغرام"
+                                className="border-gray-300 focus:border-gray-400"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label>الوصف</Label>
+                            <Textarea
+                                value={taskForm.description}
+                                onChange={(e) => setTaskForm({ ...taskForm, description: e.target.value })}
+                                placeholder="وصف تفصيلي للمهمة..."
+                                rows={3}
+                                className="border-gray-300 focus:border-gray-400"
+                            />
+                        </div>
+
+                        <div className="bg-green-50 p-2 rounded-lg border border-green-200">
+                            <p className="text-xs text-green-800 font-medium mb-1">
+                                ✓ سيتم تعيين هذه المهمة لجميع الأعضاء ({memberCount} عضو)
+                            </p>
+                            <p className="text-xs text-green-700">
+                                سيتم نشر المهمة تلقائياً في مجتمع المجموعة
+                            </p>
+                        </div>
+
+                        <div className="flex gap-2">
+                            <Button
+                                onClick={handleCreateTask}
+                                disabled={createTaskMutation.isPending}
+                                className="flex-1 bg-gray-900 hover:bg-gray-800 text-white"
+                            >
+                                {createTaskMutation.isPending ? "جاري الإنشاء..." : "إنشاء ونشر المهمة"}
+                            </Button>
+                            <Button
+                                variant="outline"
+                                onClick={() => setShowTaskForm(false)}
+                                className="flex-1 border-gray-300 text-gray-700 hover:bg-gray-50"
+                            >
+                                إلغاء
+                            </Button>
+                        </div>
+                    </div>
+                )}
+            </CardContent>
+        </Card>
     );
 }

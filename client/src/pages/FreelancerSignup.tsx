@@ -14,7 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Briefcase, Users as UsersIcon, Puzzle, Edit3, Camera, CreditCard, ArrowRight, ArrowLeft, Upload } from "lucide-react";
+import { Briefcase, Users as UsersIcon, Puzzle, Edit3, Camera, CreditCard, ArrowRight, ArrowLeft } from "lucide-react";
 import { serviceOptions, paymentMethods, paymentMethodDetails } from "@shared/schema";
 import { useLocation } from "wouter";
 import { useMutation } from "@tanstack/react-query";
@@ -89,19 +89,16 @@ export default function FreelancerSignup() {
       return await response.json();
     },
     onSuccess: (data: any) => {
-      // Store token and user data in localStorage
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
       localStorage.setItem("userType", "freelancer");
       
-      // Dispatch custom event to update Navbar
       window.dispatchEvent(new Event("userLoggedIn"));
       
       toast({
         title: "تم إنشاء الحساب بنجاح!",
-        description: "مرحبًا بك في منصة سُمُوّ. يرجى قراءة التعليمات الهامة قبل البدء",
+        description: "مرحبًا بك في منصة سُمُوّ",
       });
-      // Redirect to instructions page first
       navigate("/freelancer-instructions");
     },
     onError: (error: any) => {
@@ -123,7 +120,6 @@ export default function FreelancerSignup() {
     }
   };
 
-  // Memoize default values to prevent re-initialization
   const defaultFormValues = useMemo(() => ({
     fullName: formData.fullName || "",
     username: formData.username || "",
@@ -159,7 +155,6 @@ export default function FreelancerSignup() {
         setCurrentStep(currentStep + 1);
         form.clearErrors();
       } else {
-        // Submit form to backend
         createFreelancerMutation.mutate(updatedFormData);
       }
     }
@@ -173,25 +168,24 @@ export default function FreelancerSignup() {
     }
   };
 
-  // Watch payment method value outside of JSX to avoid hook call issues
   const selectedPaymentMethod = form.watch("paymentMethod");
 
   return (
-    <div className="min-h-screen flex flex-col bg-muted/20">
+    <div className="min-h-screen flex flex-col bg-white">
       <Navbar />
 
-      <div className="flex-1 py-8 px-4">
+      <div className="flex-1 py-8 px-4 mt-12">
         <div className="max-w-4xl mx-auto">
           <StepIndicator steps={steps} currentStep={currentStep} />
 
-          <Card className="rounded-2xl shadow-lg">
-            <CardHeader className="border-b">
-              <CardTitle className="text-2xl text-center">
+          <Card className="border border-gray-200 rounded-lg">
+            <CardHeader className="border-b border-gray-200">
+              <CardTitle className="text-xl text-center text-gray-900">
                 {steps[currentStep - 1].title}
               </CardTitle>
             </CardHeader>
 
-            <CardContent className="p-6 md:p-8">
+            <CardContent className="p-6">
               <Form {...form}>
                 <form className="space-y-6">
                   {/* Step 1: Basic Information */}
@@ -202,9 +196,14 @@ export default function FreelancerSignup() {
                         name="fullName"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>الاسم الكامل *</FormLabel>
+                            <FormLabel className="text-gray-700">الاسم الكامل *</FormLabel>
                             <FormControl>
-                              <Input {...field} placeholder="أحمد محمد" className="rounded-xl" data-testid="input-fullname" />
+                              <Input 
+                                {...field} 
+                                placeholder="أحمد محمد" 
+                                className="rounded-lg border-gray-300 focus:border-gray-400" 
+                                data-testid="input-fullname" 
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -216,9 +215,14 @@ export default function FreelancerSignup() {
                         name="username"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>اسم المستخدم *</FormLabel>
+                            <FormLabel className="text-gray-700">اسم المستخدم *</FormLabel>
                             <FormControl>
-                              <Input {...field} placeholder="ahmed_tester" className="rounded-xl" data-testid="input-username" />
+                              <Input 
+                                {...field} 
+                                placeholder="ahmed_tester" 
+                                className="rounded-lg border-gray-300 focus:border-gray-400" 
+                                data-testid="input-username" 
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -230,9 +234,17 @@ export default function FreelancerSignup() {
                         name="email"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>البريد الإلكتروني *</FormLabel>
+                            <FormLabel className="text-gray-700">البريد الإلكتروني *</FormLabel>
                             <FormControl>
-                              <Input {...field} type="email" placeholder="ahmed@example.com" className="rounded-xl" data-testid="input-email" autoComplete="email" name="email" />
+                              <Input 
+                                {...field} 
+                                type="email" 
+                                placeholder="ahmed@example.com" 
+                                className="rounded-lg border-gray-300 focus:border-gray-400" 
+                                data-testid="input-email" 
+                                autoComplete="email" 
+                                name="email" 
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -245,36 +257,20 @@ export default function FreelancerSignup() {
                           name="countryCode"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>كود الدولة</FormLabel>
+                              <FormLabel className="text-gray-700">كود الدولة</FormLabel>
                               <Select onValueChange={field.onChange} defaultValue={field.value}>
                                 <FormControl>
-                                  <SelectTrigger className="rounded-xl" data-testid="select-country-code">
+                                  <SelectTrigger className="rounded-lg border-gray-300" data-testid="select-country-code">
                                     <SelectValue />
                                   </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
-                                  <SelectItem value="+966">🇸🇦 السعودية +966</SelectItem>
-                                  <SelectItem value="+971">🇦🇪 الإمارات +971</SelectItem>
-                                  <SelectItem value="+965">🇰🇼 الكويت +965</SelectItem>
-                                  <SelectItem value="+973">🇧🇭 البحرين +973</SelectItem>
-                                  <SelectItem value="+974">🇶🇦 قطر +974</SelectItem>
-                                  <SelectItem value="+968">🇴🇲 عمان +968</SelectItem>
-                                  <SelectItem value="+20">🇪🇬 مصر +20</SelectItem>
-                                  <SelectItem value="+962">🇯🇴 الأردن +962</SelectItem>
-                                  <SelectItem value="+961">🇱🇧 لبنان +961</SelectItem>
-                                  <SelectItem value="+963">🇸🇾 سوريا +963</SelectItem>
-                                  <SelectItem value="+964">🇮🇶 العراق +964</SelectItem>
-                                  <SelectItem value="+970">🇵🇸 فلسطين +970</SelectItem>
-                                  <SelectItem value="+212">🇲🇦 المغرب +212</SelectItem>
-                                  <SelectItem value="+213">🇩🇿 الجزائر +213</SelectItem>
-                                  <SelectItem value="+216">🇹🇳 تونس +216</SelectItem>
-                                  <SelectItem value="+218">🇱🇾 ليبيا +218</SelectItem>
-                                  <SelectItem value="+249">🇸🇩 السودان +249</SelectItem>
-                                  <SelectItem value="+967">🇾🇪 اليمن +967</SelectItem>
-                                  <SelectItem value="+222">🇲🇷 موريتانيا +222</SelectItem>
-                                  <SelectItem value="+253">🇩🇯 جيبوتي +253</SelectItem>
-                                  <SelectItem value="+252">🇸🇴 الصومال +252</SelectItem>
-                                  <SelectItem value="+269">🇰🇲 جزر القمر +269</SelectItem>
+                                  <SelectItem value="+966">🇸🇦 +966</SelectItem>
+                                  <SelectItem value="+971">🇦🇪 +971</SelectItem>
+                                  <SelectItem value="+965">🇰🇼 +965</SelectItem>
+                                  <SelectItem value="+973">🇧🇭 +973</SelectItem>
+                                  <SelectItem value="+974">🇶🇦 +974</SelectItem>
+                                  <SelectItem value="+20">🇪🇬 +20</SelectItem>
                                 </SelectContent>
                               </Select>
                               <FormMessage />
@@ -287,9 +283,14 @@ export default function FreelancerSignup() {
                           name="phone"
                           render={({ field }) => (
                             <FormItem className="col-span-2">
-                              <FormLabel>رقم الهاتف *</FormLabel>
+                              <FormLabel className="text-gray-700">رقم الهاتف *</FormLabel>
                               <FormControl>
-                                <Input {...field} placeholder="501234567" className="rounded-xl" data-testid="input-phone" />
+                                <Input 
+                                  {...field} 
+                                  placeholder="501234567" 
+                                  className="rounded-lg border-gray-300 focus:border-gray-400" 
+                                  data-testid="input-phone" 
+                                />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -302,9 +303,17 @@ export default function FreelancerSignup() {
                         name="password"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>كلمة المرور *</FormLabel>
+                            <FormLabel className="text-gray-700">كلمة المرور *</FormLabel>
                             <FormControl>
-                              <Input {...field} type="password" placeholder="••••••••" className="rounded-xl" data-testid="input-password" autoComplete="new-password" name="password" />
+                              <Input 
+                                {...field} 
+                                type="password" 
+                                placeholder="••••••••" 
+                                className="rounded-lg border-gray-300 focus:border-gray-400" 
+                                data-testid="input-password" 
+                                autoComplete="new-password" 
+                                name="password" 
+                              />
                             </FormControl>
                             <PasswordStrength password={field.value || ""} />
                             <FormMessage />
@@ -322,12 +331,12 @@ export default function FreelancerSignup() {
                         name="bio"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>وصف قصير عن نفسك *</FormLabel>
+                            <FormLabel className="text-gray-700">وصف قصير عن نفسك *</FormLabel>
                             <FormControl>
                               <Textarea 
                                 {...field} 
-                                placeholder="مثال: أنا محمد، مختبر تطبيقات وخرائط Google لدي 40 شخصًا قادرين على الاختبار من فريقي..." 
-                                className="rounded-xl min-h-[100px]" 
+                                placeholder="مثال: أنا محمد، مختبر تطبيقات وخرائط Google..." 
+                                className="rounded-lg border-gray-300 focus:border-gray-400 min-h-[100px]" 
                                 data-testid="input-bio"
                               />
                             </FormControl>
@@ -336,19 +345,21 @@ export default function FreelancerSignup() {
                         )}
                       />
 
-                      <Card className="rounded-xl bg-muted/30">
-                        <CardContent className="p-6 space-y-4">
+                      <Card className="border border-gray-200 rounded-lg bg-gray-50">
+                        <CardContent className="p-4 space-y-4">
                           <FormField
                             control={form.control}
                             name="jobTitle"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel className="flex items-center gap-2">
-                                  <Briefcase className="h-4 w-4" />
-                                  المسمى المهني *
-                                </FormLabel>
+                                <FormLabel className="text-gray-700">المسمى المهني *</FormLabel>
                                 <FormControl>
-                                  <Input {...field} placeholder="مثال: مختبر تطبيقات - مسوّق تقييمات - مدير فريق مراجعين" className="rounded-xl" data-testid="input-job-title" />
+                                  <Input 
+                                    {...field} 
+                                    placeholder="مثال: مختبر تطبيقات - مسوّق تقييمات" 
+                                    className="rounded-lg border-gray-300 focus:border-gray-400" 
+                                    data-testid="input-job-title" 
+                                  />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
@@ -360,18 +371,15 @@ export default function FreelancerSignup() {
                             name="services"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel className="flex items-center gap-2">
-                                  <Puzzle className="h-4 w-4" />
-                                  المجالات التي تقدمها *
-                                </FormLabel>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
+                                <FormLabel className="text-gray-700">المجالات التي تقدمها *</FormLabel>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
                                   {serviceOptions.map((service) => (
                                     <FormField
                                       key={service}
                                       control={form.control}
                                       name="services"
                                       render={({ field }) => (
-                                        <FormItem className="flex items-start gap-2 p-3 rounded-xl border hover-elevate transition-all">
+                                        <FormItem className="flex items-start gap-2 p-3 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 transition-colors">
                                           <FormControl>
                                             <Checkbox
                                               checked={(field.value || []).includes(service)}
@@ -382,11 +390,11 @@ export default function FreelancerSignup() {
                                                   : current.filter((s) => s !== service);
                                                 field.onChange(updated);
                                               }}
-                                              className="mt-0.5"
+                                              className="mt-0.5 border-gray-300 data-[state=checked]:bg-gray-900 data-[state=checked]:border-gray-900"
                                               data-testid={`checkbox-service-${service}`}
                                             />
                                           </FormControl>
-                                          <FormLabel className="text-sm font-normal cursor-pointer">
+                                          <FormLabel className="text-sm font-normal text-gray-700 cursor-pointer">
                                             {service}
                                           </FormLabel>
                                         </FormItem>
@@ -404,15 +412,12 @@ export default function FreelancerSignup() {
                             name="aboutMe"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel className="flex items-center gap-2">
-                                  <Edit3 className="h-4 w-4" />
-                                  الوصف المهني (نبذة تفصيلية) *
-                                </FormLabel>
+                                <FormLabel className="text-gray-700">الوصف المهني (نبذة تفصيلية) *</FormLabel>
                                 <FormControl>
                                   <Textarea 
                                     {...field} 
                                     placeholder="اكتب نبذة عنك توضح كيف تنفذ المهام مع فريقك، وما يميزك عن الآخرين..." 
-                                    className="rounded-xl min-h-[150px]" 
+                                    className="rounded-lg border-gray-300 focus:border-gray-400 min-h-[120px]" 
                                     data-testid="input-about-me"
                                   />
                                 </FormControl>
@@ -428,17 +433,14 @@ export default function FreelancerSignup() {
                   {/* Step 3: Verification */}
                   {currentStep === 3 && (
                     <div className="space-y-6">
-                      <Card className="rounded-xl bg-muted/30">
-                        <CardContent className="p-6 space-y-6">
+                      <Card className="border border-gray-200 rounded-lg bg-gray-50">
+                        <CardContent className="p-4 space-y-4">
                           <FormField
                             control={form.control}
                             name="profileImage"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel className="flex items-center gap-2">
-                                  <Camera className="h-4 w-4" />
-                                  صورة الملف الشخصي
-                                </FormLabel>
+                                <FormLabel className="text-gray-700">صورة الملف الشخصي</FormLabel>
                                 <FormControl>
                                   <div className="flex items-center gap-4">
                                     <FileUpload
@@ -448,7 +450,7 @@ export default function FreelancerSignup() {
                                       accept="image/*"
                                     />
                                     <div className="flex-1">
-                                      <p className="text-xs text-muted-foreground">
+                                      <p className="text-sm text-gray-600">
                                         اختر صورة واضحة لزيادة الثقة بينك وبين العملاء
                                       </p>
                                     </div>
@@ -464,7 +466,7 @@ export default function FreelancerSignup() {
                             name="idVerification"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>إثبات الهوية (اختياري)</FormLabel>
+                                <FormLabel className="text-gray-700">إثبات الهوية (اختياري)</FormLabel>
                                 <FormControl>
                                   <div>
                                     <FileUpload
@@ -473,7 +475,7 @@ export default function FreelancerSignup() {
                                       onFileUploaded={(url) => field.onChange(url)}
                                       accept="image/*,application/pdf"
                                     />
-                                    <p className="text-xs text-muted-foreground mt-2">
+                                    <p className="text-sm text-gray-600 mt-2">
                                       PDF أو صورة - سيتم مراجعتها يدويًا من قبل الإدارة
                                     </p>
                                   </div>
@@ -490,20 +492,17 @@ export default function FreelancerSignup() {
                   {/* Step 4: Payment Settings */}
                   {currentStep === 4 && (
                     <div className="space-y-4">
-                      <Card className="rounded-xl bg-accent/10">
-                        <CardContent className="p-6 space-y-4">
+                      <Card className="border border-gray-200 rounded-lg bg-gray-50">
+                        <CardContent className="p-4 space-y-4">
                           <FormField
                             control={form.control}
                             name="paymentMethod"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel className="flex items-center gap-2">
-                                  <CreditCard className="h-4 w-4" />
-                                  وسيلة الدفع المفضلة *
-                                </FormLabel>
+                                <FormLabel className="text-gray-700">وسيلة الدفع المفضلة *</FormLabel>
                                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                                   <FormControl>
-                                    <SelectTrigger className="rounded-xl" data-testid="select-payment-method">
+                                    <SelectTrigger className="rounded-lg border-gray-300" data-testid="select-payment-method">
                                       <SelectValue placeholder="اختر وسيلة الدفع" />
                                     </SelectTrigger>
                                   </FormControl>
@@ -529,17 +528,17 @@ export default function FreelancerSignup() {
                                 
                                 return (
                                   <FormItem>
-                                    <FormLabel>{methodDetails?.label || "رقم الحساب أو المحفظة"}</FormLabel>
+                                    <FormLabel className="text-gray-700">{methodDetails?.label || "رقم الحساب أو المحفظة"}</FormLabel>
                                     <FormControl>
                                       <Input 
                                         {...field} 
                                         type={methodDetails?.inputType || "text"}
                                         placeholder={methodDetails?.placeholder || "مثال: 1234 5678 9012 3456"} 
-                                        className="rounded-xl" 
+                                        className="rounded-lg border-gray-300 focus:border-gray-400" 
                                         data-testid="input-account-number" 
                                       />
                                     </FormControl>
-                                    <FormDescription className="text-xs">
+                                    <FormDescription className="text-sm text-gray-600">
                                       {selectedPaymentMethod === "التحويل البنكي" && "أدخل رقم الحساب البنكي الدولي (IBAN)"}
                                       {selectedPaymentMethod.includes("كاش") && "أدخل رقم هاتف المحفظة"}
                                     </FormDescription>
@@ -551,22 +550,26 @@ export default function FreelancerSignup() {
                           )}
                           
                           {selectedPaymentMethod === "محفظة سُمُوّ" && (
-                            <div className="p-4 bg-primary/10 rounded-xl border border-primary/20">
-                              <p className="text-sm text-muted-foreground">
-                                ℹ️ سيتم إنشاء محفظة سُمُوّ تلقائيًا لك عند إنشاء الحساب. يمكنك استخدامها لاستلام المدفوعات مباشرة في المنصة.
+                            <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                              <p className="text-sm text-gray-700">
+                                سيتم إنشاء محفظة سُمُوّ تلقائيًا لك عند إنشاء الحساب.
                               </p>
                             </div>
                           )}
                         </CardContent>
                       </Card>
 
-                      <div className="flex items-start gap-2 p-4 bg-muted/30 rounded-xl">
-                        <Checkbox id="terms" data-testid="checkbox-terms" />
-                        <label htmlFor="terms" className="text-sm leading-relaxed cursor-pointer">
+                      <div className="flex items-start gap-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                        <Checkbox 
+                          id="terms" 
+                          data-testid="checkbox-terms" 
+                          className="border-gray-300 data-[state=checked]:bg-gray-900 data-[state=checked]:border-gray-900"
+                        />
+                        <label htmlFor="terms" className="text-sm text-gray-700 leading-relaxed cursor-pointer">
                           أوافق على{" "}
-                          <a href="#terms" className="text-primary hover:underline">الشروط والأحكام</a>
+                          <a href="#terms" className="text-gray-900 hover:underline">الشروط والأحكام</a>
                           {" "}و{" "}
-                          <a href="#privacy" className="text-primary hover:underline">سياسة الخصوصية</a>
+                          <a href="#privacy" className="text-gray-900 hover:underline">سياسة الخصوصية</a>
                         </label>
                       </div>
                     </div>
@@ -579,7 +582,7 @@ export default function FreelancerSignup() {
                         type="button" 
                         variant="outline" 
                         onClick={handleBack}
-                        className="flex-1 rounded-2xl"
+                        className="flex-1 rounded-lg border-gray-300 text-gray-700 hover:bg-gray-50"
                         data-testid="button-back"
                       >
                         <ArrowLeft className="ml-2 h-4 w-4" />
@@ -589,7 +592,7 @@ export default function FreelancerSignup() {
                     <Button 
                       type="button" 
                       onClick={handleNext}
-                      className="flex-1 rounded-2xl"
+                      className="flex-1 bg-gray-900 hover:bg-gray-800 text-white rounded-lg"
                       data-testid="button-next"
                       disabled={createFreelancerMutation.isPending}
                     >
