@@ -64,13 +64,13 @@ export default function MyTasks() {
     const statusMap: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
       assigned: { label: "مقبولة", variant: "secondary" },
       in_progress: { label: "قيد التنفيذ", variant: "default" },
-      submitted: { label: "تم التسليم", variant: "secondary" },
+      submitted: { label: "تم الإنجاز ✓", variant: "default" },
       approved: { label: "موافق عليها", variant: "default" },
       rejected: { label: "مرفوضة", variant: "destructive" },
     };
     
     const statusInfo = statusMap[status] || { label: status, variant: "outline" as const };
-    return <Badge variant={statusInfo.variant}>{statusInfo.label}</Badge>;
+    return <Badge variant={statusInfo.variant} className={status === "submitted" ? "bg-green-600 hover:bg-green-700" : ""}>{statusInfo.label}</Badge>;
   };
 
   if (isLoading) {
@@ -147,6 +147,13 @@ export default function MyTasks() {
                   <Send className="ml-2 h-4 w-4" />
                   تسليم المهمة
                 </Button>
+              )}
+              {task.status === "submitted" && (
+                <div className="flex-1 text-center p-3 bg-green-50 border border-green-200 rounded-xl">
+                  <p className="text-sm font-medium text-green-700">
+                    ✓ تم الإنجاز - في انتظار الموافقة
+                  </p>
+                </div>
               )}
             </CardFooter>
           </Card>

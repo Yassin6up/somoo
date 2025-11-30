@@ -268,6 +268,7 @@ export interface IStorage {
     getDirectMessages(userId: string, userType: string, otherUserId: string, otherUserType: string): Promise<any[]>;
     sendDirectMessage(senderId: string, senderType: string, receiverId: string, receiverType: string, content: string): Promise<any>;
     getDirectMessageHistory(userId: string, userType: string): Promise<any[]>;
+    markDirectMessagesAsRead(userId: string, userType: string, senderId: string, senderType: string): Promise<void>;
 
     // Group Posts methods
     getPostsByGroup(groupId: string): Promise<GroupPost[]>;
@@ -1833,6 +1834,26 @@ export class DatabaseStorage implements IStorage {
         return result;
     }
 
+    async markDirectMessagesAsRead(
+        userId: string,
+        userType: string,
+        senderId: string,
+        senderType: string
+    ): Promise<void> {
+        await db
+            .update(directMessages)
+            .set({ isRead: true })
+            .where(
+                and(
+                    eq(directMessages.receiverId, userId),
+                    eq(directMessages.receiverType, userType),
+                    eq(directMessages.senderId, senderId),
+                    eq(directMessages.senderType, senderType),
+                    eq(directMessages.isRead, false)
+                )
+            );
+    }
+
     // Group Posts methods
     async getPostsByGroup(groupId: string): Promise<GroupPost[]> {
         return await db
@@ -2219,6 +2240,45 @@ export class DatabaseStorage implements IStorage {
                 eq(projectProposals.status, "accepted")
             ))
             .orderBy(desc(projectProposals.acceptedAt));
+    }
+
+    // Task methods
+    async getTasksByGroup(groupId: string): Promise<Task[]> {
+        return await db
+            .select()
+            .from(tasks)
+            .where(eq(tasks.groupId, groupId))
+            .orderBy(desc(tasks.createdAt));
+    }
+
+    async getTask(taskId: string): Promise<Task | undefined> {
+        const [task] = await db
+            .select()
+            .from(tasks)
+            .where(eq(tasks.id, taskId));
+        return task || undefined;
+    }
+
+    async createTask(task: InsertTask): Promise<Task> {
+        const [newTask] = await db.insert(tasks).values(task).returning();
+        return newTask;
+    }
+
+    async updateTask(id: string, updates: Partial<Task>): Promise<Task | undefined> {
+        const [updated] = await db
+            .update(tasks)
+            .set({ ...updates, updatedAt: new Date() })
+            .where(eq(tasks.id, id))
+            .returning();
+        return updated || undefined;
+    }
+
+    async getTasksByFreelancer(freelancerId: string): Promise<Task[]> {
+        return await db
+            .select()
+            .from(tasks)
+            .where(eq(tasks.freelancerId, freelancerId))
+            .orderBy(desc(tasks.createdAt));
     }
 }
 

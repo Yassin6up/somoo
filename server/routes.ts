@@ -303,6 +303,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
             socket.to(room).emit('typing:stop', { userId: user.userId });
         });
 
+        // Direct message typing indicator
+        socket.on('direct:typing', (data: { roomId: string; userId: string }) => {
+            socket.to(`direct:${data.roomId}`).emit('direct:typing', { userId: data.userId });
+        });
+
+        // Mark direct messages as seen
+        socket.on('direct:seen', async (data: { senderId: string; senderType: string }) => {
+            try {
+                // Mark all messages from sender as read
+                await storage.markDirectMessagesAsRead(user.userId, user.userType, data.senderId, data.senderType);
+                
+                // Notify sender that messages were seen
+                socket.to(`user:${data.senderId}`).emit('direct:seen', { 
+                    viewedBy: user.userId,
+                    viewerType: user.userType 
+                });
+            } catch (error) {
+                console.error('Error marking messages as seen:', error);
+            }
+        });
+
         socket.on('disconnect', async () => {
             console.log(`User disconnected: ${user.userId}`);
 
@@ -1429,7 +1450,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
             // Create a post in the group community
             let postContent = `📋 **مهمة جديدة: ${title}**\n\n${description}\n\n`;
             // Add a visible task badge marker in the post content
-            postContent += `🏷️ **وسم:** مهمة\n`;
             postContent += `💰 **توزيع الأموال:**\n`;
             postContent += `- إجمالي المكافأة: $${reward}\n`;
             postContent += `- رسوم المنصة (10%): -$${platformFee}\n`;
@@ -3255,7 +3275,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 }
             }
 
-            // If this task references a group post via taskUrl (/posts/:postId), create a comment on that post
             // If this task references a group post via taskUrl, create a comment on that post
             try {
                 if (updatedTask.taskUrl && typeof updatedTask.taskUrl === 'string') {
@@ -3275,16 +3294,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
                     }
 
                     if (postId && updatedTask.freelancerId) {
-                        // Check if comment already exists to avoid duplicates (optional but good)
-                        // For now, just create it
-                        const commentContent = `تم إكمال المهمة: ${updatedTask.title || ''}`;
+                        // Check if user already submitted a comment for this task
+                        const existingComments = await storage.getCommentsByPost(postId);
+                        const userAlreadyCommented = existingComments.some(
+                            (comment) => comment.authorId === updatedTask.freelancerId && comment.isTaskCompleted
+                        );
 
-                        await storage.createComment({
-                            postId,
-                            authorId: updatedTask.freelancerId,
-                            content: commentContent,
-                            imageUrl: updatedTask.proofImage || null,
-                        });
+                        if (!userAlreadyCommented) {
+                            // Get the post to check if it has task reward
+                            const post = await storage.getPost(postId);
+                            const hasTaskReward = post && !!(post.taskTitle && post.taskReward);
+
+                            // Create comment with task completion data
+                            await storage.createComment({
+                                postId,
+                                authorId: updatedTask.freelancerId,
+                                content: report || updatedTask.submission || "تم إنجاز المهمة",
+                                imageUrl: updatedTask.proofImage || null,
+                                isTaskCompleted: hasTaskReward,
+                                taskCompletionReward: hasTaskReward ? post.taskReward : null,
+                            });
+
+                            // Add reward to pending balance if task has reward
+                            if (hasTaskReward && post.taskReward) {
+                                try {
+                                    const wallet = await storage.getWalletByFreelancer(updatedTask.freelancerId);
+                                    if (wallet) {
+                                        const rewardAmount = parseFloat(post.taskReward) || 0;
+                                        const newPendingBalance = (parseFloat(wallet.pendingBalance?.toString() || "0")) + rewardAmount;
+                                        await storage.updateWallet(wallet.id, {
+                                            pendingBalance: newPendingBalance.toString() as any,
+                                        });
+                                        console.log(`[TASK SUBMISSION] Added ${rewardAmount} to pending balance for user ${updatedTask.freelancerId}`);
+                                    }
+                                } catch (err) {
+                                    console.error("Error updating wallet pending balance:", err);
+                                }
+                            }
+                        }
                     }
                 }
             } catch (err) {
@@ -4507,9 +4554,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
             const isMember = await storage.isGroupMember(groupId, userId);
             const isLeader = group.leaderId === userId;
+            const isSpectator = req.user!.userType === 'product_owner'
+                ? await storage.isGroupSpectator(groupId, userId)
+                : false;
 
-            if (!isMember && !isLeader) {
-                return res.status(403).json({ error: "يجب أن تكون عضواً في المجموعة" });
+            if (!isMember && !isLeader && !isSpectator) {
+                return res.status(403).json({ error: "يجب أن تكون عضواً أو زائراً في المجموعة" });
             }
 
             let posts = await storage.getPostsByGroup(groupId);
@@ -4800,6 +4850,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 isTaskApproved: true,
             }).where(eq(postComments.id, commentId));
 
+            // Find and update the related task status to "approved"
+            try {
+                const groupTasks = await storage.getTasksByGroup(post.groupId);
+                const userTask = groupTasks.find(
+                    task => task.freelancerId === comment.authorId && 
+                           task.status === "submitted" &&
+                           (task.taskUrl?.includes(`postId=${post.id}`) ||
+                            task.taskUrl?.includes(post.id) ||
+                            (task.title === post.taskTitle && task.description === post.content?.trim()) ||
+                            task.description === post.content?.trim())
+                );
+
+                if (userTask) {
+                    await storage.updateTask(userTask.id, {
+                        status: "approved",
+                        completedAt: new Date(),
+                    });
+                    console.log(`[TASK APPROVAL] Task ${userTask.id} marked as approved for user ${comment.authorId}`);
+                }
+            } catch (err) {
+                console.error("Error updating task status on approval:", err);
+            }
+
             // Move money from pending balance to available balance
             try {
                 const wallet = await storage.getWalletByFreelancer(comment.authorId);
@@ -4854,9 +4927,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
             const isMember = await storage.isGroupMember(post.groupId, userId);
             const group = await storage.getGroup(post.groupId);
             const isLeader = group?.leaderId === userId;
+            const isSpectator = req.user!.userType === 'product_owner'
+                ? await storage.isGroupSpectator(post.groupId, userId)
+                : false;
 
-            if (!isMember && !isLeader) {
-                return res.status(403).json({ error: "يجب أن تكون عضواً في المجموعة" });
+            if (!isMember && !isLeader && !isSpectator) {
+                return res.status(403).json({ error: "يجب أن تكون عضواً أو زائراً في المجموعة" });
             }
 
             const comments = await storage.getCommentsByPost(postId);
@@ -4912,6 +4988,70 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 if (imageUrl) {
                     isTaskCompleted = true;
                     taskCompletionReward = post.taskReward;
+
+                    // Find and update the task status to "submitted"
+                    try {
+                        const groupTasks = await storage.getTasksByGroup(post.groupId);
+                        console.log(`[TASK MATCHING] Looking for task with postId=${postId} for user ${userId}`);
+                        console.log(`[TASK MATCHING] Post title: "${post.taskTitle}", Post content: "${post.content?.substring(0, 50)}..."`);
+                        console.log(`[TASK MATCHING] Found ${groupTasks.length} tasks in group`);
+                        
+                        // Try multiple matching strategies
+                        // Strategy 1: Match by taskUrl with postId
+                        let userTask = groupTasks.find(
+                            task => task.freelancerId === userId && 
+                                   task.taskUrl?.includes(`postId=${postId}`) &&
+                                   (task.status === "assigned" || task.status === "in_progress")
+                        );
+
+                        // Strategy 2: Match by taskUrl containing the post id (looser match)
+                        if (!userTask) {
+                            userTask = groupTasks.find(
+                                task => task.freelancerId === userId && 
+                                       task.taskUrl?.includes(postId) &&
+                                       (task.status === "assigned" || task.status === "in_progress")
+                            );
+                        }
+
+                        // Strategy 3: Match by task title and description matching the post
+                        if (!userTask && post.taskTitle) {
+                            userTask = groupTasks.find(
+                                task => task.freelancerId === userId && 
+                                       task.title === post.taskTitle &&
+                                       task.description === post.content?.trim() &&
+                                       (task.status === "assigned" || task.status === "in_progress")
+                            );
+                        }
+
+                        // Strategy 4: Match by description only (for posts without explicit taskTitle)
+                        if (!userTask) {
+                            userTask = groupTasks.find(
+                                task => task.freelancerId === userId && 
+                                       task.description === post.content?.trim() &&
+                                       task.groupId === post.groupId &&
+                                       (task.status === "assigned" || task.status === "in_progress")
+                            );
+                        }
+
+                        if (userTask) {
+                            await storage.updateTask(userTask.id, {
+                                status: "submitted",
+                                submittedAt: new Date(),
+                            });
+                            console.log(`[TASK SUBMISSION] Task ${userTask.id} marked as submitted for user ${userId}`);
+                        } else {
+                            console.log(`[TASK MATCHING] No matching task found for user ${userId} and postId ${postId}`);
+                            console.log(`[TASK MATCHING] User tasks:`, groupTasks.filter(t => t.freelancerId === userId).map(t => ({
+                                id: t.id,
+                                title: t.title,
+                                status: t.status,
+                                taskUrl: t.taskUrl,
+                                description: t.description?.substring(0, 50)
+                            })));
+                        }
+                    } catch (err) {
+                        console.error("Error updating task status:", err);
+                    }
 
                     // Add reward to pending balance
                     try {

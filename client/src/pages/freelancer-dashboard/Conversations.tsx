@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -15,7 +15,7 @@ export default function FreelancerConversations() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedConversation, setSelectedConversation] = useState<any>(null);
   const [showProposalModal, setShowProposalModal] = useState(false);
-  const [, navigate] = useLocation();
+  const [location, navigate] = useLocation();
 
   const currentUser = localStorage.getItem("user")
     ? JSON.parse(localStorage.getItem("user")!)
@@ -54,6 +54,60 @@ export default function FreelancerConversations() {
     },
     refetchInterval: 5000,
   });
+
+  // Handle userId parameter from URL
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const userId = urlParams.get('userId');
+    
+    if (userId && !isLoading) {
+      // Find conversation with this user
+      const conversation = conversations.find((conv: any) => 
+        conv.otherUserId === userId
+      );
+      
+      if (conversation) {
+        // User already has a conversation, open it
+        setSelectedConversation(conversation);
+      } else {
+        // No existing conversation, create a new one by fetching user info
+        const fetchUserAndCreateConversation = async () => {
+          try {
+            const token = localStorage.getItem("token");
+            const response = await fetch(`/api/freelancers/${userId}`, {
+              headers: {
+                "Authorization": token ? `Bearer ${token}` : "",
+              },
+            });
+            
+            if (response.ok) {
+              const freelancerData = await response.json();
+              // Create a temporary conversation object
+              const newConversation = {
+                otherUserId: userId,
+                otherUserType: "freelancer",
+                freelancer: freelancerData,
+                productOwner: null,
+                lastMessage: null,
+                lastMessageAt: new Date().toISOString(),
+                unreadCount: 0,
+                isOnline: false,
+                conversationKey: `${userId}-freelancer`,
+              };
+              setSelectedConversation(newConversation);
+            }
+          } catch (error) {
+            console.error("Failed to fetch user info:", error);
+          }
+        };
+        
+        fetchUserAndCreateConversation();
+      }
+      
+      // Remove the parameter from URL after opening the chat
+      window.history.replaceState({}, '', '/freelancer-dashboard/conversations');
+    }
+  }, [conversations, location, isLoading]);
 
   console.log("Conversations state:", { conversations, isLoading, error });
 

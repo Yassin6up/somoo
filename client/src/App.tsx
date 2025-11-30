@@ -33,6 +33,7 @@ import FreelancerOverview from "@/pages/freelancer-dashboard/Overview";
 import FreelancerGroups from "@/pages/freelancer-dashboard/Groups";
 import AvailableTasks from "@/pages/freelancer-dashboard/AvailableTasks";
 import MyTasksPage from "@/pages/freelancer-dashboard/MyTasks";
+import TaskProgress from "@/pages/freelancer-dashboard/TaskProgress";
 import WalletPage from "@/pages/freelancer-dashboard/Wallet";
 import WithdrawalsPage from "@/pages/freelancer-dashboard/Withdrawals";
 import OrdersPage from "@/pages/freelancer-dashboard/Orders";
@@ -106,6 +107,13 @@ function Router() {
         {() => (
           <FreelancerDashboardLayout>
             <MyTasksPage />
+          </FreelancerDashboardLayout>
+        )}
+      </Route>
+      <Route path="/freelancer-dashboard/tasks/progress">
+        {() => (
+          <FreelancerDashboardLayout>
+            <TaskProgress />
           </FreelancerDashboardLayout>
         )}
       </Route>

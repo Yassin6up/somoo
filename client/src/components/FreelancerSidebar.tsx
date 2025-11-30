@@ -40,6 +40,7 @@ const menuItems = [
     items: [
       { title: "المهام المتاحة", url: "/freelancer-dashboard/tasks/available" },
       { title: "مهامي", url: "/freelancer-dashboard/tasks/my-tasks" },
+      { title: "تتبع الإنجاز", url: "/freelancer-dashboard/tasks/progress" },
     ],
   },
   {

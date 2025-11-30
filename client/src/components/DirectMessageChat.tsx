@@ -33,6 +33,9 @@ export function DirectMessageChat({ roomId, receiverId, receiverType, receiverIn
     const [message, setMessage] = useState("");
     const [messages, setMessages] = useState<any[]>([]);
     const [isOnline, setIsOnline] = useState(false);
+    const [isTyping, setIsTyping] = useState(false);
+    const [lastSeen, setLastSeen] = useState<string | null>(null);
+    const [isSending, setIsSending] = useState(false);
     const [showServiceModal, setShowServiceModal] = useState(false);
     const [showProposalModal, setShowProposalModal] = useState(false);
     const [showGroupInviteModal, setShowGroupInviteModal] = useState(false);
@@ -45,6 +48,27 @@ export function DirectMessageChat({ roomId, receiverId, receiverType, receiverIn
         ? JSON.parse(localStorage.getItem("user")!)
         : null;
     const currentUserType = localStorage.getItem("userType");
+
+    // Format last seen time
+    const formatLastSeen = (lastSeenStr: string) => {
+        const date = new Date(lastSeenStr);
+        const now = new Date();
+        const diffMs = now.getTime() - date.getTime();
+        const diffMins = Math.floor(diffMs / 60000);
+        const diffHours = Math.floor(diffMs / 3600000);
+        const diffDays = Math.floor(diffMs / 86400000);
+
+        if (diffMins < 1) return "الآن";
+        if (diffMins < 60) return `منذ ${diffMins} دقيقة`;
+        if (diffHours < 24) {
+            const hours = date.getHours();
+            const minutes = date.getMinutes().toString().padStart(2, '0');
+            return `${hours}:${minutes}`;
+        }
+        if (diffDays === 1) return "أمس";
+        if (diffDays < 7) return `منذ ${diffDays} أيام`;
+        return date.toLocaleDateString('ar-EG');
+    };
 
     // Fetch receiver online status
     const { data: statusData } = useQuery<{ userId: string; isOnline: boolean; lastSeen: Date | null }>({
@@ -71,6 +95,9 @@ export function DirectMessageChat({ roomId, receiverId, receiverType, receiverIn
     useEffect(() => {
         if (statusData) {
             setIsOnline(statusData.isOnline);
+            if (!statusData.isOnline && statusData.lastSeen) {
+                setLastSeen(typeof statusData.lastSeen === 'string' ? statusData.lastSeen : new Date(statusData.lastSeen).toISOString());
+            }
         }
     }, [statusData]);
 
@@ -99,13 +126,27 @@ export function DirectMessageChat({ roomId, receiverId, receiverType, receiverIn
         if (initialMessages) {
             setMessages(initialMessages);
 
+            // Mark messages as seen via Socket.IO
+            if (socket && initialMessages.length > 0) {
+                const hasUnreadMessages = initialMessages.some((msg: any) => 
+                    msg.receiverId === currentUser?.id && !msg.isRead
+                );
+                
+                if (hasUnreadMessages) {
+                    socket.emit('direct:seen', {
+                        senderId: receiverId,
+                        senderType: receiverType,
+                    });
+                }
+            }
+
             // Show service details modal if product owner and no messages yet
             if (currentUserType === "product_owner" && initialMessages.length === 0 && !hasShownModal) {
                 setShowServiceModal(true);
                 setHasShownModal(true);
             }
         }
-    }, [initialMessages, currentUserType, hasShownModal, currentUser?.id, receiverId]);
+    }, [initialMessages, currentUserType, hasShownModal, currentUser?.id, receiverId, receiverType, socket]);
 
     // Socket.IO listeners
     useEffect(() => {
@@ -142,14 +183,23 @@ export function DirectMessageChat({ roomId, receiverId, receiverType, receiverIn
             }
         };
 
+        const handleTyping = ({ userId }: { userId: string }) => {
+            if (userId === receiverId) {
+                setIsTyping(true);
+                setTimeout(() => setIsTyping(false), 3000);
+            }
+        };
+
         socket.on("direct:message", handleNewMessage);
         socket.on("user:online", handleUserOnline);
         socket.on("user:offline", handleUserOffline);
+        socket.on("direct:typing", handleTyping);
 
         return () => {
             socket.off("direct:message", handleNewMessage);
             socket.off("user:online", handleUserOnline);
             socket.off("user:offline", handleUserOffline);
+            socket.off("direct:typing", handleTyping);
             socket.emit("leave:direct", roomId);
         };
     }, [socket, roomId, receiverId]);
@@ -158,34 +208,6 @@ export function DirectMessageChat({ roomId, receiverId, receiverType, receiverIn
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages]);
-
-    // Send message mutation
-    const sendMessageMutation = useMutation({
-        mutationFn: async (content: string) => {
-            const response = await fetch("/api/direct-messages", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${localStorage.getItem("token")}`,
-                },
-                body: JSON.stringify({
-                    receiverId,
-                    receiverType,
-                    content,
-                }),
-            });
-
-            if (!response.ok) {
-                throw new Error("Failed to send message");
-            }
-
-            return response.json();
-        },
-        onSuccess: (data) => {
-            setMessage("");
-            queryClient.invalidateQueries({ queryKey: [`/api/direct-messages/${receiverId}`] });
-        },
-    });
 
     // Report user mutation
     const reportUserMutation = useMutation({
@@ -208,9 +230,23 @@ export function DirectMessageChat({ roomId, receiverId, receiverType, receiverIn
         },
     });
 
-    const handleSend = () => {
-        if (!message.trim() || sendMessageMutation.isPending) return;
-        sendMessageMutation.mutate(message.trim());
+    const handleSend = (content?: string) => {
+        const messageToSend = content || message.trim();
+        if (!messageToSend || isSending || !socket) return;
+        
+        setIsSending(true);
+        socket.emit('direct:message', {
+            receiverId,
+            receiverType,
+            content: messageToSend,
+            roomId
+        });
+        
+        if (!content) {
+            setMessage("");
+        }
+        
+        setTimeout(() => setIsSending(false), 500);
     };
 
     // Handle service details submission
@@ -249,7 +285,7 @@ ${details.requirements ? `**متطلبات إضافية:** ${details.requirement
 أرجو منك مراجعة هذه التفاصيل وإعطائي عرض سعر مناسب. شكراً 🙏
     `.trim();
 
-        sendMessageMutation.mutate(formattedMessage);
+        handleSend(formattedMessage);
         setShowServiceModal(false);
     };
 
@@ -298,9 +334,8 @@ ${details.requirements ? `**متطلبات إضافية:** ${details.requirement
                         <h2 className="text-gray-900 font-semibold">
                             {receiverInfo?.fullName || "مستخدم"}
                         </h2>
-                        <p className={`text-sm ${isOnline ? "text-green-600" : "text-gray-500"
-                            }`}>
-                            {isOnline ? "متصل الآن" : "غير متصل"}
+                        <p className={`text-sm ${isOnline ? "text-green-600" : "text-gray-500"}`}>
+                            {isOnline ? "متصل الآن" : lastSeen ? `آخر ظهور ${formatLastSeen(lastSeen)}` : "غير متصل"}
                         </p>
                     </div>
                 </div>
@@ -350,7 +385,7 @@ ${details.requirements ? `**متطلبات إضافية:** ${details.requirement
 
                         if (isProposal) {
                             try {
-                                const match = contentString.match(/\[PROPOSAL\](.*?)\[\/PROPOSAL\]/s);
+                                const match = contentString.match(/\[PROPOSAL\]([\s\S]*?)\[\/PROPOSAL\]/);
                                 if (match) {
                                     let jsonString = match[1].trim();
                                     if (jsonString.includes('\\"')) {
@@ -365,7 +400,7 @@ ${details.requirements ? `**متطلبات إضافية:** ${details.requirement
 
                         if (isGroupInvite) {
                             try {
-                                const match = contentString.match(/\[GROUP_INVITE\](.*?)\[\/GROUP_INVITE\]/s);
+                                const match = contentString.match(/\[GROUP_INVITE\]([\s\S]*?)\[\/GROUP_INVITE\]/);
                                 if (match) {
                                     let jsonString = match[1].trim();
                                     if (jsonString.includes('\\"')) {
@@ -665,6 +700,19 @@ ${details.requirements ? `**متطلبات إضافية:** ${details.requirement
 
             {/* Input Area */}
             <div className="border-t border-gray-200 bg-white px-4 py-3">
+                {/* Typing/Seen Indicator */}
+                {isOnline && (
+                    <div className="text-xs text-gray-500 mb-2 px-1 h-4">
+                        {isTyping ? (
+                            <span className="flex items-center gap-1">
+                                <span className="animate-pulse">●</span>
+                                <span>يكتب الآن...</span>
+                            </span>
+                        ) : messages.length > 0 && messages[messages.length - 1]?.senderId === currentUser?.id ? (
+                            <span className="text-blue-600">✓✓ تم الاستلام</span>
+                        ) : null}
+                    </div>
+                )}
                 <div className="flex items-center gap-2">
                     {/* Actions Menu - Show only for freelancers chatting with product owners */}
                     {currentUserType === "freelancer" && receiverType === "product_owner" && (
@@ -699,7 +747,13 @@ ${details.requirements ? `**متطلبات إضافية:** ${details.requirement
 
                     <Input
                         value={message}
-                        onChange={(e) => setMessage(e.target.value)}
+                        onChange={(e) => {
+                            setMessage(e.target.value);
+                            // Emit typing event
+                            if (socket && e.target.value.length > 0) {
+                                socket.emit('direct:typing', { roomId, userId: currentUser?.id });
+                            }
+                        }}
                         onKeyPress={(e) => {
                             if (e.key === "Enter" && !e.shiftKey) {
                                 e.preventDefault();
@@ -708,15 +762,15 @@ ${details.requirements ? `**متطلبات إضافية:** ${details.requirement
                         }}
                         placeholder="اكتب رسالتك هنا..."
                         className="flex-1 rounded-lg border-gray-300 focus:border-gray-400"
-                        disabled={sendMessageMutation.isPending}
+                        disabled={isSending}
                     />
                     <Button
-                        onClick={handleSend}
-                        disabled={!message.trim() || sendMessageMutation.isPending}
+                        onClick={() => handleSend()}
+                        disabled={!message.trim() || isSending}
                         className="bg-gray-900 hover:bg-gray-800 text-white rounded-lg"
                         size="sm"
                     >
-                        {sendMessageMutation.isPending ? (
+                        {isSending ? (
                             <Loader2 className="h-4 w-4 animate-spin" />
                         ) : (
                             <Send className="h-4 w-4" />
@@ -740,7 +794,7 @@ ${details.requirements ? `**متطلبات إضافية:** ${details.requirement
                 receiverType={receiverType}
                 receiverName={receiverInfo?.fullName || "صاحب عمل"}
                 onSendMessage={(content: string) => {
-                    sendMessageMutation.mutate(content);
+                    handleSend(content);
                 }}
             />
 
@@ -757,7 +811,7 @@ ${details.requirements ? `**متطلبات إضافية:** ${details.requirement
                     };
 
                     const inviteMessage = `[GROUP_INVITE]${JSON.stringify(inviteData)}[/GROUP_INVITE]`;
-                    sendMessageMutation.mutate(inviteMessage);
+                    handleSend(inviteMessage);
 
                     toast({
                         title: "تم إرسال الدعوة",
